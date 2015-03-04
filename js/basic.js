@@ -1,10 +1,25 @@
 //
-// APIs
+// APIs & Libraries
 //
 
 var WACOM;
 	WACOM = document.getElementById('Wacom').penAPI;
 	WACOM = WACOM ? WACOM : {pressure:3};
+
+// Three.js
+
+var SCENE = new THREE.Scene();
+var CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+var RENDERER = new THREE.CanvasRenderer();
+	RENDERER.setSize( window.innerWidth, window.innerHeight );
+	RENDERER.domElement.setAttribute("id","paper")
+	RENDERER.domElement.setAttribute("class","three canvas")
+	RENDERER.domElement.setAttribute("onMouseDown","javascript:onMouseDown(event);")
+	RENDERER.domElement.setAttribute("onMouseUp","javascript:onMouseUp(event);")
+	RENDERER.domElement.setAttribute("onMouseMove","javascript:onMouseMove(event);")
+	RENDERER.domElement.setAttribute("onMouseOut","javascript:onMouseOut(event);")
+
+document.body.appendChild( RENDERER.domElement );
 
 // CANVAS ... in the future this will be replaced as Three.js's WebGLRenderer (or something), get canvas by renderer.domElement
 // PAPER will be fetched from the Three.js object too. It is: renderer.getContext();
@@ -13,7 +28,7 @@ var WACOM;
 // Probably we want to call renderer render manually: renderer.render( scene , camera , renderTarget , forceClear)
 
 var CANVAS,PAPER,PAPER_WIDTH,PAPER_HEIGHT,SPACE;
-	CANVAS = document.getElementById('paper');
+	CANVAS = RENDERER.domElement
 	CANVAS.width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 	CANVAS.height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 	PAPER = CANVAS.getContext("2d"); SPACE = CANVAS.getContext("3d");
