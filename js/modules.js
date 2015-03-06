@@ -18,59 +18,51 @@ clear_canvas : function() {
 	this.func = function(){ clear(1); STROKES = new _strokes(); return ""; }
 },
 
-brush_size_up : {
-	type: "command",
-	id: "brush_size_up",
-	name: "Increase brush size",
-	keyCode: 221, // ]
-	func: function(){
-		STYLE.brush_size += 5;
-		return STYLE.brush_size;
-	}
+brush_size_up : function() {
+	this.type = "command";
+	this.id = "brush_size_up";
+	this.name = "Increase brush size";
+	this.keyCode = 221; // ]
+	this.func = function(){ STYLE.brush_size += 5; return STYLE.brush_size; }
 },
 
-brush_size_down : {
-	type: "command",
-	id: "brush_size_down",
-	name: "Reduce brush size",
-	keyCode: 219, // [
-	func: function(){
-		if (STYLE.brush_size > 5) STYLE.brush_size -= 5;
-		return STYLE.brush_size;
-	}
+brush_size_down : function() {
+	this.type = "command";
+	this.id = "brush_size_down";
+	this.name = "Reduce brush size";
+	this.keyCode = 219; // [
+	this.func = function(){ if (STYLE.brush_size > 5) {STYLE.brush_size -= 5;} return STYLE.brush_size;}
 },
 
 simplified_all_strokes : function() {
 	this.type = "command",
 	this.id   = "simplify_strokes"
-	this.name = "Simplified Strokes"
+	this.name = "Strokes Simplified"
 	this.keyCode = 81
 	this.func = function() {
-		var simp_count = 0;
-		var s;
-		for( var k = 0 ; k < STROKES.getStrokesCount() ; k ++ ) {
-			s = STROKES.getStroke(k);
-		}
+		var simp_count = 0, s;
+		for( var k = 0 ; k < STROKES.getStrokesCount() ; k ++ ) { s = STROKES.getStroke(k); }
 		return "Points deleted: " + simp_count;
 	}
 },
 
 // STYLE MODULES
+// none at the moment
 
 random_stroke_color : function() {
 	this.type = "style"
 	this.id = "random_stroke_color"
 	this.name = "Random Stroke Color"
 	this.keyCode = 65 // a
-	this.func = function(sty) {
-		sty.color.r = RANDOM_NUMBER(255,{round: true});
-		sty.color.g = RANDOM_NUMBER(255,{round: true});
-		sty.color.b = RANDOM_NUMBER(255,{round: true});
-		return sty;
+	this.func = function() {
+		STYLE.color.r = RANDOM_NUMBER(255,{round: true});
+		STYLE.color.g = RANDOM_NUMBER(255,{round: true});
+		STYLE.color.b = RANDOM_NUMBER(255,{round: true});
 	}
 },
 
 // POINT DATA MODULES
+
 
 random_point_position : function() {
 	this.type = "point_data"
@@ -104,14 +96,14 @@ smooth_stroke : function() {
 	this.id   = "smooth_stroke";
 	this.name = "Smooth Stroke";
 	this.enabled = true;
-	this.settings = { length: 10000, factor: 4 , all : true }
+	this.settings = { length: 15, factor: 4 , all : false }
 	this.keyCode  = 83; // s
 	this.func = function(data) {
-		if (this.settings.all === true ) {
+		if (this.settings.all) {
 			var len = STROKES.getStrokesCount();
 			for (var k = 0 ; k < len ; k ++) { smoothie( k , data , this.settings ) }
 		} else {
-			smoothie( STROKES.getActiveStroke() )
+			smoothie( STROKES.getActiveStroke() , data , this.settings )
 		}
 		function smoothie( a , data , settings ) {
 			var eX, eY, eS;
@@ -232,24 +224,23 @@ delete_strokes_out_of_boundary : function() {
 	}
 },
 
-blow_strokes : {
-	type: "stroke_data",
-	id: "blow_strokes",
-	name: "Blow Strokes",
-	keyCode: 71,
-	func: function(data) {
+blow_strokes : function() {
+	this.type = "stroke_data";
+	this.id = "blow_strokes";
+	this.name = "Blow Strokes";
+	this.keyCode = 71;
+	this.func = function(data) {
 		var max = data.X.length;
 		for ( var i = 0 ; i < max ; i++ ) {
-			blow(data.X[i]) || blow(data.Y[i])
+			blow(data.X[i]);
+			blow(data.Y[i]);
 		}
 		function blow(arr,center,force) {
 			var l = arr.length;
 			if (!center) {
-				center = 0
-				for ( var i = 0 ; i < l ; i ++ ) {
-					center += arr[i];
-				}
-				center /= l
+				center = 0;
+				for ( var i = 0 ; i < l ; i ++ ) { center += arr[i]; }
+				center /= l;
 			}
 			if (!force) {force = 0.01;}
 			for ( i = 0 ; i < l ; i ++ ) {
@@ -267,7 +258,7 @@ connection_network : function(){
 	this.name = "NETWORK";
 	this.keyCode = 49; // 1
 	this.func = function(data){
-		clear(1);
+		// clear(1);
 		var l,o,all;
 			l = data.X.length;
 			all = {X:new Array(),Y:new Array(),Z:new Array(),S:new Array(),R:new Array(),G:new Array(),B:new Array(),A:new Array()};
@@ -288,7 +279,7 @@ connection_network : function(){
 		for ( var e = 0 ; e < all_length ; e+= 1 ) {
 			for ( var f = 0 ; f < all_length ; f+= 1 ) {
 				if (e === f) { break ; }
-				// if ( Math.abs(e-f) < 3 ) { break ; }
+				if ( Math.abs(e-f) < 1 ) { break ; }
 				var max = all.S[e] * 1,
 					min = all.S[e] / 7
 				if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
@@ -312,7 +303,7 @@ fillmember_style : function() {
 	this.name = "fillmember style"
 	this.keyCode = 50; // 2
 	this.func = function(data) {
-		clear(0.9);
+		// clear(1);
 		var l,o;
 			l = STROKES.getStrokesCount() - 1;
 		for ( var k = 0 ; k <= l ; k++ ) {
@@ -347,7 +338,7 @@ default_draw_style : function() {
 	this.enabled = true
 	this.func = function(data){
 		// default drawing style
-		clear(1);
+		// clear(1);
 		var l,o;
 			l = STROKES.getStrokesCount() - 1;
 		for ( var k = 0 ; k <= l ; k++ ) {
@@ -370,18 +361,6 @@ default_draw_style : function() {
 //
 // HELPER FUNCTIONS
 //
-
-function clear(a) {
-	if (a === 1) {
-		PAPER.clearRect(0,0,CANVAS.width,CANVAS.height)
-	} else {
-		PAPER.save();
-		PAPER.globalAlpha = a;
-		PAPER.globalCompositeOperation = "destination-out";
-		PAPER.fillRect(0,0,CANVAS.width,CANVAS.height);
-		PAPER.restore();
-	}
-}
 
 function replaceLastElements(arr,rep) {
 	var l = arr.length, n = rep.length;

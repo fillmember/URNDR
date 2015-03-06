@@ -4,34 +4,35 @@
 
 var WACOM;
 	WACOM = document.getElementById('Wacom').penAPI;
-	WACOM = WACOM ? WACOM : {pressure:3};
+	WACOM = WACOM ? WACOM : {pressure:1};
 
 // Three.js
 
-var SCENE = new THREE.Scene();
-var CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-var RENDERER = new THREE.CanvasRenderer();
+var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
+	SCENE = new THREE.Scene();
+	CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+	RENDERER = new THREE.CanvasRenderer();
 	RENDERER.setSize( window.innerWidth, window.innerHeight );
-	RENDERER.domElement.setAttribute("id","paper")
+	RENDERER.domElement.setAttribute("id","lighttable")
 	RENDERER.domElement.setAttribute("class","three canvas")
 	RENDERER.domElement.setAttribute("onMouseDown","javascript:onMouseDown(event);")
 	RENDERER.domElement.setAttribute("onMouseUp","javascript:onMouseUp(event);")
 	RENDERER.domElement.setAttribute("onMouseMove","javascript:onMouseMove(event);")
 	RENDERER.domElement.setAttribute("onMouseOut","javascript:onMouseOut(event);")
+	RAYCASTER = new THREE.Raycaster();
 
 document.body.appendChild( RENDERER.domElement );
 
-// CANVAS ... in the future this will be replaced as Three.js's WebGLRenderer (or something), get canvas by renderer.domElement
-// PAPER will be fetched from the Three.js object too. It is: renderer.getContext();
-// probably need to set autoClear to false. 
+// Set up environment for testing; module in the future...
+MESH = new THREE.Mesh( new THREE.SphereGeometry(2,30,30) , new THREE.MeshBasicMaterial( { color: 0x00ff00 , wireframe: true } ) ); // new THREE.TorusKnotGeometry( 1.33, 0.4, 50, 10 );
+SCENE.add( MESH );
+CAMERA.position.z = 5;
 
-// Probably we want to call renderer render manually: renderer.render( scene , camera , renderTarget , forceClear)
-
-var CANVAS,PAPER,PAPER_WIDTH,PAPER_HEIGHT,SPACE;
-	CANVAS = RENDERER.domElement
-	CANVAS.width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-	CANVAS.height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	PAPER = CANVAS.getContext("2d"); SPACE = CANVAS.getContext("3d");
+var CANVAS,PAPER;
+	CANVAS = document.getElementById('paper')
+	CANVAS.width = RENDERER.domElement.width;
+	CANVAS.height = RENDERER.domElement.height;
+	PAPER = CANVAS.getContext("2d");
 
 //
 // CONSTANT / DATA_CONSTRUCTORS
@@ -49,11 +50,13 @@ STYLE = new function() {
 	this.cap = "round"; join = "round";
 	this.composit = "source-over";
 	this.brush_size = 80;
-	this.color = {r:0,g:0,b:0,a:1};
+	this.color = {r:128,g:128,b:128,a:1};
 };
 PEN = new function() {
 	this.x = 0
 	this.y = 0
+	this.ndc_x = 0
+	this.ndc_y = 0
 	this.pressure = 0
 	this.active = 0
 };
@@ -266,20 +269,17 @@ function onKeyDown(event) {
 
 		ignores = {
 			CmdR : function() { return (key === 82) && event.metaKey },
-			mac_console : function() { return (key === 73) && event.metaKey && event.altKey; }
+			mac_console : function() { return (key === 73) && event.metaKey && event.altKey; },
+			chrome_presentation_mode : function() { return (key === 70) && event.metaKey && event.shiftKey; },
+			full_screen : function() { return (key === 70) && event.ctrlKey && event.metaKey; }
 		}
 		for ( scenario in ignores ) { if (ignores[scenario]()) { return false; } }
 
 		var result = MODULES.toggleModuleByKey( key );
-		if (result.type !== 0) {event.preventDefault();}
-		if (result.type === COMMAND_MODULE) {
-			HUD.display(result.name , result.func() )
-		} else if (result != 0) {
-			HUD.display("MODULE "+result.name,( result.enabled ? "ON" : "OFF" ))
-		} else {
-			// result === 0
-			HUD.display("key_pressed: "+key)
-		}
+		if (result.type !== 0) { event.preventDefault(); }
+		if (result.type === COMMAND_MODULE) { HUD.display(result.name , result.func() )
+		} else if (result != 0) { HUD.display("MODULE "+result.name,( result.enabled ? "ON" : "OFF" ))
+		} else { HUD.display("key_pressed: "+key) }
 
 }
 
@@ -292,15 +292,13 @@ function onMouseUp(event) {
 }
 function onMouseMove(event) {
 	if (PEN.active !== 1) { return false; }
-	//
-	var mouse = getMousePos(CANVAS, event);
-	//
-	PEN.x = mouse.x; PEN.y = mouse.y;
-	PEN.pressure = WACOM.pressure;
-	// style() -> update() -> draw()
 	style();
+	//
+	var mouse_data = getMousePos(CANVAS, event);
+	//
+	for (var k in mouse_data) { PEN[k] = mouse_data[k]; }
+	PEN.pressure = WACOM.pressure;
 	update();
-	draw();
 }
 function onMouseOut(event) { PEN.active = 0; }
 
@@ -319,5 +317,21 @@ UPDATER();
 
 function getMousePos(canvas, evt) {
 	var rect = canvas.getBoundingClientRect();
-	return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+	var obj = {};
+		obj.x = evt.clientX - rect.left;
+		obj.y = evt.clientY - rect.top;
+		obj.ndc_x = ( obj.x / window.innerWidth ) * 2 - 1;
+		obj.ndc_y = - ( obj.y / window.innerHeight ) * 2 + 1;
+	return obj;
+}
+
+function clear(a) {
+	if (a === 1) { PAPER.clearRect(0,0,CANVAS.width,CANVAS.height)
+	} else {
+		PAPER.save();
+		PAPER.globalAlpha = a;
+		PAPER.globalCompositeOperation = "destination-out";
+		PAPER.fillRect(0,0,CANVAS.width,CANVAS.height);
+		PAPER.restore();
+	}
 }
