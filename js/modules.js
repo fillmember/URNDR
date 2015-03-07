@@ -83,7 +83,7 @@ pressure_sensitivity : function() {
 	this.type = "point_data"
 	this.id   = "brush_pressure_sensitivity"
 	this.name = "Brush size effected by pen pressure"
-	this.enabled = true
+	this.enabled = false
 	this.func = function(point) {
 		point.S *= PEN.pressure;
 	}
@@ -95,8 +95,8 @@ smooth_stroke : function() {
 	this.type = "stroke_data";
 	this.id   = "smooth_stroke";
 	this.name = "Smooth Stroke";
-	this.enabled = false;
-	this.settings = { length: 15, factor: 4 , all : false }
+	this.enabled = true;
+	this.settings = { length: 30000, factor: 0 , all : true }
 	this.keyCode  = 83; // s
 	this.func = function(data) {
 		if (this.settings.all) {
@@ -116,6 +116,46 @@ smooth_stroke : function() {
 			data.X[a] = replaceLastElements( data.X[a] , eX )
 			data.Y[a] = replaceLastElements( data.Y[a] , eY )
 			data.S[a] = replaceLastElements( data.S[a] , eS )
+		}
+	}
+},
+
+translate_3d : function() {
+	this.type = "stroke_data";
+	this.id   = "translate_experiment_01"
+	this.name = "Magic 001"
+	this.enabled = true;
+	this.settings = {};
+	this.keyCode = 85 //u
+	this.func = function(data) {
+		var obj,face,p3d,newp,delta,len;
+			len = STROKES.getStrokesCount();
+		for (var this_stroke = 0 ; this_stroke < len ; this_stroke ++) {
+			if (STROKES.getActiveStroke() === this_stroke) {break;}
+			len_p = STROKES.getStrokeLength(this_stroke);
+			for (var this_point = 0 ; this_point < len_p ; this_point++) {
+				obj = data.BindedObject[this_stroke][this_point];
+				face = data.BindedFace[this_stroke][this_point];
+				p3d = data.BindedPoint[this_stroke][this_point];
+				if (obj && face && p3d) {
+					newp = obj.localToWorld( obj.geometry.vertices[face.a].clone() ).project(CAMERA);
+					//
+					opp = {
+						x: ( p3d.x / 2 + 0.5 ) * window.innerWidth,
+						y: -( p3d.y / 2 - 0.5 ) * window.innerHeight
+					}
+					npp = {
+						x: ( newp.x / 2 + 0.5 ) * window.innerWidth,
+						y: -( newp.y / 2 - 0.5 ) * window.innerHeight
+					}
+					data.X[this_stroke][this_point] += npp.x-opp.x 
+					data.Y[this_stroke][this_point] += npp.y-opp.y
+					// store data back to data.
+					data.BindedPoint[this_stroke][this_point] = newp.clone();
+				} else {
+					// data.X[this_stroke][this_point]
+				}
+			}
 		}
 	}
 },

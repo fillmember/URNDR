@@ -17,7 +17,7 @@ function update() {
 	var point = new Object();
 		point.X = PEN.x
 		point.Y = PEN.y
-		point.Z = 0
+		// point.Z = 0
 		point.S = STYLE.brush_size,
 		point.R = STYLE.color.r
 		point.G = STYLE.color.g
@@ -27,17 +27,10 @@ function update() {
 	RAYCASTER.setFromCamera( new THREE.Vector2( PEN.ndc_x , PEN.ndc_y ) , CAMERA );
 	var intersects = RAYCASTER.intersectObjects( SCENE.children );
 	if (intersects.length > 0) {
-		var target = intersects[0],
-			obj = target.object,
-			geo = obj.geometry,
-			a = target.face.a;
-		target.face.color.setRGB(1,0,0)
-		// console.log(geo.faces[target.faceIndex].color)
-		// geo.faces[target.faceIndex].color.setRGB(0,0,1)
-		// geo.dynamic = true;
-		// geo.elementsNeedUpdate = true;
-		geo.colorsNeedUpdate = true;
-		// console.log(geo.colors[a])
+		var i0 = intersects[0];
+		point.BindedObject = i0.object;
+		point.BindedFace = i0.face;
+		point.BindedPoint = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.a].clone() ).project(CAMERA);
 	}
 	MODULES.runEnabledModulesInList( "point_data_modules", point )
 	// WRITE POINT INTO STROKE
@@ -51,7 +44,7 @@ function draw() {
 	clear();
 
 	// cube test
-	MESH.rotation.y += 0.001;
+	MESH.rotation.y += 0.003;
 	MESH.updateMatrixWorld();
 	// MESH.rotation.x = PEN.ndc_x
 

@@ -68,3 +68,13 @@ loader.load( './models/collada/test.dae', function ( collada ) {
 
     //...
 } );
+
+//
+//
+//
+//
+
+var center = [(vex[face.a].x + vex[face.b].x + vex[face.c].x) / 3, 
+			  (vex[face.a].y + vex[face.b].y + vex[face.c].y) / 3,
+			  (vex[face.a].z + vex[face.b].z + vex[face.c].z) / 3]
+var normal = face.normal
