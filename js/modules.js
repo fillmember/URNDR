@@ -95,7 +95,7 @@ smooth_stroke : function() {
 	this.type = "stroke_data";
 	this.id   = "smooth_stroke";
 	this.name = "Smooth Stroke";
-	this.enabled = true;
+	this.enabled = false;
 	this.settings = { length: 15, factor: 4 , all : false }
 	this.keyCode  = 83; // s
 	this.func = function(data) {

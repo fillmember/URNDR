@@ -53,3 +53,18 @@ if ( intersects.length > 0 ) {
 if (PEN.active === true) {
 	// BIND STROKE POINT latest one TO 3D MESH
 }
+
+
+// to get vertices from .dae
+
+loader.load( './models/collada/test.dae', function ( collada ) {                
+    for(i = 0; i < collada.scene.children.length; i++) {
+        if(collada.scene.children[i].geometry) {
+            for(j = 0; j < collada.scene.children[i].geometry.vertices.length; j++) {
+                //do stuff...
+            }
+        }
+    }
+
+    //...
+} );

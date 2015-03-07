@@ -10,28 +10,28 @@ var WACOM;
 
 var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
 	SCENE = new THREE.Scene();
+	SCENE.fog = new THREE.Fog( 0xFFFFFF , 3, 6)
 	CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-	RENDERER = new THREE.CanvasRenderer();
+	RENDERER = new THREE.WebGLRenderer( {
+		canvas: document.getElementById('lighttable'),
+		precision: "mediump",
+		alpha: true,
+		preserveDrawingBuffer: true
+	} );
 	RENDERER.setSize( window.innerWidth, window.innerHeight );
-	RENDERER.domElement.setAttribute("id","lighttable")
-	RENDERER.domElement.setAttribute("class","three canvas")
-	RENDERER.domElement.setAttribute("onMouseDown","javascript:onMouseDown(event);")
-	RENDERER.domElement.setAttribute("onMouseUp","javascript:onMouseUp(event);")
-	RENDERER.domElement.setAttribute("onMouseMove","javascript:onMouseMove(event);")
-	RENDERER.domElement.setAttribute("onMouseOut","javascript:onMouseOut(event);")
 	RAYCASTER = new THREE.Raycaster();
 
 document.body.appendChild( RENDERER.domElement );
 
 // Set up environment for testing; module in the future...
-MESH = new THREE.Mesh( new THREE.SphereGeometry(2,30,30) , new THREE.MeshBasicMaterial( { color: 0x00ff00 , wireframe: true } ) ); // new THREE.TorusKnotGeometry( 1.33, 0.4, 50, 10 );
+MESH = new THREE.Mesh( new THREE.IcosahedronGeometry(3,2) , new THREE.MeshBasicMaterial( { color: 0xCCCCCC , vertexColors: THREE.FaceColors, wireframe: true , wireframeLinewidth: 0.1, fog: true } ) ); // new THREE.TorusKnotGeometry( 1.33, 0.4, 50, 10 );
+MESH.rotation.z = 0.5
 SCENE.add( MESH );
 CAMERA.position.z = 5;
 
 var CANVAS,PAPER;
 	CANVAS = document.getElementById('paper')
-	CANVAS.width = RENDERER.domElement.width;
-	CANVAS.height = RENDERER.domElement.height;
+	CANVAS.width = RENDERER.domElement.width; CANVAS.height = RENDERER.domElement.height;
 	PAPER = CANVAS.getContext("2d");
 
 //
@@ -50,7 +50,7 @@ STYLE = new function() {
 	this.cap = "round"; join = "round";
 	this.composit = "source-over";
 	this.brush_size = 80;
-	this.color = {r:128,g:128,b:128,a:1};
+	this.color = {r:0,g:0,b:255,a:1};
 };
 PEN = new function() {
 	this.x = 0
@@ -321,8 +321,8 @@ function getMousePos(canvas, evt) {
 	var obj = {};
 		obj.x = evt.clientX - rect.left;
 		obj.y = evt.clientY - rect.top;
-		obj.ndc_x = ( obj.x / window.innerWidth ) * 2 - 1;
-		obj.ndc_y = - ( obj.y / window.innerHeight ) * 2 + 1;
+		obj.ndc_x = THREE.Math.mapLinear( obj.x , 0 , window.innerWidth , -1 , 1 )
+		obj.ndc_y = THREE.Math.mapLinear( obj.y , 0 , window.innerHeight , 1 , -1 )
 	return obj;
 }
 

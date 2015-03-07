@@ -23,10 +23,18 @@ function update() {
 		point.G = STYLE.color.g
 		point.B = STYLE.color.b
 		point.A = STYLE.color.a
-		//
-		// RAYCASTER.setFromCamera( new THREE.Vector2( PEN.ndc_x , PEN.ndc_y ) , CAMERA );
-		// var intersects = RAYCASTER.intersectObject( SCENE.children )[0];
-		// console.log(intersects)
+	//// EXPERIMENTAL
+	RAYCASTER.setFromCamera( new THREE.Vector2( PEN.ndc_x , PEN.ndc_y ) , CAMERA );
+	var intersections = RAYCASTER.intersectObjects( SCENE.children );
+	if (intersections.length > 0) {
+		var intersect = intersections[0], 
+			face = {a:0,b:0,c:0}
+		for (v in face) {
+			face[v] = intersect.object.geometry.vertices[intersect.face[v]]
+			face[v].applyMatrix4(intersect.object.matrixWorld)
+		}
+		console.log(face.a.index, face.a.x , face.a.y )
+	}
 	MODULES.runEnabledModulesInList( "point_data_modules", point )
 	// WRITE POINT INTO STROKE
 	STROKES.addNewPointInStroke( STROKES.active_stroke , point );
@@ -37,9 +45,12 @@ function update() {
 function draw() {
 	
 	clear();
-	
+
 	// cube test
 	MESH.rotation.y += 0.001;
+	MESH.updateMatrixWorld();
+	// MESH.rotation.x = PEN.ndc_x
+
 	// RENDER
 	RENDERER.render(SCENE,CAMERA)
 
