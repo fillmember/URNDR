@@ -58,7 +58,8 @@ PEN = new function() {
 	this.ndc_x = 0
 	this.ndc_y = 0
 	this.pressure = 0
-	this.active = 0
+	this.isDown = 0
+	this.drawingMode = 1
 };
 MODULES = new function() {
 	this.style_modules = new Object();
@@ -283,15 +284,15 @@ function onKeyDown(event) {
 
 }
 
-function onMouseDown(event) { PEN.active = 1; }
+function onMouseDown(event) { PEN.isDown = 1; }
 function onMouseUp(event) {
-	PEN.active = 0;
-	if (PEN.active !== 0) return false;
-	if (STROKES.data.X.length === 0) {return false;}
-	STROKES.beginNewStroke();
+	PEN.isDown = 0;
+	if (PEN.isDown !== 0) {return false;}
+	if (STROKES.getStrokesCount() === 0) {return false;}
+	if (PEN.drawingMode === 1) {STROKES.beginNewStroke();}
 }
 function onMouseMove(event) {
-	if (PEN.active !== 1) { return false; }
+	if (PEN.isDown !== 1) { return false; }
 	style();
 	//
 	var mouse_data = getMousePos(CANVAS, event);
@@ -300,7 +301,7 @@ function onMouseMove(event) {
 	PEN.pressure = WACOM.pressure;
 	update();
 }
-function onMouseOut(event) { PEN.active = 0; }
+function onMouseOut(event) { PEN.isDown = 0; }
 
 var iteration = 0;
 // requestAnimationFrame

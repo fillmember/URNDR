@@ -10,7 +10,7 @@ function style() {
 // this is going to be a constant running function.
 function update() {
 	// ## When pen is not active and bae still run this function...
-	if ( ! PEN.active || arguments[0] === 0) {
+	if ( ! PEN.isDown || arguments[0] === 0) {
 		MODULES.runEnabledModulesInList("stroke_data_modules", STROKES.data)
 		return 0;
 	}
