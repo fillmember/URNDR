@@ -25,15 +25,19 @@ function update() {
 		point.A = STYLE.color.a
 	//// EXPERIMENTAL
 	RAYCASTER.setFromCamera( new THREE.Vector2( PEN.ndc_x , PEN.ndc_y ) , CAMERA );
-	var intersections = RAYCASTER.intersectObjects( SCENE.children );
-	if (intersections.length > 0) {
-		var intersect = intersections[0], 
-			face = {a:0,b:0,c:0}
-		for (v in face) {
-			face[v] = intersect.object.geometry.vertices[intersect.face[v]]
-			face[v].applyMatrix4(intersect.object.matrixWorld)
-		}
-		console.log(face.a.index, face.a.x , face.a.y )
+	var intersects = RAYCASTER.intersectObjects( SCENE.children );
+	if (intersects.length > 0) {
+		var target = intersects[0],
+			obj = target.object,
+			geo = obj.geometry,
+			a = target.face.a;
+		target.face.color.setRGB(1,0,0)
+		// console.log(geo.faces[target.faceIndex].color)
+		// geo.faces[target.faceIndex].color.setRGB(0,0,1)
+		// geo.dynamic = true;
+		// geo.elementsNeedUpdate = true;
+		geo.colorsNeedUpdate = true;
+		// console.log(geo.colors[a])
 	}
 	MODULES.runEnabledModulesInList( "point_data_modules", point )
 	// WRITE POINT INTO STROKE
