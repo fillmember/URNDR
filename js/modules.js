@@ -83,7 +83,7 @@ pressure_sensitivity : function() {
 	this.type = "point_data"
 	this.id   = "brush_pressure_sensitivity"
 	this.name = "Brush size effected by pen pressure"
-	this.enabled = false
+	this.enabled = true
 	this.func = function(point) {
 		point.S *= PEN.pressure;
 	}
@@ -95,7 +95,7 @@ smooth_stroke : function() {
 	this.type = "stroke_data";
 	this.id   = "smooth_stroke";
 	this.name = "Smooth Stroke";
-	this.enabled = true;
+	this.enabled = false;
 	this.settings = { length: 30000, factor: 0 , all : true }
 	this.keyCode  = 83; // s
 	this.func = function(data) {
@@ -153,7 +153,8 @@ translate_3d : function() {
 					// store data back to data.
 					data.BindedPoint[this_stroke][this_point] = newp.clone();
 				} else {
-					// data.X[this_stroke][this_point]
+					data.S[this_stroke][this_point] = 0;
+					data.A[this_stroke][this_point] = 0;
 				}
 			}
 		}
@@ -196,6 +197,7 @@ fade_strokes : function() {
 		alpha_fade_step : 1
 	}
 	this.func = function(data) {
+		if (iteration % 5 !== 0 ) return false;
 		if (this.settings.all) {
 			var len = STROKES.getStrokesCount();
 			for (var k = 0 ; k < len ; k ++) { fade( k , data , this.settings ) }
@@ -208,7 +210,7 @@ fade_strokes : function() {
 					data[i][k].shift();
 					if (settings.alpha_fade_step && settings.alpha_fade_length) {
 						for (var j = 0 ; j < settings.alpha_fade_length ; j += settings.alpha_fade_step ) {
-							if (data.A[k][j] > 0.01) {data.A[k][j] *= 0.98; data.S[k][j] *= 0.999; } else {data.A[k][j] = 0;}
+							if (data.A[k][j] > 0.01) {data.A[k][j] *= 0.99; data.S[k][j] *= 0.999; } else {data.A[k][j] = 0;}
 						}
 					}
 				}
@@ -348,7 +350,7 @@ fillmember_style : function() {
 			l = STROKES.getStrokesCount() - 1;
 		for ( var k = 0 ; k <= l ; k++ ) {
 			o = STROKES.getStrokeLength(k);
-				PAPER.strokeStyle= '#FFF';
+				PAPER.strokeStyle= '#000';
 			for ( var i = 1 ; i < o-1 ; i++ ) {
 				PAPER.beginPath();
 					PAPER.lineWidth = data.S[k][i] * 2;

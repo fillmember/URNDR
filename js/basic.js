@@ -10,7 +10,7 @@ var WACOM;
 
 var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
 	SCENE = new THREE.Scene();
-	SCENE.fog = new THREE.Fog( 0xCCC , 3, 6)
+	SCENE.fog = new THREE.Fog( 0x000000 , 3, 6)
 	CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
 	RENDERER = new THREE.WebGLRenderer( {
 		canvas: document.getElementById('lighttable'),
@@ -25,10 +25,10 @@ document.body.appendChild( RENDERER.domElement );
 
 // Set up environment for testing; module in the future...
 var test_mesh = {
-	geo: new THREE.IcosahedronGeometry(2.5,3),
+	geo: new THREE.IcosahedronGeometry(3.5,2),
 	geo_2: new THREE.TorusKnotGeometry( 2 , 0.4, 50, 10 ),
 	mat: new THREE.MeshBasicMaterial( {
-		color: 0xFFFFFF, 
+		color: 0x333333, 
 		vertexColors: THREE.FaceColors, 
 		fog: true,
 		wireframe: true, 
@@ -37,7 +37,7 @@ var test_mesh = {
 }
 test_mesh.mat.side = THREE.FrontSide;
 // MESH = new THREE.Mesh(  , new THREE.MeshBasicMaterial( { color: 0xCCCCCC , vertexColors: THREE.FaceColors, wireframe: true , wireframeLinewidth: 0.1, fog: true } ) );
-MESH = new THREE.Mesh( test_mesh.geo_2 , test_mesh.mat );
+MESH = new THREE.Mesh( test_mesh.geo , test_mesh.mat );
 MESH.rotation.z = 0.5
 MESH.geometry.dynamic = true; // EXPERIMENTAL
 SCENE.add( MESH );

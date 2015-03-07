@@ -28,6 +28,11 @@ function update() {
 	var intersects = RAYCASTER.intersectObjects( SCENE.children );
 	if (intersects.length > 0) {
 		var i0 = intersects[0];
+		//
+		i0.face.color.setHSL(0,0,0)
+		i0.object.geometry.colorsNeedUpdate = true;
+		// i0.object.geometry.elementsNeedUpdate = true;
+		//
 		point.BindedObject = i0.object;
 		point.BindedFace = i0.face;
 		point.BindedPoint = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.a].clone() ).project(CAMERA);
