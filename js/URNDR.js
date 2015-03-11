@@ -1,1 +1,3 @@
 var URNDR = { REVISION: '02' }
+
+URNDR.MOUSE = {};
