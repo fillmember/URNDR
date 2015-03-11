@@ -31,6 +31,7 @@ function update() {
 		point.BindedObject = i0.object;
 		point.BindedFace = i0.face;
 		point.BindedPoint = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.a].clone() ).project(CAMERA);
+		console.log( point.BindedPoint , i0.point )
 	}
 	MODULES.runEnabledModulesInList( "point_data_modules", point )
 	// WRITE POINT INTO STROKE

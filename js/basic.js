@@ -36,7 +36,6 @@ var test_mesh = {
 	} )
 }
 test_mesh.mat.side = THREE.FrontSide;
-// MESH = new THREE.Mesh(  , new THREE.MeshBasicMaterial( { color: 0xCCCCCC , vertexColors: THREE.FaceColors, wireframe: true , wireframeLinewidth: 0.1, fog: true } ) );
 MESH = new THREE.Mesh( test_mesh.geo , test_mesh.mat );
 MESH.rotation.z = 0.5
 MESH.geometry.dynamic = true; // EXPERIMENTAL
@@ -63,7 +62,7 @@ var STYLE, PEN, MODULES, STROKES, HUD, FRAMES;
 STYLE = new function() {
 	this.cap = "round"; join = "round";
 	this.composit = "source-over";
-	this.brush_size = 80;
+	this.brush_size = 50;
 	this.color = {r:0,g:0,b:255,a:1};
 };
 PEN = new function() {
@@ -155,8 +154,10 @@ var _strokes = function(){
 		// Colour Data
 		R:new Array(),G:new Array(),B:new Array(),A:new Array(),
 		// 3D Data. BINDED_FACE is the reference to the face object, The next two are initial position. 
-		BindedObject: new Array(), BindedFace: new Array(), 
-		BindedPoint: new Array()
+		BindedObject: new Array(), BindedFace: new Array(), BindedPoint: new Array(), BindVector: new Array();
+		InitialObject: new Array(), InitialFace: new Array(),
+		// Additional Effect Data
+		EffectData: new Array()
 	};
 	this.active_stroke = 0;
 	for ( p in this.data ) { this.data[p][0] = new Array(); }
@@ -182,10 +183,18 @@ var _strokes = function(){
 		this.active_stroke++;
 	}
 	this.optimizeStroke = function( stroke_n ) {
-		var stroke = this.getStroke(stroke_n)
-		for ( p in stroke ) {
-
+		// Goals : 
+		//          remove strokes points with alpha zero
+		var stroke = this.getStroke(stroke_n),
+			stroke_length = getStrokeLength(stroke_n)
+		for ( var point_n = 0 ; point_n < stroke_length ; point_n ++ ) {
+			stroke.getPointInStroke(stroke_n,point_n)
+			deletePointInStroke(stroke_n, point_n)
 		}
+		//          speparate strokes into not mapped ones and mapped ones
+	}
+	this.cutStroke = function( stroke_n , index ) {
+		//
 	}
 	this.getActiveStroke = function() { return this.active_stroke; }
 	this.getStrokeCenter = function(stroke_n) {
@@ -315,8 +324,8 @@ function onKeyDown(event) {
 function onMouseDown(event) { PEN.isDown = 1; }
 function onMouseUp(event) {
 	PEN.isDown = 0;
-	if (PEN.isDown !== 0) {return false;}
 	if (STROKES.getStrokesCount() === 0) {return false;}
+	STROKES.optimizeStroke( getStrokesCount() - 1);
 	if (PEN.drawingMode === 1) {STROKES.beginNewStroke();}
 }
 function onMouseMove(event) {

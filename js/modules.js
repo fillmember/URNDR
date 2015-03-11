@@ -72,10 +72,10 @@ random_point_position : function() {
 		amp : 60
 	}
 	this.keyCode = 68
-	this.func = function( p ) {
+	this.func = function( point ) {
 		var amp = this.settings.amp;
-		p.X += amp/2 - RANDOM_NUMBER(amp);
-		p.Y += amp/2 - RANDOM_NUMBER(amp);
+		point.X += amp/2 - RANDOM_NUMBER(amp);
+		point.Y += amp/2 - RANDOM_NUMBER(amp);
 	}
 },
 
@@ -86,6 +86,8 @@ pressure_sensitivity : function() {
 	this.enabled = true
 	this.func = function(point) {
 		point.S *= PEN.pressure;
+		if (point.S < 10) point.S = 10;
+		if (point.s > 100) point.S = 100;
 	}
 },
 
@@ -302,7 +304,7 @@ connection_network : function(){
 	this.name = "NETWORK";
 	this.keyCode = 49; // 1
 	this.func = function(data){
-		// clear(1);
+		clear(1);
 		var l,o,all;
 			l = data.X.length;
 			all = {X:new Array(),Y:new Array(),Z:new Array(),S:new Array(),R:new Array(),G:new Array(),B:new Array(),A:new Array()};
@@ -320,20 +322,22 @@ connection_network : function(){
 			}
 		}
 		var all_length = all.X.length;
+		PAPER.lineWidth = 2;
 		for ( var e = 0 ; e < all_length ; e+= 1 ) {
 			for ( var f = 0 ; f < all_length ; f+= 1 ) {
-				if (e === f) { break ; }
-				if ( Math.abs(e-f) < 1 ) { break ; }
-				var max = all.S[e] * 1,
-					min = all.S[e] / 7
-				if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
-					PAPER.lineWidth = Math.min( all.S[e] , 2 )
-					PAPER.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
-					PAPER.beginPath();
-					PAPER.moveTo(all.X[e],all.Y[e])
-					PAPER.lineTo(all.X[f],all.Y[f])
-					PAPER.stroke();
-					PAPER.closePath();
+				if (Math.abs(e-f) <= 1) {
+					// do nothing
+				} else {
+					var max = all.S[e] * 1, 
+						min = all.S[e] / 7
+					if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
+						PAPER.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
+						PAPER.beginPath();
+						PAPER.moveTo(all.X[e],all.Y[e])
+						PAPER.lineTo(all.X[f],all.Y[f])
+						PAPER.stroke();
+						PAPER.closePath();
+					}
 				}
 			}
 		}
@@ -347,7 +351,7 @@ fillmember_style : function() {
 	this.name = "fillmember style"
 	this.keyCode = 50; // 2
 	this.func = function(data) {
-		// clear(1);
+		clear(1);
 		var l,o;
 			l = STROKES.getStrokesCount() - 1;
 		for ( var k = 0 ; k <= l ; k++ ) {
