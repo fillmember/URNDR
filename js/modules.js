@@ -96,7 +96,7 @@ smooth_stroke : function() {
 	this.id   = "smooth_stroke";
 	this.name = "Smooth Stroke";
 	this.enabled = false;
-	this.settings = { length: 30000, factor: 0 , all : true }
+	this.settings = { length: 300, factor: 10 , all : true }
 	this.keyCode  = 83; // s
 	this.func = function(data) {
 		if (this.settings.all) {
@@ -138,25 +138,27 @@ translate_3d : function() {
 				face = data.BindedFace[this_stroke][this_point];
 				p3d = data.BindedPoint[this_stroke][this_point];
 				if (obj && face && p3d) {
-					newp = obj.localToWorld( obj.geometry.vertices[face.a].clone() ).project(CAMERA);
-					//
-					opp = {
-						x: ( p3d.x / 2 + 0.5 ) * window.innerWidth,
-						y: -( p3d.y / 2 - 0.5 ) * window.innerHeight
+					var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion(CAMERA.quaternion).normalize();
+					var faceVector = obj.localToWorld(face.normal.clone()).normalize();
+					if (Math.abs( cameraVector.dot(faceVector) ) <= 0.5) {
+						hidePoint(this_stroke, this_point)
+					} else {
+						newp = obj.localToWorld( obj.geometry.vertices[face.a].clone() ).project(CAMERA);
+						npp = coordinateToPixel(newp.x, newp.y)
+						opp = coordinateToPixel(p3d.x, p3d.y)
+						data.X[this_stroke][this_point] += npp.x - opp.x;
+						data.Y[this_stroke][this_point] += npp.y - opp.y;
+						// store data back to data.
+						data.BindedPoint[this_stroke][this_point] = newp.clone();
 					}
-					npp = {
-						x: ( newp.x / 2 + 0.5 ) * window.innerWidth,
-						y: -( newp.y / 2 - 0.5 ) * window.innerHeight
-					}
-					data.X[this_stroke][this_point] += npp.x-opp.x 
-					data.Y[this_stroke][this_point] += npp.y-opp.y
-					// store data back to data.
-					data.BindedPoint[this_stroke][this_point] = newp.clone();
 				} else {
-					data.S[this_stroke][this_point] = 0;
-					data.A[this_stroke][this_point] = 0;
+					hidePoint(this_stroke, this_point);
 				}
 			}
+		}
+		function hidePoint(this_stroke,this_point) {
+			data.A[this_stroke][this_point] = 0;
+			try { data.A[this_stroke][this_point+1] = 0; } catch (err) {}
 		}
 	}
 },
@@ -350,14 +352,16 @@ fillmember_style : function() {
 			l = STROKES.getStrokesCount() - 1;
 		for ( var k = 0 ; k <= l ; k++ ) {
 			o = STROKES.getStrokeLength(k);
-				PAPER.strokeStyle= '#000';
+				PAPER.strokeStyle= '#FFF';
 			for ( var i = 1 ; i < o-1 ; i++ ) {
-				PAPER.beginPath();
+				if (data.A[k][i] !== 0) {
+					PAPER.beginPath();
 					PAPER.lineWidth = data.S[k][i] * 2;
-				PAPER.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-				PAPER.lineTo(data.X[k][i],data.Y[k][i]);
+					PAPER.moveTo(data.X[k][i-1],data.Y[k][i-1]);
+					PAPER.lineTo(data.X[k][i],data.Y[k][i]);
 					PAPER.stroke();
-				PAPER.closePath();
+					PAPER.closePath();
+				}
 			}
 			for ( var i = 1 ; i < o-1 ; i++ ) {
 				PAPER.beginPath();
@@ -380,7 +384,8 @@ default_draw_style : function() {
 	this.enabled = true
 	this.func = function(data){
 		// default drawing style
-		// clear(1);
+		clear(1);
+		MESH.rotation.y += 0.001;
 		var l,o;
 			l = STROKES.getStrokesCount() - 1;
 		for ( var k = 0 ; k <= l ; k++ ) {

@@ -10,7 +10,7 @@ var WACOM;
 
 var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
 	SCENE = new THREE.Scene();
-	SCENE.fog = new THREE.Fog( 0x000000 , 3, 6)
+	SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5)
 	CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
 	RENDERER = new THREE.WebGLRenderer( {
 		canvas: document.getElementById('lighttable'),
@@ -25,10 +25,10 @@ document.body.appendChild( RENDERER.domElement );
 
 // Set up environment for testing; module in the future...
 var test_mesh = {
-	geo: new THREE.IcosahedronGeometry(3.5,2),
+	geo: new THREE.IcosahedronGeometry(2,3),
 	geo_2: new THREE.TorusKnotGeometry( 2 , 0.4, 50, 10 ),
 	mat: new THREE.MeshBasicMaterial( {
-		color: 0x333333, 
+		color: 0xFFFFFF, 
 		vertexColors: THREE.FaceColors, 
 		fog: true,
 		wireframe: true, 
@@ -181,6 +181,12 @@ var _strokes = function(){
 		for ( p in this.data ) { this.data[p].push(new Array()) }
 		this.active_stroke++;
 	}
+	this.optimizeStroke = function( stroke_n ) {
+		var stroke = this.getStroke(stroke_n)
+		for ( p in stroke ) {
+
+		}
+	}
 	this.getActiveStroke = function() { return this.active_stroke; }
 	this.getStrokeCenter = function(stroke_n) {
 		var stroke = this.getStroke(stroke_n),
@@ -325,11 +331,11 @@ function onMouseMove(event) {
 }
 function onMouseOut(event) { PEN.isDown = 0; }
 
-var iteration = 0;
+var counter = 0;
 // requestAnimationFrame
 var UPDATER = function() {
 	update(0); draw(0);
-	iteration ++;
+	counter ++;
 	requestAnimationFrame( UPDATER )
 }
 UPDATER();
@@ -337,6 +343,23 @@ UPDATER();
 //
 // HELPER FUNCTIONS
 //
+
+function requestCanvasExport() {
+	var req = new XMLHttpRequest();
+	var i = new Date().getTime();
+	var data = PAPER.toDataURL();
+		data = 'data=' + encodeURIComponent(data) + '&i=' + i;
+	req.open('post','php/saveframe.php')
+	req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	req.setRequestHeader("Content-length", data.length);
+	req.setRequestHeader("Connection", "close");
+	req.onreadystatechange = function() {
+		if (req.readyState === 4 && req.status === 200) {
+			console.log("Request done for frame " + i)
+		}
+	}
+	req.send(data)
+}
 
 function getMousePos(canvas, evt) {
 	var rect = canvas.getBoundingClientRect();
@@ -359,9 +382,18 @@ function clear(a) {
 	}
 }
 
+// 3D Helpers
+
 function getFaceCenter(object,face) {
 	var vex = object.geometry.vertices;
 	return new THREE.Vector3((vex[face.a].x + vex[face.b].x + vex[face.c].x) / 3, 
 	 						 (vex[face.a].y + vex[face.b].y + vex[face.c].y) / 3,
 	 						 (vex[face.a].z + vex[face.b].z + vex[face.c].z) / 3)
+}
+
+function coordinateToPixel( x , y ) {
+	return {
+		x : ( x / 2 + 0.5) * window.innerWidth,
+		y : -( y / 2 - 0.5) * window.innerHeight
+	}
 }
