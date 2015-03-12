@@ -76,6 +76,8 @@ random_point_position : function() {
 		var amp = this.settings.amp;
 		point.X += amp/2 - RANDOM_NUMBER(amp);
 		point.Y += amp/2 - RANDOM_NUMBER(amp);
+		// also mess with barycentric coordinate.
+		// this.barycentric = {}
 	}
 },
 
@@ -122,7 +124,7 @@ smooth_stroke : function() {
 	}
 },
 
-translate_3d : function() {
+move_drawing_with_3d_model : function() {
 	this.type = "stroke_data";
 	this.id   = "translate_experiment_01"
 	this.name = "Magic 001"
@@ -132,35 +134,41 @@ translate_3d : function() {
 	this.func = function(data) {
 		var obj,face,p3d,newp,delta,len;
 			len = STROKES.getStrokesCount();
+		// get camera's lookat vector
+		var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion(CAMERA.quaternion).normalize();
+		// iterate time
 		for (var this_stroke = 0 ; this_stroke < len ; this_stroke ++) {
-			if (STROKES.getActiveStroke() === this_stroke) {break;}
+			// to stable current stroke
+			// if (STROKES.getActiveStroke() === this_stroke) {break;}
 			len_p = STROKES.getStrokeLength(this_stroke);
 			for (var this_point = 0 ; this_point < len_p ; this_point++) {
 				obj = data.BindedObject[this_stroke][this_point];
 				face = data.BindedFace[this_stroke][this_point];
-				p3d = data.BindedPoint[this_stroke][this_point];
-				if (obj && face && p3d) {
-					var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion(CAMERA.quaternion).normalize();
-					var faceVector = obj.localToWorld(face.normal.clone()).normalize();
-					if (Math.abs( cameraVector.dot(faceVector) ) <= 0.5) {
-						hidePoint(this_stroke, this_point)
-					} else {
-						newp = obj.localToWorld( obj.geometry.vertices[face.a].clone() ).project(CAMERA);
-						npp = coordinateToPixel(newp.x, newp.y)
-						opp = coordinateToPixel(p3d.x, p3d.y)
-						data.X[this_stroke][this_point] += npp.x - opp.x;
-						data.Y[this_stroke][this_point] += npp.y - opp.y;
-						// store data back to data.
-						data.BindedPoint[this_stroke][this_point] = newp.clone();
-					}
+				if (!obj || !face) continue;
+				// check if a face is turning away from camera
+				var faceVector = obj.localToWorld(face.normal.clone()).normalize();
+				if (Math.abs( cameraVector.dot(faceVector) ) <= 0.1) {
+					// if so, hide the point binded to the face.
+					hidePoint(this_stroke, this_point)
 				} else {
-					hidePoint(this_stroke, this_point);
+					var a,b,c,bary
+						a = obj.localToWorld(obj.geometry.vertices[face.a].clone()).project(CAMERA)
+						b = obj.localToWorld(obj.geometry.vertices[face.b].clone()).project(CAMERA)
+						c = obj.localToWorld(obj.geometry.vertices[face.c].clone()).project(CAMERA)
+						bary = data.Barycentric[this_stroke][this_point]
+					p_now = coordinateToPixel(
+						a.x * bary.u + b.x * bary.v + c.x * bary.w, 
+						a.y * bary.u + b.y * bary.v + c.y * bary.w
+					)
+					data.X[this_stroke][this_point] += (p_now.x - data.X[this_stroke][this_point]) * 0.1
+					data.Y[this_stroke][this_point] += (p_now.y - data.Y[this_stroke][this_point]) * 0.1
 				}
 			}
 		}
 		function hidePoint(this_stroke,this_point) {
 			data.A[this_stroke][this_point] = 0;
 			try { data.A[this_stroke][this_point+1] = 0; } catch (err) {}
+			try { data.A[this_stroke][this_point-1] = 0; } catch (err) {}
 		}
 	}
 },
@@ -197,11 +205,11 @@ fade_strokes : function() {
 	this.settings = {
 		all : true,
 		length : 300,
-		alpha_fade_length : 30,
+		alpha_fade_length : 10,
 		alpha_fade_step : 1
 	}
 	this.func = function(data) {
-		if (iteration % 5 !== 0 ) return false;
+		if (counter % 2 !== 0 ) return false;
 		if (this.settings.all) {
 			var len = STROKES.getStrokesCount();
 			for (var k = 0 ; k < len ; k ++) { fade( k , data , this.settings ) }
@@ -242,6 +250,7 @@ randomise_strokes : function() {
 			rnd_stroke(data.Y[a] , this.settings.amp );
 			rnd_stroke(data.Z[a] , this.settings.amp );
 			rnd_stroke(data.S[a] , this.settings.amp );
+			// also randomise barycentric here -> -> -> -> -> -> -> -> ///
 		}
 		function rnd_stroke(arr , amp) {
 			var l = arr.length;
@@ -313,8 +322,6 @@ connection_network : function(){
 			for ( var i = 1 ; i < o - 1 ; i += 1 ) {
 				all.X.push( data.X[k][i] )
 				all.Y.push( data.Y[k][i] )
-				all.Z.push( data.Z[k][i] )
-				all.S.push( data.S[k][i] )
 				all.R.push( data.R[k][i] )
 				all.G.push( data.G[k][i] )
 				all.B.push( data.B[k][i] )
@@ -325,19 +332,16 @@ connection_network : function(){
 		PAPER.lineWidth = 2;
 		for ( var e = 0 ; e < all_length ; e+= 1 ) {
 			for ( var f = 0 ; f < all_length ; f+= 1 ) {
-				if (Math.abs(e-f) <= 1) {
-					// do nothing
-				} else {
-					var max = all.S[e] * 1, 
-						min = all.S[e] / 7
-					if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
-						PAPER.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
-						PAPER.beginPath();
-						PAPER.moveTo(all.X[e],all.Y[e])
-						PAPER.lineTo(all.X[f],all.Y[f])
-						PAPER.stroke();
-						PAPER.closePath();
-					}
+				if (Math.abs(e-f) <= 1) continue;
+				var max = all.S[e] * 1, 
+					min = all.S[e] / 7
+				if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
+					PAPER.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
+					PAPER.beginPath();
+					PAPER.moveTo(all.X[e],all.Y[e])
+					PAPER.lineTo(all.X[f],all.Y[f])
+					PAPER.stroke();
+					PAPER.closePath();
 				}
 			}
 		}

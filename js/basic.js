@@ -15,8 +15,7 @@ var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
 	RENDERER = new THREE.WebGLRenderer( {
 		canvas: document.getElementById('lighttable'),
 		precision: "lowp",
-		alpha: true,
-		preserveDrawingBuffer: true
+		alpha: true
 	} );
 	RENDERER.setSize( window.innerWidth, window.innerHeight );
 	RAYCASTER = new THREE.Raycaster();
@@ -150,12 +149,11 @@ MODULES = new function() {
 var _strokes = function(){
 	this.data = {
 		// Vector Data
-		X:new Array(),Y:new Array(),Z:new Array(),S:new Array(),
+		X:new Array(), Y:new Array(), S:new Array(), 
 		// Colour Data
-		R:new Array(),G:new Array(),B:new Array(),A:new Array(),
+		R:new Array(), G:new Array(), B:new Array(), A:new Array(),
 		// 3D Data. BINDED_FACE is the reference to the face object, The next two are initial position. 
-		BindedObject: new Array(), BindedFace: new Array(), BindedPoint: new Array(), BindVector: new Array();
-		InitialObject: new Array(), InitialFace: new Array(),
+		BindedObject: new Array(), BindedFace: new Array(), Barycentric: new Array(),
 		// Additional Effect Data
 		EffectData: new Array()
 	};
@@ -183,15 +181,22 @@ var _strokes = function(){
 		this.active_stroke++;
 	}
 	this.optimizeStroke = function( stroke_n ) {
+		var stroke, stroke_length;
 		// Goals : 
-		//          remove strokes points with alpha zero
-		var stroke = this.getStroke(stroke_n),
-			stroke_length = getStrokeLength(stroke_n)
+		// Remove strokes points with size / alpha zero
+		stroke = this.getStroke(stroke_n);
+		stroke_length = getStrokeLength(stroke_n);
 		for ( var point_n = 0 ; point_n < stroke_length ; point_n ++ ) {
-			stroke.getPointInStroke(stroke_n,point_n)
-			deletePointInStroke(stroke_n, point_n)
+			if (this.data.S[stroke_n][point_n] === 0 || this.data.A[stroke_n][point_n] === 0) {
+				deletePointInStroke(stroke_n, point_n);
+			}
 		}
-		//          speparate strokes into not mapped ones and mapped ones
+		//
+		// Speparate strokes into not mapped ones and mapped ones
+		stroke_length = getStrokeLength(stroke_n);
+		//
+		// check if the stroke's length is zero, if so delete it
+		stroke_length = getStrokeLength(stroke_n);
 	}
 	this.cutStroke = function( stroke_n , index ) {
 		//
@@ -325,7 +330,7 @@ function onMouseDown(event) { PEN.isDown = 1; }
 function onMouseUp(event) {
 	PEN.isDown = 0;
 	if (STROKES.getStrokesCount() === 0) {return false;}
-	STROKES.optimizeStroke( getStrokesCount() - 1);
+	// STROKES.optimizeStroke( getStrokesCount() - 1);
 	if (PEN.drawingMode === 1) {STROKES.beginNewStroke();}
 }
 function onMouseMove(event) {
@@ -391,14 +396,26 @@ function clear(a) {
 	}
 }
 
-// 3D Helpers
-
-function getFaceCenter(object,face) {
-	var vex = object.geometry.vertices;
-	return new THREE.Vector3((vex[face.a].x + vex[face.b].x + vex[face.c].x) / 3, 
-	 						 (vex[face.a].y + vex[face.b].y + vex[face.c].y) / 3,
-	 						 (vex[face.a].z + vex[face.b].z + vex[face.c].z) / 3)
+// Compute barycentric coordinates (u,v,w) for
+// point p with respect to triangle (a,b,c)
+function Barycentric(p,a,b,c) {
+	var v0,v1,v2,d00,d01,d11,d20,d21,denom,u,v,w;
+	v0 = new THREE.Vector2(b.x-a.x,b.y-a.y)
+	v1 = new THREE.Vector2(c.x-a.x,c.y-a.y)
+	v2 = new THREE.Vector2(p.x-a.x,p.y-a.y)
+	d00 = v0.dot(v0)
+	d01 = v0.dot(v1)
+	d11 = v1.dot(v1)
+	d20 = v2.dot(v0)
+	d21 = v2.dot(v1)
+	denom = 1 / (d00 * d11 - d01 * d01)
+	v = (d11 * d20 - d01 * d21) * denom
+	w = (d00 * d21 - d01 * d20) * denom
+	u = 1 - v - w
+	return {u:u,v:v,w:w}
 }
+
+// 3D Helpers
 
 function coordinateToPixel( x , y ) {
 	return {

@@ -17,21 +17,24 @@ function update() {
 	var point = new Object();
 		point.X = PEN.x
 		point.Y = PEN.y
-		// point.Z = 0
 		point.S = STYLE.brush_size,
 		point.R = STYLE.color.r
 		point.G = STYLE.color.g
 		point.B = STYLE.color.b
 		point.A = STYLE.color.a
 	//// EXPERIMENTAL
-	RAYCASTER.setFromCamera( new THREE.Vector2( PEN.ndc_x , PEN.ndc_y ) , CAMERA );
+	var penNDC = new THREE.Vector2( PEN.ndc_x , PEN.ndc_y )
+	RAYCASTER.setFromCamera( penNDC , CAMERA )
 	var intersects = RAYCASTER.intersectObjects( SCENE.children );
 	if (intersects.length > 0) {
-		var i0 = intersects[0];
-		point.BindedObject = i0.object;
-		point.BindedFace = i0.face;
-		point.BindedPoint = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.a].clone() ).project(CAMERA);
-		console.log( point.BindedPoint , i0.point )
+		var i0, a, b, c
+			i0 = intersects[0]
+		point.BindedObject = i0.object
+		point.BindedFace = i0.face
+		a = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.a].clone() ).project(CAMERA)
+		b = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.b].clone() ).project(CAMERA)
+		c = i0.object.localToWorld( i0.object.geometry.vertices[i0.face.c].clone() ).project(CAMERA)
+		point.Barycentric = Barycentric( penNDC , a, b, c )
 	}
 	MODULES.runEnabledModulesInList( "point_data_modules", point )
 	// WRITE POINT INTO STROKE

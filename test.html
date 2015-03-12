@@ -1,0 +1,55 @@
+<script>
+
+var Point = function(x,y) {
+	this.x=x
+	this.y=y
+}
+
+var dV = function(pa,pb) {
+	this.x = pa.x-pb.x
+	this.y = pa.y-pb.y
+	this.dx = Math.abs(pa.x-pb.x)
+	this.dy = Math.abs(pa.y-pb.y)
+	this.d  = Math.sqrt( this.dx * this.dx + this.dy * this.dy )
+}
+
+var A,B,C,Q;
+
+A = new Point(2,10)
+B = new Point(0, 0)
+C = new Point(10,0)
+Q = new Point(4,6)
+
+var AQ,BQ,CQ;
+
+AQ = new dV(A,Q);
+BQ = new dV(B,Q);
+CQ = new dV(C,Q);
+QQ = new dV(Q,Q);
+
+var SUM = {
+	x: AQ.dx + BQ.dx + CQ.dx,
+	y: AQ.dy + BQ.dy + CQ.dy,
+	d: AQ.d  + BQ.d  + CQ.d
+}
+
+var result = function(test) {
+	console.log("Testing",test,"TEST" , (test.x === Q.x) && (test.y === Q.y) ? "SUCCESS!" : "FAILED")
+}
+
+var test1 = new Point(0,0);
+	test1.x = A.x * AQ.dx + B.x * BQ.dx + C.x * CQ.dx;
+	test1.y = A.y * AQ.dy + B.y * BQ.dy + C.y * CQ.dy;
+	test1.x /= SUM.x
+	test1.y /= SUM.y
+
+var test2 = new Point(0,0);
+	test2.x = A.x * (BQ.dx+CQ.dx) + B.x * (AQ.dx+CQ.dx) + C.x * (AQ.dx+BQ.dx);
+	test2.y = A.y * (BQ.dx+CQ.dx) + B.y * (AQ.dx+CQ.dx) + C.y * (AQ.dx+BQ.dx);
+	test2.x /= SUM.x
+	test2.y /= SUM.y
+
+result(test1)
+result(test2)
+
+</script>
