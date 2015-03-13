@@ -39,7 +39,7 @@ var test_mesh = {
     } )
 }
 test_mesh.mat.side = THREE.FrontSide;
-MESH = new THREE.Mesh( test_mesh.geo_2 , test_mesh.mat );
+MESH = new THREE.Mesh( test_mesh.geo , test_mesh.mat );
 MESH.rotation.z = 0.5
 MESH.geometry.dynamic = true; // EXPERIMENTAL
 SCENE.add( MESH );
@@ -54,7 +54,11 @@ var CANVAS,PAPER;
 // CONSTANT / DATA_CONSTRUCTORS
 //
 
-URNDR.COMMAND_MODULE = 1001
+URNDR.COMMAND_MODULE = "COMMAND_MODULES"
+URNDR.STYLE_MODULE = "STYLE_MODULES"
+URNDR.POINT_MODULE = "POINT_MODULES"
+URNDR.STROKE_MODULE = "STROKE_MODULES"
+URNDR.DRAW_MODULE = "DRAW_MODULES"
 
 //
 // OBJECTS
@@ -78,11 +82,12 @@ PEN = new function() {
     this.drawingMode = 1
 };
 MODULES = new function() {
-    this.style_modules = new Object();
-    this.point_data_modules = new Object();
-    this.stroke_data_modules = new Object();
-    this.draw_modules = new Object();
-    this.command_modules = new Object();
+    this.modules = new Object();
+    this[URNDR.COMMAND_MODULE] = new Object();
+    this[URNDR.STYLE_MODULE] = new Object();
+    this[URNDR.POINT_MODULE] = new Object();
+    this[URNDR.STROKE_MODULE] = new Object();
+    this[URNDR.DRAW_MODULE] = new Object();
     this.key_map = new Object();
     // functions
     this.KEY_PREFIX = "KEY";
@@ -92,44 +97,69 @@ MODULES = new function() {
         return (result? result : false)
     }
     this.loadModule = function ( module ) {
-        if (typeof module === "function") { module = new module(); }
+
+        if (typeof module === "function") {
+            // run the function to get the actual module
+            module = module()
+        }
+        
         var type, id;
-            type = module.type+"_modules";
+            type = module.type;
             id = module.id;
+
+        this.modules[id] = module
+        
         try {
-            this[type][id] = module; //setModule
-        } catch(err) { HUD.display("failed to load one of the modules.","error: "+err); }
+            this[type][id] = this.modules[id] //setModule
+        } catch(err) {
+            HUD.appendToDisplay("failed to load a module:",String(module).substr(0,50))
+        }
+
         if (module.keyCode) this.setKeyMap(module.keyCode, type, id)
+
     }
-    this.loadAllModules = function ( list ) { for ( l in list ) { this.loadModule( list[l] ) } }
-    this.getModule = function(type,id){ return this[type][id] }
+    this.loadModules = function ( list ) {
+    
+        for ( l in list ) { this.loadModule( list[l] ) }
+    
+    }
+
+    this.getModule = function(id){
+
+        return this.modules[id]
+
+    }
+
     this.toggleModuleByKey = function (keyCode) {
+
         var obj = this.getModuleReferenceFromKeyMap(keyCode);
+        
         if ( ! obj ) { return 0; }
-        var target = this.getModule(obj.type,obj.id);
+        
+        var target = this.getModule(obj.id);
+        
         switch( obj.type ) {
-            case "command_modules":
-                return { type: URNDR.COMMAND_MODULE , name: target.name , func : target.func }
+
+            case URNDR.COMMAND_MODULE:
+                return { type: URNDR.COMMAND_MODULE , name: target.name , func : target.getFunction() }
                 break;
-            case "draw_modules":
+            
+            case URNDR.DRAW_MODULE:
                 this.soloModule( target );
                 return { name: target.name , enabled : target.enabled }
                 break;
+            
             default:
                 target.enabled = ! target.enabled;
                 return { name: target.name , enabled : target.enabled }
                 break;
+
         }
+
     }
     this.soloModule = function( mod ) {
-        var list = this[mod.type+"_modules"];
-        for( var m in list ) {
-            if (list[m].id === mod.id) {
-                list[m].enabled = true;
-            } else {
-                list[m].enabled = false;
-            }
-        }
+        var list = this[mod.type];
+        for( var m in list ) { list[m].enabled = (list[m].id === mod.id) ? true : false }
     }
     this.runEnabledModulesInList = function (list_name, params) {
         var list = this[list_name],
@@ -153,19 +183,19 @@ MODULES = new function() {
 var _strokes = function(){
     this.data = {
         // Vector Data
-        X:new Array(), Y:new Array(), S:new Array(), 
+        X:[], Y:[], S:[], 
         // Colour Data
-        R:new Array(), G:new Array(), B:new Array(), A:new Array(),
+        R:[], G:[], B:[], A:[],
         // 3D Data. BINDED_FACE is the reference to the face object, The next two are initial position. 
-        BindedObject: new Array(), BindedFace: new Array(), Barycentric: new Array(),
+        BindedObject: [], BindedFace: [], Barycentric: [],
         // Additional Effect Data
-        EffectData: new Array()
+        EffectData: []
     };
     this.active_stroke = 0;
-    for ( p in this.data ) { this.data[p][0] = new Array(); }
+    for ( p in this.data ) { this.data[p][0] = []; }
     // functions
     this.getStroke = function(stroke_n) {
-        var result = new Object();
+        var result = {}
         for (p in this.data) { result[p] = this.data[p][stroke_n] }
         return result;
     }
@@ -323,9 +353,19 @@ function onKeyDown(event) {
         for ( scenario in ignores ) { if (ignores[scenario]()) { return false; } }
 
         var result = MODULES.toggleModuleByKey( key );
+
         if (result.type !== 0) { event.preventDefault(); }
-        if (result.type === URNDR.COMMAND_MODULE) { HUD.display(result.name , result.func() )
-        } else if (result != 0) { HUD.display("MODULE "+result.name,( result.enabled ? "ON" : "OFF" ))
+    
+        if (result.type === URNDR.COMMAND_MODULE) {
+
+            var msg = result.func()
+
+            HUD.display(result.name , msg )
+
+        } else if (result != 0) {
+
+            HUD.display(result.name,( result.enabled ? "ON" : "OFF" ))
+
         } else { HUD.display("key_pressed: "+key) }
 
 }
@@ -343,24 +383,26 @@ function onMouseUp(event) {
 
     PEN.isDown = 0;
 
-    if (STROKES.getStrokesCount() === 0) {return false;}
-    // STROKES.optimizeStroke( getStrokesCount() - 1);
     if (PEN.drawingMode === 1) {STROKES.beginNewStroke();}
 
 }
 
 function onMouseMove(event) {
 
-    if (PEN.isDown !== 1) { return false; }
-
-    style();
-    
     var mouse_data = getMousePos(CANVAS, event);
     for (var k in mouse_data) { PEN[k] = mouse_data[k]; }
+
+    if (PEN.isDown !== 1) { return false; }
+    
     PEN.pressure = WACOM.pressure;
 
-    // Run modules that changes the style (of the pen your holding)
-    MODULES.runEnabledModulesInList("style_modules")
+    MODULES.runEnabledModulesInList(URNDR.STYLE_MODULE)
+
+    URNDR.updateAndInsert();
+
+}
+
+URNDR.updateAndInsert = function() {
 
     var point = {
         X : PEN.x,
@@ -396,12 +438,14 @@ function onMouseMove(event) {
     }
     
     // Run modules that changes the point.
-    MODULES.runEnabledModulesInList( "point_data_modules" , point )
+    MODULES.runEnabledModulesInList( URNDR.POINT_MODULE , point )
 
     // WRITE POINT INTO STROKE
     STROKES.addNewPointInStroke( STROKES.active_stroke , point );
 
 }
+// add a layer of throttle function
+URNDR.updateAndInsert = Cowboy.throttle( 1000 / 60 , URNDR.updateAndInsert )
 
 function onMouseOut(event) {
 
@@ -413,13 +457,14 @@ var counter = 0;
 // requestAnimationFrame
 var UPDATER = function() {
 
-    MODULES.runEnabledModulesInList("stroke_data_modules", STROKES.data);
+    // mess with strokes
+    MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE);
     
     // RENDER
     RENDERER.render(SCENE,CAMERA)
 
     // RUN DRAW MODULES
-    MODULES.runEnabledModulesInList("draw_modules", STROKES.data )
+    MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE)
     
     counter ++;
     

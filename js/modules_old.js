@@ -13,11 +13,6 @@ URNDR.Module = function(n,t,k,e) {
 }
 URNDR.Module.prototype.setFunction = function ( f ) { this.func = f }
 URNDR.Module.prototype.getFunction = function ( f ) { return this.func }
-URNDR.Module.prototype.setConfiguration = function ( s ) {
-    this.configuration = s
-    this.initialConfiguration = Object.create(s)
-}
-URNDR.Module.prototype.getConfiguration = function () { return this.configuration }
 
 MODULES.loadModules( {
 
@@ -62,11 +57,11 @@ simplified_all_strokes : function() {
 
 random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
-    module.setFunction(function() {
+    module.function = function() {
         STYLE.color.r = RANDOM_NUMBER(255,{round: true});
         STYLE.color.g = RANDOM_NUMBER(255,{round: true});
         STYLE.color.b = RANDOM_NUMBER(255,{round: true});
-    })
+    }
     return module
 },
 
@@ -74,47 +69,55 @@ random_stroke_color : function() {
 
 
 random_point_position : function() {
-    var module = new URNDR.Module("Random Point",URNDR.POINT_MODULE,68);
-    // 
-    module.setConfiguration({amp : 60})
-    module.setFunction(function( point ) {
-        var amp = this.getConfiguration().amp;
-        var half = amp/2
-        point.X += half - RANDOM_NUMBER(amp);
-        point.Y += half - RANDOM_NUMBER(amp);
+    var module = new URNDR.Module();
+    module.type = URNDR.POINT_MODULE
+    // module.id   = "random_point_position"
+    module.name = "Random Point"
+    module.settings = {
+        amp : 60
+    }
+    module.keyCode = 68
+    module.function = function( point ) {
+        var amp = module.settings.amp;
+        point.X += amp/2 - RANDOM_NUMBER(amp);
+        point.Y += amp/2 - RANDOM_NUMBER(amp);
         // also mess with barycentric coordinate.
-        if (point.Barycentric) {
-            point.Barycentric.u += 0.2 - 0.4 * RANDOM_NUMBER(1)
-            point.Barycentric.v += 0.2 - 0.4 * RANDOM_NUMBER(1)
-            point.Barycentric.w += 0.2 - 0.4 * RANDOM_NUMBER(1)
-        }
-    })
+        // module.barycentric = {}
+    }
     return module
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,false,true);
-    module.setFunction(function(point) {
+    var module = new URNDR.Module();
+    module.type = URNDR.POINT_MODULE
+    // module.id   = "brush_pressure_sensitivity"
+    module.name = "Brush size effected by pen pressure"
+    module.enabled = true
+    module.function = function(point) {
         point.S *= PEN.pressure;
         if (point.S < 10) point.S = 10;
         if (point.s > 100) point.S = 100;
-    })
+    }
     return module
 },
 
 // STROKE DATA MODULES
 
 smooth_stroke : function() {
-    var module = new URNDR.Module("Smooth Stroke",URNDR.STROKE_MODULE,83,false) //s
-    module.setConfiguration({ length: 300, factor: 10 , all : true })
-    module.setFunction(function() {
-        var data = STROKES.data,
-            settings = module.getConfiguration()
-        if (settings.all) {
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE;
+    // module.id   = "smooth_stroke";
+    module.name = "Smooth Stroke";
+    module.enabled = false;
+    module.settings = { length: 300, factor: 10 , all : true }
+    module.keyCode  = 83; // s
+    module.function = function() {
+        var data = STROKES.data;
+        if (module.settings.all) {
             var len = STROKES.getStrokesCount();
-            for (var k = 0 ; k < len ; k ++) { smoothie( k , data , settings ) }
+            for (var k = 0 ; k < len ; k ++) { smoothie( k , data , module.settings ) }
         } else {
-            smoothie( STROKES.getActiveStroke() , data , settings )
+            smoothie( STROKES.getActiveStroke() , data , module.settings )
         }
         function smoothie( a , data , settings ) {
             var eX, eY, eS;
@@ -128,13 +131,19 @@ smooth_stroke : function() {
             data.Y[a] = replaceLastElements( data.Y[a] , eY )
             data.S[a] = replaceLastElements( data.S[a] , eS )
         }
-    })
+    }
     return module
 },
 
 move_drawing_with_3d_model : function() {
-    var module = new URNDR.Module("MAGIC 001",URNDR.STROKE_MODULE,85,true);
-    module.setFunction(function() {
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE;
+    // module.id   = "translate_experiment_01"
+    module.name = "Magic 001"
+    module.enabled = true;
+    module.settings = {};
+    module.keyCode = 85 //u
+    module.function = function() {
         var data,obj,face,p3d,newp,delta,len;
             data = STROKES.data;
             len = STROKES.getStrokesCount();
@@ -174,55 +183,57 @@ move_drawing_with_3d_model : function() {
             try { data.A[this_stroke][this_point+1] = 0; } catch (err) {}
             try { data.A[this_stroke][this_point-1] = 0; } catch (err) {}
         }
-    })
+    }
     return module
 },
 
 smooth_color : function() {
-    var module = new URNDR.Module("Smooth Color",URNDR.STROKE_MODULE,87,false);
-    // 
-    module.setConfiguration({ length: 50, factor: 30 , step: 1 })
-    module.setFunction(function() {
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE;
+    // module.id   = "smooth_color";
+    module.name = "Smooth Color";
+    module.settings = { length: 50, factor: 30 , step: 1 };
+    module.keyCode = 87;
+    module.function = function() {
         var data = STROKES.data,
-            settings = module.getConfiguration()
             a = STROKES.getActiveStroke(),
-            eR = getLastNElements( data.R[a] , settings.length ),
-            eG = getLastNElements( data.G[a] , settings.length ),
-            eB = getLastNElements( data.B[a] , settings.length );
+            eR = getLastNElements( data.R[a] , module.settings.length ),
+            eG = getLastNElements( data.G[a] , module.settings.length ),
+            eB = getLastNElements( data.B[a] , module.settings.length );
         // RGB mode
-        SMOOTH_ARRAY( eR , { factor: settings.factor , step: settings.step , round : true });
-        SMOOTH_ARRAY( eG , { factor: settings.factor , step: settings.step , round : true });
-        SMOOTH_ARRAY( eB , { factor: settings.factor , step: settings.step , round : true });
-        SMOOTH_ARRAY( data.A[STROKES.getActiveStroke()],settings.factor , { factor: settings.factor , step: settings.step });
+        SMOOTH_ARRAY( eR , { factor: module.settings.factor , step: module.settings.step , round : true });
+        SMOOTH_ARRAY( eG , { factor: module.settings.factor , step: module.settings.step , round : true });
+        SMOOTH_ARRAY( eB , { factor: module.settings.factor , step: module.settings.step , round : true });
+        SMOOTH_ARRAY( data.A[STROKES.getActiveStroke()],module.settings.factor , { factor: module.settings.factor , step: module.settings.step });
         // Write
         data.R[a] = replaceLastElements( data.R[a] , eR )
         data.G[a] = replaceLastElements( data.G[a] , eG )
         data.B[a] = replaceLastElements( data.B[a] , eB )
         //
-    })
+    };
     return module
 },
 
 fade_strokes : function() {
-    var module = new URNDR.Module("",URNDR.STROKE_MODULE);
-    // 
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE;
+    // module.id = "fade_strokes";
     module.name = "Strokes Fade";
     module.keyCode = 70; // f
-    module.setConfiguration({
+    module.settings = {
         all : true,
         length : 300,
         alpha_fade_length : 10,
         alpha_fade_step : 1
-    })
-    module.setFunction(function() {
-        var data = STROKES.data,
-            settings = this.getConfiguration();
+    }
+    module.function = function() {
+        var data = STROKES.data;
         if (counter % 2 !== 0 ) return false;
-        if (settings.all) {
+        if (module.settings.all) {
             var len = STROKES.getStrokesCount();
-            for (var k = 0 ; k < len ; k ++) { fade( k , data , settings ) }
+            for (var k = 0 ; k < len ; k ++) { fade( k , data , module.settings ) }
         } else {
-            fade( STROKES.getActiveStroke() , data , settings )
+            fade( STROKES.getActiveStroke() , data , module.settings )
         }
         function fade( k , data , settings ){
             for ( i in data ) {
@@ -236,28 +247,31 @@ fade_strokes : function() {
                 }
             }
         }
-    })
+    }
     return module
 },
 
 randomise_strokes : function() {
-    var module = new URNDR.Module("Randomise Strokes",URNDR.STROKE_MODULE,90) // z
-    module.setConfiguration({ amp : 5, all : true })
-    module.setFunction(function() {
-        var data = STROKES.data,
-            settings = module.getConfiguration()
-        if (settings.all) {
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE
+    // module.id = "randomise_strokes"
+    module.name = "Randomise Strokes"
+    module.keyCode = 90 // z
+    module.settings= { amp : 5, all : true }
+    module.function = function() {
+        var data = STROKES.data
+        if (module.settings.all) {
             var len = STROKES.getStrokesCount();
             for (var k = 0 ; k < len ; k ++) {
-                rnd_stroke( data.X[k] , settings.amp )
-                rnd_stroke( data.Y[k] , settings.amp )
+                rnd_stroke( data.X[k] , module.settings.amp )
+                rnd_stroke( data.Y[k] , module.settings.amp )
             }
         } else {
             var a = STROKES.getActiveStroke();
-            rnd_stroke(data.X[a] , settings.amp );
-            rnd_stroke(data.Y[a] , settings.amp );
-            rnd_stroke(data.Z[a] , settings.amp );
-            rnd_stroke(data.S[a] , settings.amp );
+            rnd_stroke(data.X[a] , module.settings.amp );
+            rnd_stroke(data.Y[a] , module.settings.amp );
+            rnd_stroke(data.Z[a] , module.settings.amp );
+            rnd_stroke(data.S[a] , module.settings.amp );
             // also randomise barycentric here -> -> -> -> -> -> -> -> ///
         }
         function rnd_stroke(arr , amp) {
@@ -267,16 +281,17 @@ randomise_strokes : function() {
                 arr[i] += amp/2 - Math.random() * amp
             }
         }
-    })
+    }
     return module
 },
 
 delete_strokes_out_of_boundary : function() {
-    var module = new URNDR.Module("",URNDR.STROKE_MODULE);
-    // 
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE
+    // module.id   = "delete_points_out_of_boundary"
     module.name = "Remove invisible points from strokes"
     module.enabled = true
-    module.setFunction(function() {
+    module.function = function() {
         var data = STROKES.data
         for (var stroke_n = 0 ; stroke_n < STROKES.getStrokesCount() ; stroke_n ++) {
             if ( STROKES.getStrokeLength(stroke_n) === 0) break;
@@ -286,16 +301,17 @@ delete_strokes_out_of_boundary : function() {
             }
             if (condition) { STROKES.deleteStroke(stroke_n); }
         }
-    })
+    }
     return module
 },
 
 blow_strokes : function() {
-    var module = new URNDR.Module("",URNDR.STROKE_MODULE);
-    // 
+    var module = new URNDR.Module();
+    module.type = URNDR.STROKE_MODULE;
+    // module.id = "blow_strokes";
     module.name = "Blow Strokes";
     module.keyCode = 71;
-    module.setFunction(function() {
+    module.function = function() {
         var data = STROKES.data;
         var max = data.X.length;
         for ( var i = 0 ; i < max ; i++ ) {
@@ -314,18 +330,19 @@ blow_strokes : function() {
                 arr[i] += (arr[i] - center) * force
             }
         }
-    })
+    }
     return module
 },
 
 // DRAW MODULES
 
 connection_network : function(){
-    var module = new URNDR.Module("",URNDR.DRAW_MODULE);
-    // 
+    var module = new URNDR.Module();
+    module.type = URNDR.DRAW_MODULE;
+    // module.id = "network_connection";
     module.name = "NETWORK";
     module.keyCode = 49; // 1
-    module.setFunction(function(){
+    module.function = function(){
         var data = STROKES.data
         clear(1);
         var l,o,all;
@@ -360,16 +377,17 @@ connection_network : function(){
             }
         }
 
-    })
+    }
     return module
 },
 
 fillmember_style : function() {
-    var module = new URNDR.Module("",URNDR.DRAW_MODULE);
-    // 
+    var module = new URNDR.Module();
+    module.type = URNDR.DRAW_MODULE
+    // module.id   = "fillmember_style"
     module.name = "fillmember style"
     module.keyCode = 50; // 2
-    module.setFunction(function() {
+    module.function = function() {
         clear(1);
         var data = STROKES.data
         var l,o;
@@ -397,16 +415,17 @@ fillmember_style : function() {
                 PAPER.closePath();
             }
         }
-    })
+    }
     return module
 },
 
 dot_debug_style : function() {
-    var module = new URNDR.Module("",URNDR.DRAW_MODULE);
-    // 
+    var module = new URNDR.Module();
+    module.type = URNDR.DRAW_MODULE
+    // module.id = "debug_draw"
     module.name = "debug draw mode"
     module.keyCode = 51
-    module.setFunction(function(){
+    module.function = function(){
         clear(.8);
 
         MESH.rotation.y += PEN.ndc_x * 0.01;
@@ -426,7 +445,7 @@ dot_debug_style : function() {
                 PAPER.closePath();
             }
         }
-    })
+    }
     return module
 },
 
@@ -492,5 +511,5 @@ function RANDOM_NUMBER(number,params) {
     if (params) {
         if (params.round) result = Math.round(result);
     }
-    return result
+    return result;
 }
