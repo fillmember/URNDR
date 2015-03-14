@@ -22,6 +22,8 @@ URNDR.Module.prototype.getConfiguration = function () { return this.configuratio
 MODULES.loadModules( {
 
 // COMMANDS
+// this part is the only exception that probably can't possibly conviniently pass parameters in.
+// They will use global parameters from main.js. 
 
 reload_web_page : function() {
     var module = new URNDR.Module("Reload Web Page",URNDR.COMMAND_MODULE,13)
@@ -31,7 +33,7 @@ reload_web_page : function() {
 
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function(){ clear(1); STROKES = new _strokes(); return ""; })
+    module.setFunction(function(){ clear(1); STROKES = new URNDR.Strokes(); return ""; })
     return module
 },
 
@@ -107,7 +109,7 @@ pressure_sensitivity : function() {
 smooth_stroke : function() {
     var module = new URNDR.Module("Smooth Stroke",URNDR.STROKE_MODULE,83,false) //s
     module.setConfiguration({ length: 300, factor: 10 , all : true })
-    module.setFunction(function() {
+    module.setFunction(function(STROKES) {
         var data = STROKES.data,
             settings = module.getConfiguration()
         if (settings.all) {
@@ -133,13 +135,13 @@ smooth_stroke : function() {
 },
 
 move_drawing_with_3d_model : function() {
-    var module = new URNDR.Module("MAGIC 001",URNDR.STROKE_MODULE,85,true);
-    module.setFunction(function() {
+    var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true);
+    module.setFunction(function(STROKES) {
         var data,obj,face,p3d,newp,delta,len;
             data = STROKES.data;
             len = STROKES.getStrokesCount();
         // get camera's lookat vector
-        var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion(CAMERA.quaternion).normalize();
+        var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
         // iterate time
         for (var this_stroke = 0 ; this_stroke < len ; this_stroke ++) {
             // to stable current stroke
@@ -156,11 +158,11 @@ move_drawing_with_3d_model : function() {
                     hidePoint(this_stroke, this_point)
                 } else {
                     var a,b,c,bary
-                        a = obj.localToWorld(obj.geometry.vertices[face.a].clone()).project(CAMERA)
-                        b = obj.localToWorld(obj.geometry.vertices[face.b].clone()).project(CAMERA)
-                        c = obj.localToWorld(obj.geometry.vertices[face.c].clone()).project(CAMERA)
+                        a = obj.localToWorld(obj.geometry.vertices[face.a].clone()).project( CAMERA )
+                        b = obj.localToWorld(obj.geometry.vertices[face.b].clone()).project( CAMERA )
+                        c = obj.localToWorld(obj.geometry.vertices[face.c].clone()).project( CAMERA )
                         bary = data.Barycentric[this_stroke][this_point]
-                    p_now = coordinateToPixel(
+                    p_now = URNDR.Math.coordinateToPixel(
                         a.x * bary.u + b.x * bary.v + c.x * bary.w, 
                         a.y * bary.u + b.y * bary.v + c.y * bary.w
                     )
@@ -182,7 +184,7 @@ smooth_color : function() {
     var module = new URNDR.Module("Smooth Color",URNDR.STROKE_MODULE,87,false);
     // 
     module.setConfiguration({ length: 50, factor: 30 , step: 1 })
-    module.setFunction(function() {
+    module.setFunction(function(STROKES) {
         var data = STROKES.data,
             settings = module.getConfiguration()
             a = STROKES.getActiveStroke(),
@@ -214,7 +216,7 @@ fade_strokes : function() {
         alpha_fade_length : 10,
         alpha_fade_step : 1
     })
-    module.setFunction(function() {
+    module.setFunction(function(STROKES) {
         var data = STROKES.data,
             settings = this.getConfiguration();
         if (counter % 2 !== 0 ) return false;
@@ -243,7 +245,7 @@ fade_strokes : function() {
 randomise_strokes : function() {
     var module = new URNDR.Module("Randomise Strokes",URNDR.STROKE_MODULE,90) // z
     module.setConfiguration({ amp : 5, all : true })
-    module.setFunction(function() {
+    module.setFunction(function(STROKES) {
         var data = STROKES.data,
             settings = module.getConfiguration()
         if (settings.all) {
@@ -276,7 +278,7 @@ delete_strokes_out_of_boundary : function() {
     // 
     module.name = "Remove invisible points from strokes"
     module.enabled = true
-    module.setFunction(function() {
+    module.setFunction(function(STROKES) {
         var data = STROKES.data
         for (var stroke_n = 0 ; stroke_n < STROKES.getStrokesCount() ; stroke_n ++) {
             if ( STROKES.getStrokeLength(stroke_n) === 0) break;
@@ -295,7 +297,7 @@ blow_strokes : function() {
     // 
     module.name = "Blow Strokes";
     module.keyCode = 71;
-    module.setFunction(function() {
+    module.setFunction(function(STROKES) {
         var data = STROKES.data;
         var max = data.X.length;
         for ( var i = 0 ; i < max ; i++ ) {
@@ -325,8 +327,9 @@ connection_network : function(){
     // 
     module.name = "NETWORK";
     module.keyCode = 49; // 1
-    module.setFunction(function(){
-        var data = STROKES.data
+    module.setFunction(function(params){
+        var data = params.strokes.data
+        var ctx = params.context
         clear(1);
         var l,o,all;
             l = data.X.length;
@@ -343,19 +346,19 @@ connection_network : function(){
             }
         }
         var all_length = all.X.length;
-        PAPER.lineWidth = 2;
+        ctx.lineWidth = 2;
         for ( var e = 0 ; e < all_length ; e+= 1 ) {
             for ( var f = 0 ; f < all_length ; f+= 1 ) {
                 if (Math.abs(e-f) <= 1) continue;
                 var max = all.S[e] * 1, 
                     min = all.S[e] / 7
                 if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
-                    PAPER.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
-                    PAPER.beginPath();
-                    PAPER.moveTo(all.X[e],all.Y[e])
-                    PAPER.lineTo(all.X[f],all.Y[f])
-                    PAPER.stroke();
-                    PAPER.closePath();
+                    ctx.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
+                    ctx.beginPath();
+                    ctx.moveTo(all.X[e],all.Y[e])
+                    ctx.lineTo(all.X[f],all.Y[f])
+                    ctx.stroke();
+                    ctx.closePath();
                 }
             }
         }
@@ -369,32 +372,35 @@ fillmember_style : function() {
     // 
     module.name = "fillmember style"
     module.keyCode = 50; // 2
-    module.setFunction(function() {
+    module.setFunction(function(params){
+        var data = params.strokes.data
+        var ctx = params.context
+
         clear(1);
-        var data = STROKES.data
+        
         var l,o;
             l = STROKES.getStrokesCount() - 1;
         for ( var k = 0 ; k <= l ; k++ ) {
             o = STROKES.getStrokeLength(k);
-                PAPER.strokeStyle= '#FFF';
+                ctx.strokeStyle= '#FFF';
             for ( var i = 1 ; i < o-1 ; i++ ) {
                 if (data.A[k][i] !== 0) {
-                    PAPER.beginPath();
-                    PAPER.lineWidth = data.S[k][i] * 2;
-                    PAPER.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-                    PAPER.lineTo(data.X[k][i],data.Y[k][i]);
-                    PAPER.stroke();
-                    PAPER.closePath();
+                    ctx.beginPath();
+                    ctx.lineWidth = data.S[k][i] * 2;
+                    ctx.moveTo(data.X[k][i-1],data.Y[k][i-1]);
+                    ctx.lineTo(data.X[k][i],data.Y[k][i]);
+                    ctx.stroke();
+                    ctx.closePath();
                 }
             }
             for ( var i = 1 ; i < o-1 ; i++ ) {
-                PAPER.beginPath();
-                    PAPER.lineWidth = data.S[k][i];
-                    PAPER.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
-                PAPER.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-                PAPER.lineTo(data.X[k][i],data.Y[k][i]);
-                    PAPER.stroke();
-                PAPER.closePath();
+                ctx.beginPath();
+                    ctx.lineWidth = data.S[k][i];
+                    ctx.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
+                ctx.moveTo(data.X[k][i-1],data.Y[k][i-1]);
+                ctx.lineTo(data.X[k][i],data.Y[k][i]);
+                    ctx.stroke();
+                ctx.closePath();
             }
         }
     })
@@ -406,24 +412,25 @@ dot_debug_style : function() {
     // 
     module.name = "debug draw mode"
     module.keyCode = 51
-    module.setFunction(function(){
+    module.setFunction(function(params){
+        var data = params.strokes.data
+        var ctx = params.context
         clear(.8);
 
-        MESH.rotation.y += PEN.ndc_x * 0.01;
-        MESH.rotation.x -= PEN.ndc_y * 0.01;
-        var data = STROKES.data;
+        MESH.rotation.y += PEN.ndc_x * 0.05;
+        MESH.rotation.x -= PEN.ndc_y * 0.05;
         var l,o;
             l = STROKES.getStrokesCount() - 1;
-                PAPER.lineWidth = 2;
+                ctx.lineWidth = 2;
         for ( var k = 0 ; k <= l ; k++ ) {
             o = STROKES.getStrokeLength(k);
             for ( var i = 1 ; i < o-1 ; i++ ) {
-                PAPER.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
-                PAPER.beginPath();
-                PAPER.moveTo(data.X[k][i]-0.001,data.Y[k][i]-0.001);
-                PAPER.lineTo(data.X[k][i],data.Y[k][i]);
-                PAPER.stroke();
-                PAPER.closePath();
+                ctx.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
+                ctx.beginPath();
+                ctx.moveTo(data.X[k][i]-0.001,data.Y[k][i]-0.001);
+                ctx.lineTo(data.X[k][i],data.Y[k][i]);
+                ctx.stroke();
+                ctx.closePath();
             }
         }
     })
@@ -432,23 +439,24 @@ dot_debug_style : function() {
 
 default_draw_style : function() {
     var module = new URNDR.Module("Default Draw Style",URNDR.DRAW_MODULE,48,true);
-    module.setFunction(function(){
+    module.setFunction(function(params){
+        var data = params.strokes.data
+        var ctx = params.context
         // default drawing style
         clear(1);
-        MESH.rotation.y += 0.001;
-        var data = STROKES.data;
+        MESH.rotation.y += 0.000;
         var l,o;
             l = STROKES.getStrokesCount() - 1;
         for ( var k = 0 ; k <= l ; k++ ) {
             o = STROKES.getStrokeLength(k);
             for ( var i = 1 ; i < o-1 ; i++ ) {
-                PAPER.lineWidth = data.S[k][i];
-                PAPER.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
-                PAPER.beginPath();
-                PAPER.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-                PAPER.lineTo(data.X[k][i],data.Y[k][i]);
-                PAPER.stroke();
-                PAPER.closePath();
+                ctx.lineWidth = data.S[k][i];
+                ctx.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
+                ctx.beginPath();
+                ctx.moveTo(data.X[k][i-1],data.Y[k][i-1]);
+                ctx.lineTo(data.X[k][i],data.Y[k][i]);
+                ctx.stroke();
+                ctx.closePath();
             }
         }
     })
