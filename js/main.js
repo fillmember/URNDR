@@ -192,16 +192,12 @@ var counter = 0;
 var display = function() {
 
     // RENDER
-    MESH.rotation.y -= PEN.ndc_x * 0.01
-    MESH.rotation.x += PEN.ndc_y * 0.01
+    MESH.rotation.y += 0.005;
     RENDERER.render(SCENE,CAMERA);
 
-    // mess with strokes
     if (STROKES.getStrokesCount() > 0) {
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        
-        // RUN DRAW MODULES
         MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:PAPER} );
         
     }

@@ -74,10 +74,15 @@ random_point_position : function() {
 
 pressure_sensitivity : function() {
     var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
+    module.setConfiguration( {
+        min_size : 5,
+        max_size : 200
+    } )
     module.setFunction(function(point) {
+        var settings = this.getConfiguration()
         point.S *= PEN.pressure;
-        if (point.S < 10) point.S = 10;
-        if (point.s > 100) point.S = 100;
+        if (point.S < settings.min_size) point.S = settings.min_size;
+        if (point.s > settings.max_size) point.S = settings.max_size;
     })
     return module
 },
@@ -132,13 +137,12 @@ move_drawing_with_3d_model : function() {
                     var near = stroke.getNearestPointWith( "OBJECT" , i );
                     if (near instanceof Object) {
 
-                        var sum = near.before_distance + near.after_distance;
-                        var nbpx = 0;
-                        var nbpy = 0;
-                        var nbpa = 0;
-                        var napx = 0;
-                        var napy = 0;
-                        var napa = 0;
+                        var nbpx = 0,
+                            nbpy = 0,
+                            nbpa = 0,
+                            napx = 0,
+                            napy = 0,
+                            napa = 0;
 
                         if (near.before instanceof URNDR.Point) {
                             nbpx = near.before.PX;
@@ -150,6 +154,8 @@ move_drawing_with_3d_model : function() {
                             napy = near.after.PY;
                             napa = near.after.A;
                         }
+
+                        var sum = near.before_distance + near.after_distance;
 
                         point.X += ( near.after_distance * napx + near.before_distance * nbpx ) / sum * 0.5
                         point.Y += ( near.after_distance * napy + near.before_distance * nbpy ) / sum * 0.5
@@ -205,7 +211,7 @@ move_drawing_with_3d_model : function() {
 smooth_data : function() {
     var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
     // 
-    module.setConfiguration({ length: 80, factor: 12 , step: 1 })
+    module.setConfiguration({ length: 50, factor: 23 })
     module.setFunction(function(strokes) {
         
         var stroke, settings, target_tracks, track, eArr
@@ -336,8 +342,8 @@ connection_network : function(){
                 pf = all_track.getPoint( f )
                 if (pe.A + pf.A === 0) continue;
                 if (Math.abs(e-f) <= 2) continue;
-                var max = pe.S,
-                    min = pe.S * 0.5
+                var max = pe.S * 1.5,
+                    min = 10
                 if ( Math.abs(pe.X - pf.X) < max && Math.abs(pe.Y - pf.Y) < max && Math.abs(pe.X - pf.X) > min && Math.abs(pe.Y - pf.Y) > min ) {
                     ctx.strokeStyle = STYLE.gradientMaker( ctx , pf , pe );
                     ctx.beginPath();
