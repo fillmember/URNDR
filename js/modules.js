@@ -84,56 +84,6 @@ pressure_sensitivity : function() {
 
 // STROKE DATA MODULES
 
-curverize_stroke : function() {
-    var module = new URNDR.Module("Curve-rize Stroke",URNDR.STROKE_MODULE,83,false)
-    module.setConfiguration({ factor: 2 , all_strokes : true })
-    module.setFunction(function( strokes ) {
-        
-        var settings, target_strokes, stroke
-        settings = module.getConfiguration();
-
-        if ( settings.all_strokes) {
-            target_strokes = strokes.strokesHistory ;
-        } else {
-            target_strokes = [ strokes.active_stroke ];
-        }
-
-        for ( var st in target_strokes ) {
-
-            stroke = strokes.getStrokeByID( target_strokes[st] );
-            if (stroke !== 0) {
-                smoothie( stroke , "X" );
-                smoothie( stroke , "Y" );
-            }
-
-        }
-
-        function smoothie( stroke , track_name ) {
-
-            var stroke_length, smoothed, track;
-
-            stroke_length = stroke.getLength();
-
-            if (stroke_length < 3) { return; }
-
-            track = stroke.getTrack( track_name )
-
-            for ( var i = 1; i < stroke_length / settings.factor ; i++ ) {
-                track.splice(i , settings.factor - 1)
-            }
-
-            smoothed = Smooth( track )
-
-            for ( var i = 0; i < stroke_length ; i++ ) {
-                stroke.getPoint(i)[ track_name ] = smoothed( i / settings.factor )
-            }
-
-        }
-        
-    })
-    return module
-},
-
 move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
     module.setFunction(function(strokes) {
