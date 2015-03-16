@@ -1,29 +1,8 @@
-URNDR.Module = function(n,t,k,e) {
-    this.id = "MOD"+THREE.Math.generateUUID()
-    this.priority = 1
-    this.type = t
-    this.name = n
-    if ( typeof k === "boolean" && e === undefined ) {
-        // no keycode data is sent
-        this.enabled = k
-    } else {
-        if (typeof k === "number") { this.keyCode = k }
-        if (typeof e === "boolean" && t !== URNDR.COMMAND_MODULE) { this.enabled = e }
-    }
-}
-URNDR.Module.prototype.setFunction = function ( f ) { this.func = f }
-URNDR.Module.prototype.getFunction = function ( f ) { return this.func }
-URNDR.Module.prototype.setConfiguration = function ( s ) {
-    this.configuration = s
-    this.initialConfiguration = Object.create(s)
-}
-URNDR.Module.prototype.getConfiguration = function () { return this.configuration }
-
 MODULES.loadModules( {
 
 // COMMANDS
-// this part is the only exception that probably can't possibly conviniently pass parameters in.
-// They will use global parameters from main.js. 
+// Probably can't possibly conviniently pass parameters in for all kinds of commands.
+// Developers will use global parameters from main.js. 
 
 reload_web_page : function() {
     var module = new URNDR.Module("Reload Web Page",URNDR.COMMAND_MODULE,13)
@@ -60,20 +39,19 @@ simplified_all_strokes : function() {
 },
 
 // STYLE MODULES
-// none at the moment
+// When user's drawing and you want to do something realtime. 
 
 random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
-    module.setFunction(function() {
-        STYLE.color.r = RANDOM_NUMBER(255,{round: true});
-        STYLE.color.g = RANDOM_NUMBER(255,{round: true});
-        STYLE.color.b = RANDOM_NUMBER(255,{round: true});
+    module.setFunction(function(STYLE) {
+        STYLE.color.r = URNDR.Helpers.randomNumber(255,{round: true});
+        STYLE.color.g = URNDR.Helpers.randomNumber(255,{round: true});
+        STYLE.color.b = URNDR.Helpers.randomNumber(255,{round: true});
     })
     return module
 },
 
 // POINT DATA MODULES
-
 
 random_point_position : function() {
     var module = new URNDR.Module("Random Point",URNDR.POINT_MODULE,68);
@@ -82,20 +60,20 @@ random_point_position : function() {
     module.setFunction(function( point ) {
         var amp = this.getConfiguration().amp;
         var half = amp/2
-        point.X += half - RANDOM_NUMBER(amp);
-        point.Y += half - RANDOM_NUMBER(amp);
+        point.X += half - URNDR.Helpers.randomNumber(amp);
+        point.Y += half - URNDR.Helpers.randomNumber(amp);
         // also mess with barycentric coordinate.
-        if (point.Barycentric) {
-            point.Barycentric.u += 0.2 - 0.4 * RANDOM_NUMBER(1)
-            point.Barycentric.v += 0.2 - 0.4 * RANDOM_NUMBER(1)
-            point.Barycentric.w += 0.2 - 0.4 * RANDOM_NUMBER(1)
+        if (point.BU || point.BV || point.BW) {
+            point.BU += 0.2 - 0.4 * URNDR.Helpers.randomNumber(1)
+            point.BV += 0.2 - 0.4 * URNDR.Helpers.randomNumber(1)
+            point.BW += 0.2 - 0.4 * URNDR.Helpers.randomNumber(1)
         }
     })
     return module
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,false,true);
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
     module.setFunction(function(point) {
         point.S *= PEN.pressure;
         if (point.S < 10) point.S = 10;
@@ -106,137 +84,249 @@ pressure_sensitivity : function() {
 
 // STROKE DATA MODULES
 
-smooth_stroke : function() {
-    var module = new URNDR.Module("Smooth Stroke",URNDR.STROKE_MODULE,83,false) //s
-    module.setConfiguration({ length: 300, factor: 10 , all : true })
-    module.setFunction(function(STROKES) {
-        var data = STROKES.data,
-            settings = module.getConfiguration()
-        if (settings.all) {
-            var len = STROKES.getStrokesCount();
-            for (var k = 0 ; k < len ; k ++) { smoothie( k , data , settings ) }
+curverize_stroke : function() {
+    var module = new URNDR.Module("Curve-rize Stroke",URNDR.STROKE_MODULE,83,false)
+    module.setConfiguration({ factor: 2 , all_strokes : true })
+    module.setFunction(function( strokes ) {
+        
+        var settings, target_strokes, stroke
+        settings = module.getConfiguration();
+
+        if ( settings.all_strokes) {
+            target_strokes = strokes.strokesHistory ;
         } else {
-            smoothie( STROKES.getActiveStroke() , data , settings )
+            target_strokes = [ strokes.active_stroke ];
         }
-        function smoothie( a , data , settings ) {
-            var eX, eY, eS;
-                eX = getLastNElements( data.X[a] , settings.length)
-                eY = getLastNElements( data.Y[a] , settings.length)
-                eS = getLastNElements( data.S[a] , settings.length)
-            SMOOTH_ARRAY( eX , {factor:settings.factor} );
-            SMOOTH_ARRAY( eY , {factor:settings.factor} );
-            SMOOTH_ARRAY( eS , {factor:settings.factor} );
-            data.X[a] = replaceLastElements( data.X[a] , eX )
-            data.Y[a] = replaceLastElements( data.Y[a] , eY )
-            data.S[a] = replaceLastElements( data.S[a] , eS )
+
+        for ( var st in target_strokes ) {
+
+            stroke = strokes.getStrokeByID( target_strokes[st] );
+            if (stroke !== 0) {
+                smoothie( stroke , "X" );
+                smoothie( stroke , "Y" );
+            }
+
         }
+
+        function smoothie( stroke , track_name ) {
+
+            var stroke_length, smoothed, track;
+
+            stroke_length = stroke.getLength();
+
+            if (stroke_length < 3) { return; }
+
+            track = stroke.getTrack( track_name )
+
+            for ( var i = 1; i < stroke_length / settings.factor ; i++ ) {
+                track.splice(i , settings.factor - 1)
+            }
+
+            smoothed = Smooth( track )
+
+            for ( var i = 0; i < stroke_length ; i++ ) {
+                stroke.getPoint(i)[ track_name ] = smoothed( i / settings.factor )
+            }
+
+        }
+        
     })
     return module
 },
 
 move_drawing_with_3d_model : function() {
-    var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true);
-    module.setFunction(function(STROKES) {
-        var data,obj,face,p3d,newp,delta,len;
-            data = STROKES.data;
-            len = STROKES.getStrokesCount();
+    var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
+    module.setFunction(function(strokes) {
+
+        var obj,face,p3d,newp,delta,len;
+            len = strokes.getStrokesCount();
         // get camera's lookat vector
         var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
+
         // iterate time
-        for (var this_stroke = 0 ; this_stroke < len ; this_stroke ++) {
-            // to stable current stroke
-            // if (STROKES.getActiveStroke() === this_stroke) {break;}
-            len_p = STROKES.getStrokeLength(this_stroke);
-            for (var this_point = 0 ; this_point < len_p ; this_point++) {
-                obj = data.BindedObject[this_stroke][this_point];
-                face = data.BindedFace[this_stroke][this_point];
-                if (!obj || !face) continue;
-                // check if a face is turning away from camera
-                var faceVector = obj.localToWorld(face.normal.clone()).normalize();
-                if (Math.abs( cameraVector.dot(faceVector) ) <= 0.1) {
-                    // if so, hide the point binded to the face.
-                    hidePoint(this_stroke, this_point)
-                } else {
-                    var a,b,c,bary
-                        a = obj.localToWorld(obj.geometry.vertices[face.a].clone()).project( CAMERA )
-                        b = obj.localToWorld(obj.geometry.vertices[face.b].clone()).project( CAMERA )
-                        c = obj.localToWorld(obj.geometry.vertices[face.c].clone()).project( CAMERA )
-                        bary = data.Barycentric[this_stroke][this_point]
-                    p_now = URNDR.Math.coordinateToPixel(
-                        a.x * bary.u + b.x * bary.v + c.x * bary.w, 
-                        a.y * bary.u + b.y * bary.v + c.y * bary.w
+        strokes.eachStroke( es , strokes );
+        function es( stroke , strokes , i ) {
+            stroke.eachPoint( ep , stroke );
+            function ep( point , stroke , i) {
+
+                if ( point.FACE && point.OBJECT ) {
+
+                    // It is a 3D point!
+                    var obj = point.OBJECT
+                    var face = point.FACE
+                    // check if visible
+                    if ( checkVisible( obj , face , cameraVector , 0.1) === false ) {
+                        point.A = 0;
+                        point.PX = 0;
+                        point.PY = 0;
+                    }
+                    // transform it
+                    var a,b,c,p;
+                    a = obj.localToWorld(obj.geometry.vertices[face.a].clone()).project( CAMERA )
+                    b = obj.localToWorld(obj.geometry.vertices[face.b].clone()).project( CAMERA )
+                    c = obj.localToWorld(obj.geometry.vertices[face.c].clone()).project( CAMERA )
+                    p = URNDR.Math.coordinateToPixel(
+                        a.x * point.BU + b.x * point.BV + c.x * point.BW, 
+                        a.y * point.BU + b.y * point.BV + c.y * point.BW
                     )
-                    data.X[this_stroke][this_point] += (p_now.x - data.X[this_stroke][this_point]) * 0.1
-                    data.Y[this_stroke][this_point] += (p_now.y - data.Y[this_stroke][this_point]) * 0.1
+                    // record this point's potential movement.
+                    point.PX = (p.x - point.X) * 0.5
+                    point.PY = (p.y - point.Y) * 0.5
+                    // set point X Y
+                    point.X += point.PX
+                    point.Y += point.PY
+
+                } else {
+
+                    // get nearest point's potential movement. 
+                    var near = stroke.getNearestPointWith( "OBJECT" , i );
+                    if (near instanceof Object) {
+
+                        var sum = near.before_distance + near.after_distance;
+                        var nbpx = 0;
+                        var nbpy = 0;
+                        var nbpa = 0;
+                        var napx = 0;
+                        var napy = 0;
+                        var napa = 0;
+
+                        if (near.before instanceof URNDR.Point) {
+                            nbpx = near.before.PX;
+                            nbpy = near.before.PY;
+                            nbpa = near.before.A;
+                        }
+                        if (near.after instanceof URNDR.Point) {
+                            napx = near.after.PX;
+                            napy = near.after.PY;
+                            napa = near.after.A;
+                        }
+
+                        point.X += ( near.after_distance * napx + near.before_distance * nbpx ) / sum * 0.5
+                        point.Y += ( near.after_distance * napy + near.before_distance * nbpy ) / sum * 0.5
+
+                        if (nbpa + napa === 0) {
+                            point.A = 0
+                        } else if (nbpa === 0 && napa > 0) {
+                            point.A += (point.A - napa) * 0.3
+                        } else if (nbpa > 0 && napa === 0) {
+                            point.A += (point.A - nbpa) * 0.3
+                        } else {
+                            point.A += ( point.A * 2 - napa - nbpa ) * 0.15;
+                        }
+
+                    }
+                    
                 }
+
             }
+
+
         }
-        function hidePoint(this_stroke,this_point) {
-            data.A[this_stroke][this_point] = 0;
-            try { data.A[this_stroke][this_point+1] = 0; } catch (err) {}
-            try { data.A[this_stroke][this_point-1] = 0; } catch (err) {}
+        function checkVisible( obj, face, camera, threshold ) {
+
+            if ( face instanceof THREE.Face3 ) {
+                face = obj.localToWorld( face.normal.clone() ).normalize();
+            } else if ( face instanceof THREE.Vector3 ) {
+                // face = face
+            } else {
+                throw("checkVisible only accept Face3 or Vector3 object from THREE.js Library. ")
+            }
+
+            if (camera instanceof THREE.Camera) {
+                camera = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
+            } else if ( camera instanceof THREE.Vector3 ) {
+                // camera = camera
+            } else {
+                throw("checkVisible only accept Face3 or Vector3 object from THREE.js Library. ")
+            }
+
+            if ( Math.abs( camera.dot(face) ) < threshold ) {
+                return false
+            } else {
+                return true;
+            }
+            
         }
+
     })
     return module
 },
 
-smooth_color : function() {
-    var module = new URNDR.Module("Smooth Color",URNDR.STROKE_MODULE,87,false);
+smooth_data : function() {
+    var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
     // 
-    module.setConfiguration({ length: 50, factor: 30 , step: 1 })
-    module.setFunction(function(STROKES) {
-        var data = STROKES.data,
-            settings = module.getConfiguration()
-            a = STROKES.getActiveStroke(),
-            eR = getLastNElements( data.R[a] , settings.length ),
-            eG = getLastNElements( data.G[a] , settings.length ),
-            eB = getLastNElements( data.B[a] , settings.length );
-        // RGB mode
-        SMOOTH_ARRAY( eR , { factor: settings.factor , step: settings.step , round : true });
-        SMOOTH_ARRAY( eG , { factor: settings.factor , step: settings.step , round : true });
-        SMOOTH_ARRAY( eB , { factor: settings.factor , step: settings.step , round : true });
-        SMOOTH_ARRAY( data.A[STROKES.getActiveStroke()],settings.factor , { factor: settings.factor , step: settings.step });
-        // Write
-        data.R[a] = replaceLastElements( data.R[a] , eR )
-        data.G[a] = replaceLastElements( data.G[a] , eG )
-        data.B[a] = replaceLastElements( data.B[a] , eB )
-        //
+    module.setConfiguration({ length: 80, factor: 12 , step: 1 })
+    module.setFunction(function(strokes) {
+        
+        var stroke, settings, target_tracks, track, eArr
+        stroke = strokes.getActiveStroke()
+        settings = module.getConfiguration()
+        
+        target_tracks = ["R","G","B","X","Y"];
+        for (var i in target_tracks) {
+
+            track = stroke.getTrack( target_tracks[i] );
+            eArr = URNDR.Helpers.getLastElements( track , settings.length );
+
+            URNDR.Helpers.smoothArray( eArr , { 
+                factor: settings.factor, 
+                round : true 
+            } );
+
+            track = URNDR.Helpers.replaceLastElements( track , eArr );
+            stroke.setTrack( target_tracks[i] , track );
+
+        }
+
     })
     return module
 },
 
 fade_strokes : function() {
-    var module = new URNDR.Module("",URNDR.STROKE_MODULE);
-    // 
-    module.name = "Strokes Fade";
-    module.keyCode = 70; // f
+    var module = new URNDR.Module("Fading Strokes",URNDR.STROKE_MODULE,70,false);
     module.setConfiguration({
         all : true,
-        length : 300,
-        alpha_fade_length : 10,
-        alpha_fade_step : 1
+        fade_length : 30,
     })
-    module.setFunction(function(STROKES) {
-        var data = STROKES.data,
-            settings = this.getConfiguration();
+    module.setFunction(function(strokes) {
         if (counter % 2 !== 0 ) return false;
+
+        var settings = this.getConfiguration();
         if (settings.all) {
-            var len = STROKES.getStrokesCount();
-            for (var k = 0 ; k < len ; k ++) { fade( k , data , settings ) }
+            strokes.eachStroke( fade , settings );
         } else {
-            fade( STROKES.getActiveStroke() , data , settings )
+            fade( strokes.getActiveStroke() , settings )
         }
-        function fade( k , data , settings ){
-            for ( i in data ) {
-                if ( data[i][k].length >= settings.length || k != STROKES.getActiveStroke() ) {
-                    data[i][k].shift();
-                    if (settings.alpha_fade_step && settings.alpha_fade_length) {
-                        for (var j = 0 ; j < settings.alpha_fade_length ; j += settings.alpha_fade_step ) {
-                            if (data.A[k][j] > 0.01) {data.A[k][j] *= 0.99; data.S[k][j] *= 0.999; } else {data.A[k][j] = 0;}
-                        }
-                    }
-                }
+
+        function fade( stroke , settings ){
+
+            var n, len
+            
+            if (stroke.checkTag("fade_strokes")) {
+                n = stroke.getTag("fade_strokes");
+            } else {
+                n = 0
             }
+
+            len = stroke.getLength();
+            for ( var i = 0; i < len; i++ ) {
+
+                if ( i <= n ) {
+                    stroke.getPoint( i ).A = 0;
+                } else {
+
+                    if ((i - n) < n) {
+                        stroke.getPoint( i ).A *= 0.96
+                    } else {
+                        break;
+                    }
+
+                }
+
+            }
+
+            stroke.setTag("fade_strokes", Math.min(n + 1 , len) )
+
         }
     })
     return module
@@ -245,76 +335,20 @@ fade_strokes : function() {
 randomise_strokes : function() {
     var module = new URNDR.Module("Randomise Strokes",URNDR.STROKE_MODULE,90) // z
     module.setConfiguration({ amp : 5, all : true })
-    module.setFunction(function(STROKES) {
-        var data = STROKES.data,
-            settings = module.getConfiguration()
+    module.setFunction(function(strokes) {
+        var settings = module.getConfiguration()
         if (settings.all) {
-            var len = STROKES.getStrokesCount();
-            for (var k = 0 ; k < len ; k ++) {
-                rnd_stroke( data.X[k] , settings.amp )
-                rnd_stroke( data.Y[k] , settings.amp )
-            }
+            target_strokes = strokes.strokesZDepth
         } else {
-            var a = STROKES.getActiveStroke();
-            rnd_stroke(data.X[a] , settings.amp );
-            rnd_stroke(data.Y[a] , settings.amp );
-            rnd_stroke(data.Z[a] , settings.amp );
-            rnd_stroke(data.S[a] , settings.amp );
-            // also randomise barycentric here -> -> -> -> -> -> -> -> ///
+            target_strokes = [ strokes.active_stroke ]
         }
-        function rnd_stroke(arr , amp) {
-            var l = arr.length;
-            if (!amp) {amp = 10;}
-            for ( i = 0 ; i < l ; i ++ ) {
-                arr[i] += amp/2 - Math.random() * amp
-            }
-        }
-    })
-    return module
-},
-
-delete_strokes_out_of_boundary : function() {
-    var module = new URNDR.Module("",URNDR.STROKE_MODULE);
-    // 
-    module.name = "Remove invisible points from strokes"
-    module.enabled = true
-    module.setFunction(function(STROKES) {
-        var data = STROKES.data
-        for (var stroke_n = 0 ; stroke_n < STROKES.getStrokesCount() ; stroke_n ++) {
-            if ( STROKES.getStrokeLength(stroke_n) === 0) break;
-            var this_stroke = STROKES.getStroke(stroke_n), condition = true;
-            for ( var i = 0 ; i < STROKES.getStrokeLength(stroke_n) ; i++ ) {
-                condition = condition && (this_stroke.X[i] < 0 || this_stroke.X[i] > CANVAS.width || this_stroke.Y[i] < 0 || this_stroke.Y[i] > CANVAS.height);
-            }
-            if (condition) { STROKES.deleteStroke(stroke_n); }
-        }
-    })
-    return module
-},
-
-blow_strokes : function() {
-    var module = new URNDR.Module("",URNDR.STROKE_MODULE);
-    // 
-    module.name = "Blow Strokes";
-    module.keyCode = 71;
-    module.setFunction(function(STROKES) {
-        var data = STROKES.data;
-        var max = data.X.length;
-        for ( var i = 0 ; i < max ; i++ ) {
-            blow(data.X[i]);
-            blow(data.Y[i]);
-        }
-        function blow(arr,center,force) {
-            var l = arr.length;
-            if (!center) {
-                center = 0;
-                for ( var i = 0 ; i < l ; i ++ ) { center += arr[i]; }
-                center /= l;
-            }
-            if (!force) {force = 0.01;}
-            for ( i = 0 ; i < l ; i ++ ) {
-                arr[i] += (arr[i] - center) * force
-            }
+        for (var st in target_strokes) {
+            stroke_k = strokes.getStrokeByID( target_strokes[st] )
+            stroke_k.setTrack( "X" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("X") , settings.amp ) )
+            stroke_k.setTrack( "Y" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("Y") , settings.amp ) )
+            // stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , settings.amp ) )
+            // stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , settings.amp ) )
+            // stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , settings.amp ) )
         }
     })
     return module
@@ -323,44 +357,48 @@ blow_strokes : function() {
 // DRAW MODULES
 
 connection_network : function(){
-    var module = new URNDR.Module("",URNDR.DRAW_MODULE);
-    // 
-    module.name = "NETWORK";
-    module.keyCode = 49; // 1
+    var module = new URNDR.Module("NETWORK DRAW",URNDR.DRAW_MODULE,49); // 1
     module.setFunction(function(params){
-        var data = params.strokes.data
-        var ctx = params.context
+        var strokes, ctx, all_track, strokes_count, stroke_i, points_count;
+        strokes = params.strokes
+        ctx = params.context
+        
         clear(1);
-        var l,o,all;
-            l = data.X.length;
-            all = {X:new Array(),Y:new Array(),Z:new Array(),S:new Array(),R:new Array(),G:new Array(),B:new Array(),A:new Array()};
-        for ( var k = 0 ; k < l ; k ++ ) {
-            o = data.X[k].length;
-            for ( var i = 1 ; i < o - 1 ; i += 1 ) {
-                all.X.push( data.X[k][i] )
-                all.Y.push( data.Y[k][i] )
-                all.R.push( data.R[k][i] )
-                all.G.push( data.G[k][i] )
-                all.B.push( data.B[k][i] )
-                all.A.push( data.A[k][i] )
+        
+        all_track = new URNDR.Stroke();
+        strokes_count = strokes.getStrokesCount();
+        for ( var i = 0 ; i < strokes_count ; i ++ ) {
+            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] )
+            points_count = stroke_i.getLength();
+            for ( var j = 0 ; j < points_count ; j ++ ) {
+                all_track.addPoint( stroke_i.getPoint( j ) )
             }
         }
-        var all_length = all.X.length;
-        ctx.lineWidth = 2;
-        for ( var e = 0 ; e < all_length ; e+= 1 ) {
-            for ( var f = 0 ; f < all_length ; f+= 1 ) {
-                if (Math.abs(e-f) <= 1) continue;
-                var max = all.S[e] * 1, 
-                    min = all.S[e] / 7
-                if ( Math.abs(all.X[e] - all.X[f]) < max && Math.abs(all.Y[e] - all.Y[f]) < max && Math.abs(all.X[e] - all.X[f]) > min && Math.abs(all.Y[e] - all.Y[f]) > min ) {
-                    ctx.strokeStyle = 'rgba('+all.R[e]+','+all.G[e]+','+all.B[e]+','+all.A[e] +')'
+
+        var pe, pf, all_length;
+        all_length = all_track.getLength();
+        ctx.lineWidth = 1.5;
+        for ( var e = 0 ; e < all_length ; e++ ) {
+            pe = all_track.getPoint( e )
+
+            for ( var f = 0 ; f < all_length ; f++ ) {
+            
+                pf = all_track.getPoint( f )
+                if (pe.A + pf.A === 0) continue;
+                if (Math.abs(e-f) <= 2) continue;
+                var max = pe.S,
+                    min = pe.S * 0.5
+                if ( Math.abs(pe.X - pf.X) < max && Math.abs(pe.Y - pf.Y) < max && Math.abs(pe.X - pf.X) > min && Math.abs(pe.Y - pf.Y) > min ) {
+                    ctx.strokeStyle = STYLE.gradientMaker( ctx , pf , pe );
                     ctx.beginPath();
-                    ctx.moveTo(all.X[e],all.Y[e])
-                    ctx.lineTo(all.X[f],all.Y[f])
+                    ctx.moveTo(pe.X,pe.Y)
+                    ctx.lineTo(pf.X,pf.Y)
                     ctx.stroke();
                     ctx.closePath();
                 }
+            
             }
+
         }
 
     })
@@ -368,137 +406,139 @@ connection_network : function(){
 },
 
 fillmember_style : function() {
-    var module = new URNDR.Module("",URNDR.DRAW_MODULE);
-    // 
-    module.name = "fillmember style"
-    module.keyCode = 50; // 2
+    var module = new URNDR.Module("COMIC STYLE",URNDR.DRAW_MODULE,50); // 2
     module.setFunction(function(params){
-        var data = params.strokes.data
+        var strokes, ctx, strokes_count, stroke_i, points_count, point_j, point_prev, grad;
+        var strokes = params.strokes
         var ctx = params.context
 
         clear(1);
-        
-        var l,o;
-            l = STROKES.getStrokesCount() - 1;
-        for ( var k = 0 ; k <= l ; k++ ) {
-            o = STROKES.getStrokeLength(k);
-                ctx.strokeStyle= '#FFF';
-            for ( var i = 1 ; i < o-1 ; i++ ) {
-                if (data.A[k][i] !== 0) {
-                    ctx.beginPath();
-                    ctx.lineWidth = data.S[k][i] * 2;
-                    ctx.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-                    ctx.lineTo(data.X[k][i],data.Y[k][i]);
-                    ctx.stroke();
-                    ctx.closePath();
-                }
-            }
-            for ( var i = 1 ; i < o-1 ; i++ ) {
+
+        strokes_count = strokes.getStrokesCount();
+        for ( var i = 0 ; i < strokes_count ; i++ ) {
+
+            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
+
+            points_count = stroke_i.getLength();
+            if (points_count === 0) { continue; }
+
+            ctx.strokeStyle = 'rgb(255,255,255)'
+            
+            for ( var k = 1 ; k < points_count ; k++ ) {
+                point_prev = stroke_i.getPoint( k - 1 )
+                point_j = stroke_i.getPoint( k )
+
+                if (point_prev.A + point_j.A === 0) { continue; }
+
                 ctx.beginPath();
-                    ctx.lineWidth = data.S[k][i];
-                    ctx.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
-                ctx.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-                ctx.lineTo(data.X[k][i],data.Y[k][i]);
-                    ctx.stroke();
+                ctx.lineWidth = point_j.S * 2;
+                ctx.moveTo(point_prev.X,point_prev.Y);
+                ctx.lineTo(point_j.X,point_j.Y);
+                ctx.stroke();
+                ctx.closePath();
+
+            }
+
+            for ( var j = 1 ; j < points_count ; j++ ) {
+                point_prev = stroke_i.getPoint( j - 1 )
+                point_j = stroke_i.getPoint( j )
+
+                if (point_prev.A + point_j.A === 0) { continue; }
+
+                ctx.lineWidth = point_j.S;
+                
+                grad = ctx.createLinearGradient( point_prev.X , point_prev.Y , point_j.X , point_j.Y );
+                grad.addColorStop(0,'rgba('+point_prev.R+','+point_prev.G+','+point_prev.B+','+point_prev.A+')')
+                grad.addColorStop(1,'rgba('+point_j.R+','+point_j.G+','+point_j.B+','+point_j.A+')')
+                
+                ctx.strokeStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo( point_prev.X , point_prev.Y )
+                ctx.lineTo( point_j.X , point_j.Y )
+                ctx.stroke();
                 ctx.closePath();
             }
+
         }
+
     })
     return module
 },
 
 dot_debug_style : function() {
-    var module = new URNDR.Module("",URNDR.DRAW_MODULE);
-    // 
-    module.name = "debug draw mode"
-    module.keyCode = 51
+    var module = new URNDR.Module("DEBUG MODE (FUN MODE) ",URNDR.DRAW_MODULE,51);
     module.setFunction(function(params){
-        var data = params.strokes.data
-        var ctx = params.context
-        clear(.8);
+        var strokes, ctx, strokes_count, stroke_i, points_count, point_j;
+        strokes = params.strokes
+        ctx = params.context
+        
+        clear(.2);
 
-        MESH.rotation.y += PEN.ndc_x * 0.05;
-        MESH.rotation.x -= PEN.ndc_y * 0.05;
-        var l,o;
-            l = STROKES.getStrokesCount() - 1;
-                ctx.lineWidth = 2;
-        for ( var k = 0 ; k <= l ; k++ ) {
-            o = STROKES.getStrokeLength(k);
-            for ( var i = 1 ; i < o-1 ; i++ ) {
-                ctx.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
+        ctx.lineWidth = 2;
+
+        strokes_count = strokes.getStrokesCount();
+        for ( var i = 0 ; i < strokes_count ; i++ ) {
+
+            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
+            points_count = stroke_i.getLength();
+            if (points_count === 0) { continue; }
+            
+            for ( var j = 0 ; j < points_count  ; j++ ) {
+                point_j = stroke_i.getPoint( j )
+                ctx.strokeStyle= 'rgba('+point_j.R+','+point_j.G+','+point_j.B+','+point_j.A+')';
                 ctx.beginPath();
-                ctx.moveTo(data.X[k][i]-0.001,data.Y[k][i]-0.001);
-                ctx.lineTo(data.X[k][i],data.Y[k][i]);
+                ctx.moveTo(point_j.X-0.001,point_j.Y-0.001);
+                ctx.lineTo(point_j.X,point_j.Y);
                 ctx.stroke();
                 ctx.closePath();
             }
+
         }
     })
     return module
 },
 
 default_draw_style : function() {
-    var module = new URNDR.Module("Default Draw Style",URNDR.DRAW_MODULE,48,true);
+    var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
     module.setFunction(function(params){
-        var data = params.strokes.data
-        var ctx = params.context
+
+        var strokes, ctx, strokes_count, stroke_i, points_count, point_j, point_prev, grad;
+        strokes = params.strokes
+        ctx = params.context
+        
         // default drawing style
         clear(1);
-        MESH.rotation.y += 0.000;
-        var l,o;
-            l = STROKES.getStrokesCount() - 1;
-        for ( var k = 0 ; k <= l ; k++ ) {
-            o = STROKES.getStrokeLength(k);
-            for ( var i = 1 ; i < o-1 ; i++ ) {
-                ctx.lineWidth = data.S[k][i];
-                ctx.strokeStyle= 'rgba('+data.R[k][i]+','+data.G[k][i]+','+data.B[k][i]+','+data.A[k][i]+')';
+        
+        strokes_count = strokes.getStrokesCount();
+
+        for ( var i = 0 ; i < strokes_count  ; i ++ ) {
+
+            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
+            points_count = stroke_i.getLength();
+            if (points_count === 0) { continue; }
+
+            for ( var j = 1 ; j < points_count ; j ++ ) {
+
+                point_prev = stroke_i.getPoint( j - 1 )
+                point_j = stroke_i.getPoint( j )
+
+                if (point_prev.A + point_j.A === 0) { continue; }
+
+                ctx.lineWidth = point_j.S;
+                
+                ctx.strokeStyle = STYLE.gradientMaker( ctx , point_prev , point_j );
                 ctx.beginPath();
-                ctx.moveTo(data.X[k][i-1],data.Y[k][i-1]);
-                ctx.lineTo(data.X[k][i],data.Y[k][i]);
+                ctx.moveTo( point_prev.X , point_prev.Y )
+                ctx.lineTo( point_j.X , point_j.Y )
                 ctx.stroke();
                 ctx.closePath();
+
             }
+
         }
+
     })
     return module
 }
 
 } );
-
-//
-// HELPER FUNCTIONS
-//
-
-function replaceLastElements(arr,rep) {
-    var l = arr.length, n = rep.length;
-    if ( l <= n ) {
-        arr = rep.slice( 0 , l );
-    } else {
-        arr = arr.slice( 0 , l - n ).concat(rep);
-    }
-    return arr;
-}
-
-function getLastNElements(arr,n) {
-    if (n > arr.length) {return Object.create(arr);}
-    return arr.slice( - n );
-}
-
-function SMOOTH_ARRAY(arr,params) {
-    var l = arr.length;
-    if (!params.factor) {params.factor = 8}
-    if (!params.step) {params.step = 1}
-    for ( var i = 1 ; i < l - 1 ; i += params.step ) {
-        arr[i] = (arr[i-1] + arr[i] * params.factor + arr[i+1]) / (params.factor + 2);
-        if (params.round) { arr[i] = Math.round(arr[i]); }
-    }
-}
-
-function RANDOM_NUMBER(number,params) {
-    var result;
-        result = number * Math.random();
-    if (params) {
-        if (params.round) result = Math.round(result);
-    }
-    return result
-}

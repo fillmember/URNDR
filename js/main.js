@@ -25,8 +25,8 @@ document.body.appendChild( RENDERER.domElement );
 
 // Set up environment for testing; module in the future...
 var test_mesh = {
-    geo: new THREE.IcosahedronGeometry(2,1),
-    geo_2: new THREE.TorusKnotGeometry( 2 , 0.6, 30, 5 ),
+    geo: new THREE.IcosahedronGeometry(1.5,1),
+    geo_2: new THREE.TorusKnotGeometry( 1.2 , 0.6, 30, 5 ),
     mat: new THREE.MeshBasicMaterial( {
         color: 0xFFFFFF, 
         vertexColors: THREE.FaceColors, 
@@ -36,7 +36,7 @@ var test_mesh = {
     } )
 };
 test_mesh.mat.side = THREE.FrontSide;
-MESH = new THREE.Mesh( test_mesh.geo_2 , test_mesh.mat );
+MESH = new THREE.Mesh( test_mesh.geo , test_mesh.mat );
 MESH.rotation.z = 0.5;
 MESH.geometry.dynamic = true; // EXPERIMENTAL
 SCENE.add( MESH );
@@ -97,7 +97,8 @@ document.addEventListener("keydown", function (event) {
 CANVAS.addEventListener("mouseup", function (event) {
 
     if (PEN.drawingMode === 1) {
-        STROKES.optimizeStroke( STROKES.getActiveStroke() )
+        // STROKES.optimize( STROKES.getActiveStroke() )
+        //
         STROKES.beginNewStroke();
     }
 
@@ -105,6 +106,17 @@ CANVAS.addEventListener("mouseup", function (event) {
 
 });
 CANVAS.addEventListener("mousedown", function (event) {
+
+    if (PEN.drawingMode === 1) {
+
+        // check if there's active stroke, if not then...
+        if ( STROKES.getActiveStroke() === 0) {
+
+            STROKES.beginNewStroke()
+
+        }
+
+    }
     
     PEN.isDown = 1;
 
@@ -112,28 +124,15 @@ CANVAS.addEventListener("mousedown", function (event) {
     PAPER.lineJoin = STYLE.join
 
 });
-CANVAS.addEventListener("mousemove", function (event) {
+CANVAS.addEventListener("mousemove", Cowboy.throttle( 30 , function (event) {
 
     var mouse_data = PEN.getMousePos(CANVAS, event);
-    for (var k in mouse_data) {
-        if ( PEN.hasOwnProperty(k) ) { PEN[k] = mouse_data[k]; }
-    }
-    PEN.pressure = WACOM.pressure;
+    mouse_data.pressure = WACOM.pressure;
+    PEN.updatePen( mouse_data )
 
     if (PEN.isDown !== 1) { return false; }
 
     MODULES.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
-
-    updateAndInsert();
-
-});
-CANVAS.addEventListener("mouseout", function ( event ) {
-
-    PEN.isDown = 0;
-
-});
-
-var updateAndInsert = function() {
 
     var point = {
         X : PEN.x,
@@ -157,16 +156,18 @@ var updateAndInsert = function() {
             face = i0.face
             vertices = obj.geometry.vertices
 
-        point.BindedObject = obj
-        point.BindedFace = face
+        point.OBJECT = obj;
+        point.FACE = face
         
         a = obj.localToWorld( vertices[i0.face.a].clone() ).project(CAMERA)
         b = obj.localToWorld( vertices[i0.face.b].clone() ).project(CAMERA)
         c = obj.localToWorld( vertices[i0.face.c].clone() ).project(CAMERA)
         
         var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
-        // TODO: seperate barycentric coordinate into u , v , w
-        point.Barycentric = bco
+        
+        point.BU = bco.u
+        point.BV = bco.v
+        point.BW = bco.w
 
     }
     
@@ -174,24 +175,36 @@ var updateAndInsert = function() {
     MODULES.runEnabledModulesInList( URNDR.POINT_MODULE , point )
 
     // WRITE POINT INTO STROKE
-    STROKES.addNewPointInStroke( STROKES.active_stroke , point );
+    var active_stroke = STROKES.getActiveStroke();
+    if (active_stroke !== 0) {
+        STROKES.getActiveStroke().addPoint( point )
+    }
 
-}
-// add a layer of throttle function
-updateAndInsert = Cowboy.throttle( 1000 / 60 , updateAndInsert )
+}) );
+CANVAS.addEventListener("mouseout", function ( event ) {
+
+    PEN.isDown = 0;
+
+});
 
 var counter = 0;
 // requestAnimationFrame
 var display = function() {
 
-    // mess with strokes
-    MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-    
     // RENDER
+    MESH.rotation.y -= PEN.ndc_x * 0.01
+    MESH.rotation.x += PEN.ndc_y * 0.01
     RENDERER.render(SCENE,CAMERA);
 
-    // RUN DRAW MODULES
-    MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:PAPER} );
+    // mess with strokes
+    if (STROKES.getStrokesCount() > 0) {
+
+        MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
+        
+        // RUN DRAW MODULES
+        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:PAPER} );
+        
+    }
     
     counter = counter + 1;
     

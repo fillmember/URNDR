@@ -132,7 +132,7 @@ URNDR.ModuleManager = function() {
     }
     this.getEnabledModulesCount = function( list_name ) {
         var list = this[list_name], enabled_count = 0;
-        for (m in list) if (list[m].enabled) enabled_count ++
+        for (m in list) { if (list[m].enabled) { enabled_count ++; } }
         return enabled_count;
     }
     this.resetModules = function( list_name ) { }
@@ -141,102 +141,373 @@ URNDR.ModuleManager = function() {
 // Strokes
 
 URNDR.Strokes = function(){
-    this.data = {
-        // Vector Data
-        X:[], Y:[], S:[], 
-        // Colour Data
-        R:[], G:[], B:[], A:[],
-        // 3D Data. BINDED_FACE is the reference to the face object, The next two are initial position. 
-        BindedObject: [], BindedFace: [], Barycentric: [],
-        // Additional Effect Data
-        EffectData: []
-    };
+    
+    // Data
+    this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
+    this.strokesHistory = []; // Store stroke ID. Record order of creation.
+    this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
+    // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
     this.active_stroke = 0;
-    for ( var p in this.data ) { this.data[p][0] = []; }
-    // functions
-    this.getStroke = function(stroke_n) {
-        var result = {}
-        for (p in this.data) { result[p] = this.data[p][stroke_n] }
+
+}
+// functions
+URNDR.Strokes.prototype.getActiveStroke = function() {
+
+    if (this.active_stroke !== 0) {
+        return this.getStrokeByID( this.active_stroke );
+    } else {
+        return 0;
+    }
+
+}
+// Make one stroke active by storing its ID into active_stroke
+URNDR.Strokes.prototype.selectStrokeByID = function ( id ) {
+
+    if ( this.strokes.hasOwnProperty(id) ) {
+        this.active_stroke = id
+    } else {
+        return false;
+    }
+
+}
+URNDR.Strokes.prototype.getLastStrokeInHistory = function() {
+
+    return this.getStrokeByID( this.strokesHistory[ this.strokesHistory.length - 1 ] );
+
+}
+URNDR.Strokes.prototype.beginNewStroke = function (  ) {
+
+    this.selectStrokeByID( this.addStroke() );
+
+}
+URNDR.Strokes.prototype.addStroke = function (  ) {
+
+    // Check argument first
+    var alen = arguments.length;
+    if (alen === 0) {
+
+        // Create an empty stroke for user.
+        return this.addStroke( new URNDR.Stroke() )
+
+    } else if (alen > 1) {
+
+        // Several Strokes. 
+        for ( var j = 0; j < alen; j++) {
+
+            this.addStroke( arguments[j] )
+
+        }
+
+    } else if (alen === 1) {
+
+        var this_stroke = arguments[0]
+
+        if (this_stroke instanceof URNDR.Stroke ) {
+            
+            this.strokes[this_stroke.id] = this_stroke;
+            this.strokesHistory.push( this_stroke.id )
+            this.strokesZDepth.push( this_stroke.id )
+
+            return this_stroke.id; // return the id so people can identify it. 
+
+        } else {
+            
+            console.log("addStroke only accept Stroke objects. ")
+
+            return false;
+
+        }
+
+    }
+
+}
+// NOTE: To iterate through strokes when drawing & manipulating... just use strokes map or strokesArray. 
+URNDR.Strokes.prototype.getStrokeByID = function ( id ) {
+
+    if (this.strokes.hasOwnProperty(id)) {
+        return this.strokes[id]
+    } else {
+        return 0;
+    }
+
+}
+URNDR.Strokes.prototype.deleteStrokeByID = function ( id ) {
+    
+    if (this.strokes.hasOwnProperty(id)) {
+
+        var in_history = this.strokesHistory.indexOf(id)
+        var in_z_depth = this.strokesZDepth.indexOf(id)
+
+        // NOTE: if everything works right. They should also be present in these arrays...
+        if (in_history >= 0) { this.strokesHistory.splice( in_history , 1) }
+        if (in_z_depth >= 0) { this.strokesZDepth.splice( in_z_depth , 1) }
+        if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) } // auto check consistency, something might be wrong :(
+
+        delete this.strokes[id]
+
+    } else {
+
+        console.log("Warning : Stroke not found. Did nothing. ")
+
+    }
+
+}
+URNDR.Strokes.prototype.getStrokesCount = function () {
+
+    return this.strokesHistory.length;
+
+}
+URNDR.Strokes.prototype.checkConsistency = function (id) {
+
+    console.log("PART I : Start to check consistency in the data. ")
+
+    if (id) {
+
+        console.log("Check stroke by ID...")
+
+        if ( this.strokes.hasOwnProperty(id) ) {
+
+            var in_history = this.strokesHistory.indexOf(id);
+            var in_z_depth = this.strokesZDepth.indexOf(id);
+
+            console.log("Index in History Array: "+in_history,"Index in Z-Depth Array: "+in_z_depth);
+            console.log("Something wrong? ",in_history === in_z_depth ? "NO :)" : "YES :(");
+
+        } else {
+
+            console.log("no such stroke present. ");
+
+        }
+
+    }
+
+    console.log("PART II : Check Data Length");
+
+    var slen, hlen, zlen;
+    slen = Object.keys(strokes).length;
+    hlen = this.strokesHistory.length;
+    zlen = this.strokesZDepth.length;
+
+    if ( slen === hlen === zlen) {
+        console.log("")
+    } else {
+        console.log("Warning to developer : there's inconsistency between strokes and other two arrays! (slen,hlen,zlen) = (",slen,hlen,zlen,")");
+        console.log("Tips : Don't control strokes without Strokes object's interface. ");
+    }
+
+}
+URNDR.Strokes.prototype.eachStroke = function( my_function , parameters ) {
+    var len = this.getStrokesCount();
+    for( var i = 0; i < len; i++ ){
+        my_function( this.getStrokeByID( this.strokesHistory[ i ] ) , parameters , i );
+    }
+}
+
+// SUB CLASSES
+URNDR.Stroke = function(tags) {
+
+    this.id = "S-"+THREE.Math.generateUUID();
+    this.tags = tags || {}; // for future stroke-specific effect.
+    this.center = {x:0,y:0}; // for future transform function.
+    this.points = []; // must be sequential. From 0 to this.length.
+
+}
+URNDR.Stroke.prototype.getLength = function() {
+
+    return this.points.length;
+
+}
+URNDR.Stroke.prototype.addPoint = function( point ) {
+
+    if ( point instanceof URNDR.Point ) {
+        // already a Point object, just push it
+        this.points.push( point );
+    } else {
+        // copy the values to a newly created point.
+        this.points.push( new URNDR.Point( point ) )
+
+    }
+
+}
+URNDR.Stroke.prototype.getPoint = function( point_n ) {
+
+    if ( point_n >= 0 && point_n < this.getLength() ) {
+        return this.points[ point_n ]
+    } else {
+        return 0
+    }
+
+}
+URNDR.Stroke.prototype.getTrack = function( track_name ) {
+
+    var len, result
+    len = this.getLength();
+    result = [];
+
+    if (len === 0) {
         return result;
     }
-    this.deleteStroke = function(stroke_n) {
-        for (p in this.data) { this.data[p].splice( stroke_n , 1 ) }
-        this.active_stroke--;
+
+    if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) {
+        return 0
     }
-    this.deletePointInStroke = function( stroke_n , point_n ) { for (p in this.data ) { this.data[p][stroke_n].splice(point_n, 1)} }
-    this.setPointInStroke = function( stroke_n , point_n , data_set ) {
-        for ( p in data_set ) { if (this.data.hasOwnProperty(p)) { this.data[p][stroke_n][point_n] = data_set[p]; } }
+
+    for ( var i = 0; i < len; i++ ) {
+
+        result.push( this.getPoint(i)[ track_name ] )
+
     }
-    this.addNewPointInStroke = function( stroke_n , point ) { for ( p in this.data ) { this.data[p][stroke_n].push(point[p]) } }
-    this.getStrokesCount = function() { return this.data.X.length; }
-    this.getStrokeLength = function(stroke_n) { return this.data.X[stroke_n].length; }
-    this.beginNewStroke = function() {
-        for ( p in this.data ) { this.data[p].push([]) }
-        this.active_stroke++;
+    return result;
+
+}
+URNDR.Stroke.prototype.setTrack = function( track_name , arr ) {
+
+    var len = this.getLength()
+
+    if (len !== arr.length) {
+        return 0
     }
-    this.optimizeStroke = function( stroke_n ) {
-        var stroke, stroke_length, deleted_point_count;
 
-        deleted_point_count = 0;
+    for ( var i = 0; i < len; i++ ) {
 
-        // Goals : 
-        // Remove strokes points with size / alpha zero
-        stroke = this.getStroke(stroke_n);
-        stroke_length = this.getStrokeLength(stroke_n);
-        for ( var point_n = 0 ; point_n < stroke_length ; point_n ++ ) {
+        this.getPoint(i)[ track_name ] = arr[i]
 
-            if (stroke.S[point_n] === 0 || stroke.A[point_n] === 0) {
-                this.deletePointInStroke(stroke_n, point_n);
-                deleted_point_count += 1;
-            }
+    }
 
+}
+URNDR.Stroke.prototype.searchPoint = function( rect ) {}
+URNDR.Stroke.prototype.removePoint = function( point_n ) {
+
+    if ( point_n >= 0 && point_n < this.getLength() ) {
+        this.points.splice( point_n , 1)
+    } else {
+        console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.getLength() )
+    }
+
+}
+URNDR.Stroke.prototype.optimize = function() {}
+URNDR.Stroke.prototype.calculateCenterOfPoints = function() {}
+URNDR.Stroke.prototype.setTag = function( tag , tag_data ) {
+    this.tags[tag] = tag_data;
+}
+URNDR.Stroke.prototype.checkTag = function( tag ) {
+    if (this.tags.hasOwnProperty(tag)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+URNDR.Stroke.prototype.getTag = function( tag ) {
+
+    if (this.tags.hasOwnProperty(tag)) {
+        return this.tags[tag];
+    } else {
+        return undefined;
+    }
+
+}
+URNDR.Stroke.prototype.eachPoint = function( my_function , parameters ) {
+    var len = this.getLength()
+    for (var j = 0; j < len; j++ ) {
+        my_function( this.getPoint( j ) , parameters , j )
+    }
+}
+URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
+
+    if (this.getLength() < 2) { return 0; }
+    if (this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
+
+    var track = this.getTrack( track_name );
+    var track_leng = track.length;
+    var before_me, b, after_me, a;
+    before_me = undefined;
+    after_me = undefined;
+    var result = {
+        before: 0, after: 0, before_distance: 0, after_distance: 0
+    }
+    for (b = n - 1; b >= 0; b--) {
+        if (track[b] !== null && track[b] !== undefined) {
+            before_me = b;
+            break;
         }
-
-        //
-        // Speparate strokes into not mapped ones and mapped ones
-        function checkBarycentricCoordinate( stroke , point_n ) {
-            return stroke.Barycentric[ point_n ] ? true : false
-        }
-
-        var flag = {new_lines:0,state:null,cutpoints:[]}
-        stroke = this.getStroke(stroke_n);
-        stroke_length = this.getStrokeLength(stroke_n);
-        flag.state = checkBarycentricCoordinate( stroke , 0 )
-        for ( var point_n = 1 ; point_n < stroke_length ; point_n ++ ) {
-            var b = checkBarycentricCoordinate(stroke, point_n);
-            if (b !== flag.state) {
-                console.log(point_n,b?"3D":"2D")
-                flag.cutpoints.push(point_n)
-                flag.state = b
-                flag.new_lines ++;
-            }
-        }
-        console.log("// CUT TIME //")
-        var cut = 0;
-        var newStrokes = [];
-        var bufferStroke;
-        while (cut < flag.cutpoints.length) {
-            console.log("from",0,"to",flag.cutpoints[cut])
-            newStrokes.push()
-            cut += 1;
-        }
-        console.log("")
-
-        //
-        // check if the stroke's length is zero, if so delete it
-        stroke_length = this.getStrokeLength(stroke_n);
     }
-    this.cutStroke = function( stroke_n , index ) {
-        //
+    for (a = n; a < track_leng; a++) {
+        if (track[a] !== null && track[a] !== undefined) {
+            after_me = a;
+            break;
+        }
     }
-    this.getActiveStroke = function() { return this.active_stroke; }
-    this.getStrokeCenter = function(stroke_n) {
-        var stroke = this.getStroke(stroke_n),
-            len = this.getStrokeLength(stroke_n),
-            sum = [0,0,0];
-        for( var p = 0 ; p < len ; p ++ ) { sum[0] += stroke.X[p]; sum[1] += stroke.Y[p]; sum[2] += stroke.Z[p]; }
-        sum[0] /= len; sum[1] /= len; sum[2] /= len;
-        return sum;
+    if (after_me === undefined) {
+        if (before_me === undefined) {
+            return 0;
+        } else {
+            result.before = this.getPoint( before_me )
+            result.before_distance = n - before_me
+        }
+    } else {
+        if (before_me === undefined) {
+            result.after = this.getPoint( after_me )
+            result.after_distance = after_me - n
+        } else {
+            result.before = this.getPoint( before_me )
+            result.before_distance = n - before_me
+            result.after = this.getPoint( after_me )
+            result.after_distance = after_me - n
+        }
+    }
+
+    return result
+
+}
+
+URNDR.Point = function( input ) {
+
+    this.X = -100;
+    this.Y = -100;
+    this.S = 0;
+    
+    this.R = 0;
+    this.G = 0;
+    this.B = 0;
+    this.A = 0;
+
+    this.OBJECT = null;
+    this.FACE = null;
+    this.BU = 1;
+    this.BV = 0;
+    this.BW = 0;
+
+    // Potential movement
+    this.PX = 0;
+    this.PY = 0;
+
+    this.updatePoint(input);
+
+}
+URNDR.Point.prototype.updatePoint = function( input ) {
+
+    for (var key in input) {
+        if (input.hasOwnProperty(key) && this.hasOwnProperty(key)) {
+            this[key] = input[key]
+        }
+    }
+
+}
+URNDR.Point.prototype.updateBarycentricCoordinate = function( camera ) {
+    if (this.OBJECT && this.FACE) {
+
+        var ndc_pos, a, b, c, bary
+        ndc_pos = URNDR.Math.pixelToCoordinate( this.X , this.Y )
+        a = this.OBJECT.localToWorld( this.FACE.a.clone() ).project(camera)
+        b = this.OBJECT.localToWorld( this.FACE.b.clone() ).project(camera)
+        c = this.OBJECT.localToWorld( this.FACE.c.clone() ).project(camera)
+
+        bary = URNDR.Math.getBarycentricCoordinate( ndc_pos , a , b , c )
+
+        this.BU = bary.u
+        this.BV = bary.v
+        this.BW = bary.w
+
     }
 }
 
@@ -260,27 +531,71 @@ URNDR.Pen.prototype.getMousePos = function (canvas, evt) {
         obj.ndc_y = THREE.Math.mapLinear( obj.y , 0 , window.innerHeight , 1 , -1 )
     return obj;
 }
+URNDR.Pen.prototype.updatePen = function ( data ) {
+    for (var k in data) {
+        if ( PEN.hasOwnProperty(k) ) { PEN[k] = data[k]; }
+    }
+}
 
 // DEBUG HUD
 
 URNDR.Hud = function(box) {
     this.box = box;
     this.messageStyle = { prefix : '<div class="argument">', suffix : '</div>', seperation : '' }
+    this.vocal = true;
+    this.devToDisplay = true;
+    this.msg_count = 0;
+    this.MAX_msg_count = 8;
     // METHODS
-    this.display = function() {
-        this.box.innerHTML = this.makeMessage( arguments[0] );
-        for (var i=1;i<arguments.length;i++) { this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] ); }
+    
+}
+URNDR.Hud.prototype.display = function() {
+
+    this.box.innerHTML = this.makeMessage( arguments[0] );
+    this.msg_count = 1;
+
+    for (var i=1;i<arguments.length;i++) {
+        this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
+        this.msg_count += 1;
     }
-    this.appendToDisplay = function() { for (var i=0;i<arguments.length;i++) { this.box.innerHTML += '<br />' + arguments[i]; } }
-    this.makeMessage = function(msg) {
-        return this.messageStyle.prefix + msg + this.messageStyle.suffix;
+
+}
+URNDR.Hud.prototype.appendToDisplay = function() {
+    
+    for (var i=0;i<arguments.length;i++) {
+        this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
+        this.msg_count += 1;
     }
-    this.clearDisplay = function() { this.box.innerHTML = null; }
-    this.setPosition = function(left,top) {
-        var style = this.box.style
-        style.left = left || style.left;
-        style.top = top || style.top;
+
+}
+URNDR.Hud.prototype.makeMessage = function(msg) {
+
+    return this.messageStyle.prefix + msg + this.messageStyle.suffix;
+
+}
+URNDR.Hud.prototype.clearDisplay = function() {
+
+    this.box.innerHTML = null;
+    this.msg_count = 0;
+
+}
+URNDR.Hud.prototype.setPosition = function(left,top) {
+    
+    var style = this.box.style
+    style.left = left || style.left;
+    style.top = top || style.top;
+
+}
+URNDR.Hud.prototype.devChannel = function(msg) {
+
+    if (this.vocal) {
+        if (this.devToDisplay) {
+            this.appendToDisplay(msg)
+        } else {
+            console.log(msg)
+        }
     }
+
 }
 
 // FRAMES MANAGER
@@ -375,6 +690,11 @@ URNDR.FramesManager = function() {
 // MATH
 
 URNDR.Math = {
+
+    pixelToCoordinate: function( x , y ) {
+        return {x : THREE.Math.mapLinear( x , 0 , window.innerWidth , -1 , 1 ),
+                y : THREE.Math.mapLinear( y , 0 , window.innerHeight , 1 ,-1 )}
+    },
     
     coordinateToPixel : function( x , y ) {
         return { x : ( x / 2 + 0.5) * window.innerWidth,
@@ -401,6 +721,66 @@ URNDR.Math = {
 
 }
 
+URNDR.Helpers = {
+
+    replaceLastElements : function(arr,rep) {
+        var l = arr.length, 
+            n = rep.length;
+
+        if ( l <= n ) {
+            arr = rep.slice( 0 , l );
+        } else {
+            arr = arr.slice( 0 , l - n ).concat(rep);
+        }
+
+        return arr;
+    },
+
+    getLastElements : function(arr,n) {
+
+        if (n > arr.length) {
+            return Object.create(arr);
+        }
+
+        return arr.slice( - n );
+
+    },
+
+    smoothArray : function(arr,params) {
+        var l = arr.length;
+        if (!params.factor) {params.factor = 8}
+        for ( var i = 1 ; i < l - 1 ; i ++ ) {
+            arr[i] = (arr[i-1] + arr[i] * params.factor + arr[i+1]) / (params.factor + 2);
+            if (params.round) { arr[i] = Math.round(arr[i]); }
+        }
+    },
+
+    randomNumber : function(number,params) {
+
+        if (!number) { number = 1; }
+        
+        var result;
+            result = number * Math.random();
+        
+        if (params) {
+            if (params.round) result = Math.round(result);
+        }
+
+        return result
+    
+    },
+
+    randomiseArray : function(arr , amp) {
+        var l = arr.length;
+        if (!amp) {amp = 10;}
+        for ( i = 0 ; i < l ; i ++ ) {
+            arr[i] += amp/2 - Math.random() * amp
+        }
+        return arr
+    }
+
+}
+
 // STYLE
 
 URNDR.StrokeStyle = function() {
@@ -409,4 +789,10 @@ URNDR.StrokeStyle = function() {
     this.composit = "source-over";
     this.brush_size = 50;
     this.color = {r:0,g:0,b:255,a:1};
+}
+URNDR.StrokeStyle.prototype.gradientMaker = function(ctx,p1,p2) {
+    var grad = ctx.createLinearGradient( p1.X , p1.Y , p2.X , p2.Y );
+    grad.addColorStop(0,'rgba('+p1.R+','+p1.G+','+p1.B+','+p1.A+')')
+    grad.addColorStop(1,'rgba('+p2.R+','+p2.G+','+p2.B+','+p2.A+')')
+    return grad
 }
