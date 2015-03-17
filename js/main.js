@@ -24,18 +24,6 @@ var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
 document.body.appendChild( RENDERER.domElement );
 
 // Set up environment for testing; module in the future...
-var test_mesh = {
-    geo: new THREE.IcosahedronGeometry(1.5,1),
-    geo_2: new THREE.TorusKnotGeometry( 1.2 , 0.6, 30, 5 ),
-    mat: new THREE.MeshBasicMaterial( {
-        color: 0xFFFFFF, 
-        vertexColors: THREE.FaceColors, 
-        fog: true,
-        wireframe: true, 
-        wireframeLinewidth: 0.1,
-    } )
-};
-test_mesh.mat.side = THREE.FrontSide;
 MESH = new THREE.Mesh( test_mesh.geo , test_mesh.mat );
 MESH.rotation.z = 0.5;
 MESH.geometry.dynamic = true; // EXPERIMENTAL
