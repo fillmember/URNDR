@@ -11,7 +11,7 @@ var WACOM = document.getElementById('Wacom').penAPI;
 
 var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
     SCENE = new THREE.Scene();
-    SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
+    // SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
     CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     RENDERER = new THREE.WebGLRenderer( {
         canvas: document.getElementById('lighttable'),
@@ -24,11 +24,44 @@ var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
 document.body.appendChild( RENDERER.domElement );
 
 // Set up environment for testing; module in the future...
-MESH = new THREE.Mesh( test_mesh.geo , test_mesh.mat );
-MESH.rotation.z = 0.5;
-MESH.geometry.dynamic = true; // EXPERIMENTAL
-SCENE.add( MESH );
-CAMERA.position.z = 5;
+var MESH, ANIMATION;
+var loader = new THREE.JSONLoader();
+loader.load( "models/human_02.js" , function( geometry ){
+
+    //
+    // ON LOAD
+    //
+
+    var mat = new THREE.MeshBasicMaterial( {
+        color: 0xFFFFFF,
+        vertexColors: THREE.FaceColors, 
+        
+        fog: true,
+        
+        wireframe: true, 
+        wireframeLinewidth: 0.1,
+
+        morphTargets: true,
+    } );
+
+    MESH = new THREE.Mesh( geometry , mat )
+    MESH.scale.set( 0.03 , 0.03 , 0.03 )
+    MESH.rotation.set( 0 , 4 , 0 )
+    MESH.position.set( 0 , -2 , 0)
+    // MESH.rotation.y = 4.2
+
+    ANIMATION = new THREE.MorphAnimation( MESH );
+    ANIMATION.play();
+
+    SCENE.add( MESH );
+
+})
+// SCENE.add( MESH );
+// CAMERA.position.set( 5 , 0 , 0)
+CAMERA.position.set( 0 , 0 , 5)
+// CAMERA.position.x = 0;
+// CAMERA.position.y = 80;
+// CAMERA.position.z = 170;
 
 //
 // OBJECTS
@@ -176,11 +209,20 @@ CANVAS.addEventListener("mouseout", function ( event ) {
 });
 
 var counter = 0;
+var prevTime = Date.now();
 // requestAnimationFrame
 var display = function() {
 
     // RENDER
-    MESH.rotation.y += 0.005;
+    if ( MESH ) {
+
+        // var time = Date.now();
+        // ANIMATION.update( time - prevTime );
+        ANIMATION.update( 2 );
+        // prevTime = time;
+
+    }
+
     RENDERER.render(SCENE,CAMERA);
 
     if (STROKES.getStrokesCount() > 0) {

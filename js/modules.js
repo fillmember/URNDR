@@ -180,6 +180,8 @@ move_drawing_with_3d_model : function() {
         }
         function checkVisible( obj, face, camera, threshold ) {
 
+            return true;
+
             if ( face instanceof THREE.Face3 ) {
                 face = obj.localToWorld( face.normal.clone() ).normalize();
             } else if ( face instanceof THREE.Vector3 ) {
@@ -268,15 +270,7 @@ fade_strokes : function() {
             for ( var i = 0; i < len; i++ ) {
 
                 if ( i <= n ) {
-                    stroke.getPoint( i ).A = 0;
-                } else {
-
-                    if ((i - n) < n) {
-                        stroke.getPoint( i ).A *= 0.96
-                    } else {
-                        break;
-                    }
-
+                    stroke.getPoint( i ).A *= 0.5;
                 }
 
             }

@@ -1,3 +1,14 @@
+setInterval( function(){ console.log( MESH.geometry.vertices[30] ) } , 100 )
+
+
+
+
+
+
+
+
+
+
 document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 function onDocumentMouseMove( event ) {
 	event.preventDefault();
