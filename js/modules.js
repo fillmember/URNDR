@@ -75,7 +75,7 @@ random_point_position : function() {
 pressure_sensitivity : function() {
     var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
     module.setConfiguration( {
-        min_size : 5,
+        min_size : 1,
         max_size : 200
     } )
     module.setFunction(function(point) {
@@ -91,16 +91,21 @@ pressure_sensitivity : function() {
 
 move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
+    module.setConfiguration({
+        delayFactor : 0.5
+    })
     module.setFunction(function(strokes) {
-
         var obj,face,p3d,newp,delta,len;
             len = strokes.getStrokesCount();
         // get camera's lookat vector
         var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
 
+        var settings = this.getConfiguration()
+
         // iterate time
         strokes.eachStroke( es , strokes );
         function es( stroke , strokes , i ) {
+            if (strokes.getActiveStroke() === stroke) return 0;
             stroke.eachPoint( ep , stroke );
             function ep( point , stroke , i) {
 
@@ -117,57 +122,49 @@ move_drawing_with_3d_model : function() {
                     }
                     // transform it
                     var a,b,c,p;
-                    a = obj.localToWorld(obj.geometry.vertices[face.a].clone()).project( CAMERA )
-                    b = obj.localToWorld(obj.geometry.vertices[face.b].clone()).project( CAMERA )
-                    c = obj.localToWorld(obj.geometry.vertices[face.c].clone()).project( CAMERA )
+                    a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project(CAMERA)
+                    b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project(CAMERA)
+                    c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project(CAMERA)
                     p = URNDR.Math.coordinateToPixel(
                         a.x * point.BU + b.x * point.BV + c.x * point.BW, 
                         a.y * point.BU + b.y * point.BV + c.y * point.BW
                     )
                     // record this point's potential movement.
-                    point.PX = (p.x - point.X) * 0.5
-                    point.PY = (p.y - point.Y) * 0.5
+                    point.PX = (p.x - point.X) * settings.delayFactor
+                    point.PY = (p.y - point.Y) * settings.delayFactor
                     // set point X Y
                     point.X += point.PX
                     point.Y += point.PY
 
                 } else {
 
-                    // get nearest point's potential movement. 
-                    var near = stroke.getNearestPointWith( "OBJECT" , i );
+                    var near = stroke.getNearestPointWith( "FACE" , i );
                     if (near instanceof Object) {
 
-                        var nbpx = 0,
-                            nbpy = 0,
-                            nbpa = 0,
-                            napx = 0,
-                            napy = 0,
-                            napa = 0;
+                        var before_present = near.before instanceof URNDR.Point;
+                        var after_present = near.after instanceof URNDR.Point;
 
-                        if (near.before instanceof URNDR.Point) {
-                            nbpx = near.before.PX;
-                            nbpy = near.before.PY;
-                            nbpa = near.before.A;
-                        }
-                        if (near.after instanceof URNDR.Point) {
-                            napx = near.after.PX;
-                            napy = near.after.PY;
-                            napa = near.after.A;
-                        }
+                        if ( before_present && after_present ) {
 
-                        var sum = near.before_distance + near.after_distance;
+                            var a = 1 / ( near.after_distance + near.before_distance )
 
-                        point.X += ( near.after_distance * napx + near.before_distance * nbpx ) / sum * 0.5
-                        point.Y += ( near.after_distance * napy + near.before_distance * nbpy ) / sum * 0.5
+                            point.X += ( near.before.PX * near.after_distance + near.after.PX * near.before_distance ) * a
+                            point.Y += ( near.before.PY * near.after_distance + near.after.PY * near.before_distance ) * a
 
-                        if (nbpa + napa === 0) {
-                            point.A = 0
-                        } else if (nbpa === 0 && napa > 0) {
-                            point.A += (point.A - napa) * 0.3
-                        } else if (nbpa > 0 && napa === 0) {
-                            point.A += (point.A - nbpa) * 0.3
-                        } else {
-                            point.A += ( point.A * 2 - napa - nbpa ) * 0.15;
+                        } else if ( before_present || after_present ) {
+
+                            if ( before_present ) {
+
+                                point.X += near.before.PX
+                                point.Y += near.before.PY
+
+                            } else {
+
+                                point.X += near.after.PX
+                                point.Y += near.after.PY
+
+                            }
+
                         }
 
                     }
@@ -250,6 +247,8 @@ fade_strokes : function() {
         if (counter % 2 !== 0 ) return false;
 
         var settings = this.getConfiguration();
+        var visible_point_count = 0;
+        var strokes_to_be_delete = [];
         if (settings.all) {
             strokes.eachStroke( fade , settings );
         } else {
@@ -271,6 +270,11 @@ fade_strokes : function() {
 
                 if ( i <= n ) {
                     stroke.getPoint( i ).A *= 0.5;
+                    if ( stroke.getPoint( i ).A <= 0.1) {
+                        stroke.removePoint( i )
+                        len --;
+                        i --;
+                    }
                 }
 
             }
@@ -278,6 +282,7 @@ fade_strokes : function() {
             stroke.setTag("fade_strokes", Math.min(n + 1 , len) )
 
         }
+
     })
     return module
 },

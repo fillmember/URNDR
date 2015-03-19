@@ -42,13 +42,17 @@ loader.load( "models/human_02.js" , function( geometry ){
         wireframeLinewidth: 0.1,
 
         morphTargets: true,
+
+        side: THREE.CullFaceBack
     } );
 
     MESH = new THREE.Mesh( geometry , mat )
-    MESH.scale.set( 0.03 , 0.03 , 0.03 )
+    MESH.geometry.computeBoundingBox()
+    var y_len = (MESH.geometry.boundingBox.max.y - MESH.geometry.boundingBox.min.y)
+    var scale = 5 / y_len
+    MESH.scale.set( scale , scale , scale )
     MESH.rotation.set( 0 , 4 , 0 )
-    MESH.position.set( 0 , -2 , 0)
-    // MESH.rotation.y = 4.2
+    MESH.position.set( 0 , - 0.45 * y_len * scale , 0)
 
     ANIMATION = new THREE.MorphAnimation( MESH );
     ANIMATION.play();
@@ -56,12 +60,7 @@ loader.load( "models/human_02.js" , function( geometry ){
     SCENE.add( MESH );
 
 })
-// SCENE.add( MESH );
-// CAMERA.position.set( 5 , 0 , 0)
 CAMERA.position.set( 0 , 0 , 5)
-// CAMERA.position.x = 0;
-// CAMERA.position.y = 80;
-// CAMERA.position.z = 170;
 
 //
 // OBJECTS
@@ -119,8 +118,8 @@ CANVAS.addEventListener("mouseup", function (event) {
 
     if (PEN.drawingMode === 1) {
         // STROKES.optimize( STROKES.getActiveStroke() )
-        //
-        STROKES.beginNewStroke();
+        // deselect stroke
+        STROKES.active_stroke = 0
     }
 
     PEN.isDown = 0;
@@ -130,12 +129,7 @@ CANVAS.addEventListener("mousedown", function (event) {
 
     if (PEN.drawingMode === 1) {
 
-        // check if there's active stroke, if not then...
-        if ( STROKES.getActiveStroke() === 0) {
-
-            STROKES.beginNewStroke()
-
-        }
+        STROKES.beginNewStroke();
 
     }
     
@@ -180,9 +174,9 @@ CANVAS.addEventListener("mousemove", Cowboy.throttle( 30 , function (event) {
         point.OBJECT = obj;
         point.FACE = face
         
-        a = obj.localToWorld( vertices[i0.face.a].clone() ).project(CAMERA)
-        b = obj.localToWorld( vertices[i0.face.b].clone() ).project(CAMERA)
-        c = obj.localToWorld( vertices[i0.face.c].clone() ).project(CAMERA)
+        a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project(CAMERA)
+        b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project(CAMERA)
+        c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project(CAMERA)
         
         var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
         
@@ -209,19 +203,17 @@ CANVAS.addEventListener("mouseout", function ( event ) {
 });
 
 var counter = 0;
-var prevTime = Date.now();
 // requestAnimationFrame
 var display = function() {
 
     // RENDER
     if ( MESH ) {
 
-        // var time = Date.now();
-        // ANIMATION.update( time - prevTime );
-        ANIMATION.update( 2 );
-        // prevTime = time;
+        ANIMATION.update( 12 );
+        MESH.rotation.y += 0.003;
 
     }
+
 
     RENDERER.render(SCENE,CAMERA);
 

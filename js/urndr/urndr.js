@@ -796,3 +796,72 @@ URNDR.StrokeStyle.prototype.gradientMaker = function(ctx,p1,p2) {
     grad.addColorStop(1,'rgba('+p2.R+','+p2.G+','+p2.B+','+p2.A+')')
     return grad
 }
+
+// MODEL -- an extension to displaying three objects.
+
+URNDR.Model = function() {
+    this.file_path = "";
+    this.tags = {};
+    // three
+    this.Object3D = undefined;
+    this.AnimationObject = undefined;
+    // this.movesPerUpdate
+}
+URNDR.Model.prototype.loadModel = function() {}
+URNDR.Model.prototype.updateModel = function( speed ) {
+    this.AnimationObject.update( speed )
+}
+
+// ThreeManager -- to manage all things regards Three.js
+
+URNDR.ThreeManager = function() {
+    this.renderer
+    this.camera
+    this.scene
+    this.model_list // List of URNDR.Model, stored by id
+    this.model_count
+    this.global_animation_speed
+}
+URNDR.ThreeManager.prototype.addModel = function(scene,model) {}
+URNDR.ThreeManager.prototype.createScene = function() {}
+URNDR.ThreeManager.prototype.updateScene = function() {
+    for( var i = 0; i < model_count; i++ ){
+        this.model_list[i].updateModel( this.global_animation_speed );
+    }
+    // finally, render
+    this.renderer.render( this.scene , this.camera )
+}
+URNDR.ThreeManager.prototype.checkVisibility = function(){};
+
+
+// EXTEND THREE.JS for connecting my custom objects.
+
+THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
+    
+    var target_count = this.geometry.morphTargets.length
+    if ( target_count === 0 ) {
+        // there's no morphTarget. Return the original vertex.
+        return this.geometry.vertices[ vertex_index ].clone()
+    }
+    // compute the vertex by morphTargets. 
+    var result = new THREE.Vector3( 0, 0, 0 )
+    for ( var i = 0; i < target_count; i++ ) {
+
+        result.add( this.geometry.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
+
+    }
+    return result
+
+}
+
+THREE.Object3D.prototype.getMorphedFaceNormal = function( face_index ) {
+
+    var target_face = this.geometry.faces[ face_index ]
+    if (!target_face) { return 0; }
+
+    var a,b,c
+    a = obj.getMorphedVertex( face.a )
+    b = obj.getMorphedVertex( face.b )
+    c = obj.getMorphedVertex( face.c )
+
+}
