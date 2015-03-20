@@ -26,7 +26,7 @@ document.body.appendChild( RENDERER.domElement );
 // Set up environment for testing; module in the future...
 var MESH, ANIMATION;
 var loader = new THREE.JSONLoader();
-loader.load( "models/human_02.js" , function( geometry ){
+loader.load( "models/human_01.js" , function( geometry ){
 
     //
     // ON LOAD
@@ -209,7 +209,7 @@ var display = function() {
     // RENDER
     if ( MESH ) {
 
-        ANIMATION.update( 12 );
+        ANIMATION.update( 8 );
         MESH.rotation.y += 0.003;
 
     }
