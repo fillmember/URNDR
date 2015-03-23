@@ -105,7 +105,7 @@ move_drawing_with_3d_model : function() {
         // iterate time
         strokes.eachStroke( es , strokes );
         function es( stroke , strokes , i ) {
-            if (strokes.getActiveStroke() === stroke) return 0;
+            // if (strokes.getActiveStroke() === stroke) return 0;
             stroke.eachPoint( ep , stroke );
             function ep( point , stroke , i) {
 

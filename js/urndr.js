@@ -797,22 +797,6 @@ URNDR.StrokeStyle.prototype.gradientMaker = function(ctx,p1,p2) {
     return grad
 }
 
-// Paper
-
-URNDR.DrawingCanvas = function( parameters ) {
-
-    parameters = parameters || {};
-    var _canvas = parameters.canvas !== undefined ? parameters.canvas : document.createElement( 'canvas' ),
-        _w = parameters.width !== undefined ? parameters.width : window.innerWidth,
-        _h = parameters.height !== undefined ? parameters.height : window.innerHeight
-    
-    this.domElement = _canvas;
-    this.context = _canvas.getContext("2d");
-    this.domElement.width = _w;
-    this.domElement.height = _h;
-
-}
-
 // MODEL -- an extension to displaying three objects.
 
 URNDR.Model = function() {
