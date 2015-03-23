@@ -116,6 +116,8 @@ window.onload = function() {
     // EVENTS
     //
 
+    var active_path = null;
+
     document.addEventListener("keydown", function (event) {
 
         var i,k,key,ignores,commands;
@@ -151,15 +153,15 @@ window.onload = function() {
 
     CANVAS.addEventListener("mouseup", function (event) {
 
-        // if (PEN.drawingMode === 1) {
-        //     // STROKES.optimize( STROKES.getActiveStroke() )
-        //     // deselect stroke
-        //     STROKES.active_stroke = 0
-        // }
+        if (PEN.drawingMode === 1) {
+            // STROKES.optimize( STROKES.getActiveStroke() )
+            // deselect stroke
+            STROKES.active_stroke = 0
+        }
 
-        // PEN.isDown = 0;
+        PEN.isDown = 0;
 
-        paper = new paper.Path()
+        // active_path.simplify()
 
     });
     CANVAS.addEventListener("mousedown", function (event) {
@@ -171,6 +173,17 @@ window.onload = function() {
         }
         
         PEN.isDown = 1;
+
+        if (active_path) {
+            active_path.selected = false;
+        }
+
+        active_path = new Path({
+            strokeColor: "black",
+            fullySelected: true
+        })
+
+        project.activeLayer.insertChild( active_path )
 
     });
     CANVAS.addEventListener("mousemove", Cowboy.throttle( 30 , function (event) {
@@ -224,10 +237,26 @@ window.onload = function() {
         MODULES.runEnabledModulesInList( URNDR.POINT_MODULE , point )
 
         // WRITE POINT INTO STROKE
-        var active_stroke = STROKES.getActiveStroke();
-        if (active_stroke !== 0) {
+        if (STROKES.getActiveStroke() !== 0) {
             STROKES.getActiveStroke().addPoint( point )
         }
+
+        // paper.js
+
+        var seg = new paper.Segment( new paper.Point( point.X , point.Y ) )
+        if (intersects.length > 0) {
+            seg.binding = {
+                object:point.OBJECT,
+                face:point.FACE,
+                bu:point.BU,
+                bv:point.BV,
+                bw:point.BW
+            }
+        }
+
+        active_path.add( seg )
+
+        // paper.js
 
     }) );
 
@@ -254,7 +283,7 @@ window.onload = function() {
         if (STROKES.getStrokesCount() > 0) {
 
             MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-            MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:CONTEXT} );
+            // MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:CONTEXT} );
             
         }
 
