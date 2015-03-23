@@ -10,72 +10,35 @@ var WACOM = document.getElementById('Wacom').penAPI;
 // Three.js
 
 var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
-    SCENE = new THREE.Scene();
-    // SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
-    CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-    RENDERER = new THREE.WebGLRenderer( {
-        canvas: document.getElementById('lighttable'),
-        precision: "lowp",
-        alpha: true
-    } );
-    RENDERER.setSize( window.innerWidth, window.innerHeight );
-    RAYCASTER = new THREE.Raycaster();
-
-document.body.appendChild( RENDERER.domElement );
+SCENE = new THREE.Scene();
+// SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
+CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+RENDERER = new THREE.WebGLRenderer( {
+    canvas: document.getElementById('canvas_3d'),
+    precision: "lowp",
+    alpha: true
+} );
+RAYCASTER = new THREE.Raycaster();
 
 // Set up environment for testing; module in the future...
 var MESH, ANIMATION;
-var loader = new THREE.JSONLoader();
-loader.load( "models/human_01.js" , function( geometry ){
-
-    //
-    // ON LOAD
-    //
-
-    var mat = new THREE.MeshBasicMaterial( {
-        color: 0xFFFFFF,
-        vertexColors: THREE.FaceColors, 
-        
-        fog: true,
-        
-        wireframe: true, 
-        wireframeLinewidth: 0.1,
-
-        morphTargets: true,
-
-        side: THREE.CullFaceBack
-    } );
-
-    MESH = new THREE.Mesh( geometry , mat )
-    MESH.geometry.computeBoundingBox()
-    var y_len = (MESH.geometry.boundingBox.max.y - MESH.geometry.boundingBox.min.y)
-    var scale = 5 / y_len
-    MESH.scale.set( scale , scale , scale )
-    MESH.rotation.set( 0 , 4 , 0 )
-    MESH.position.set( 0 , - 0.45 * y_len * scale , 0)
-
-    ANIMATION = new THREE.MorphAnimation( MESH );
-    ANIMATION.play();
-
-    SCENE.add( MESH );
-
-})
-CAMERA.position.set( 0 , 0 , 5)
 
 //
 // OBJECTS
 //
-var STYLE, PEN, MODULES, STROKES, HUD, FRAMES, CANVAS, PAPER;
+var STYLE, PEN, MODULES, STROKES, HUD, DrawPaper;
 
-CANVAS = document.getElementById('paper');
-CANVAS.width = RENDERER.domElement.width; CANVAS.height = RENDERER.domElement.height;
-PAPER = CANVAS.getContext("2d");
+// ON LOAD FUNCTIONS
+// CANVAS = document.getElementById('paper');
+// CANVAS.width = RENDERER.domElement.width; CANVAS.height = RENDERER.domElement.height;
+// PAPER = CANVAS.getContext("2d");
 
 STYLE = new URNDR.StrokeStyle();
 PEN = new URNDR.Pen();
 MODULES = new URNDR.ModuleManager();
 STROKES = new URNDR.Strokes();
 HUD = new URNDR.Hud( document.getElementById('HUD') );
+DrawPaper = new URNDR.DrawingCanvas( {canvas:document.getElementById('canvas_2d')} )
 
 //
 // EVENTS
@@ -244,4 +207,55 @@ function clear(a) {
         PAPER.fillRect(0,0,CANVAS.width,CANVAS.height);
         PAPER.restore();
     }
+}
+
+//
+// ON LOAD
+//
+
+window.onload = function() {
+
+    // Set THREE.Renderer
+
+    RENDERER.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( RENDERER.domElement );
+
+    // Set Camera Position
+
+    CAMERA.position.set( 0 , 0 , 5)
+
+    // Loader load initial object
+
+    var loader = new THREE.JSONLoader();
+    loader.load( "models/human_01.js" , function( geometry ){
+
+        var mat = new THREE.MeshBasicMaterial( {
+            color: 0xFFFFFF,
+            vertexColors: THREE.FaceColors, 
+            
+            fog: true,
+            
+            wireframe: true, 
+            wireframeLinewidth: 0.1,
+
+            morphTargets: true,
+
+            side: THREE.CullFaceBack
+        } );
+
+        MESH = new THREE.Mesh( geometry , mat )
+        MESH.geometry.computeBoundingBox()
+        var y_len = (MESH.geometry.boundingBox.max.y - MESH.geometry.boundingBox.min.y)
+        var scale = 5 / y_len
+        MESH.scale.set( scale , scale , scale )
+        MESH.rotation.set( 0 , 4 , 0 )
+        MESH.position.set( 0 , - 0.45 * y_len * scale , 0)
+
+        ANIMATION = new THREE.MorphAnimation( MESH );
+        ANIMATION.play();
+
+        SCENE.add( MESH );
+
+    })
+
 }
