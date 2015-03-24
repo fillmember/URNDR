@@ -387,8 +387,8 @@ fillmember_style : function() {
                 ctx.lineWidth = point_j.S * 2;
                 ctx.moveTo(point_prev.X,point_prev.Y);
                 ctx.lineTo(point_j.X,point_j.Y);
-                ctx.stroke();
                 ctx.closePath();
+                ctx.stroke();
 
             }
 
@@ -408,8 +408,8 @@ fillmember_style : function() {
                 ctx.beginPath();
                 ctx.moveTo( point_prev.X , point_prev.Y )
                 ctx.lineTo( point_j.X , point_j.Y )
-                ctx.stroke();
                 ctx.closePath();
+                ctx.stroke();
             }
 
         }
@@ -455,16 +455,14 @@ default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
     module.setFunction(function(params){
 
-        var strokes, ctx, strokes_count, stroke_i, points_count, point_j, point_prev, grad;
-        strokes = params.strokes
-        ctx = params.context
+        var strokes = params.strokes, 
+            ctx,  = params.context, 
+            stroke_i, points_count, point_j, point_prev, grad;
         
         // default drawing style
         clear(1);
-        
-        strokes_count = strokes.getStrokesCount();
 
-        for ( var i = 0 ; i < strokes_count  ; i ++ ) {
+        for ( var i = 0, len = strokes.getStrokesCount(); i < len; i ++ ) {
 
             stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
             points_count = stroke_i.getLength();
