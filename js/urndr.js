@@ -645,27 +645,98 @@ URNDR.Point.prototype.updateBarycentricCoordinate = function( camera ) {
 
 // PEN
 
-URNDR.Pen = function() {
+URNDR.Pen = function( canvas , wacom ) {
+    // spatial data
     this.x = 0
     this.y = 0
     this.ndc_x = 0
     this.ndc_y = 0
     this.pressure = 0
+    // state data
     this.isDown = 0
-    this.drawingMode = 1
+    this.active_tool = 0
+    // tool data
+    this.tools = {}
+    this.canvas = canvas
+    this.wacom = wacom
+    // function
+    this.onmousedown = function( evt ) {
+        this.isDown = 1;
+        activeTool.onmousedown( this, evt );
+    };
+    this.onmouseup = function( evt ) {
+        this.isDown = 0;
+        activeTool.onmouseup( this, evt );
+    };
+    this.onmousemove = function( evt ) {
+
+        var d = this.getMousePos()
+        d.pressure = this.wacom.pressure
+        this.update( d )
+
+        if (this.isDown === 1) {
+            activeTool.onmousemove( this, evt );
+        }
+    };
+    this.onmouseout = function( evt ) {
+        this.isDown = 0;
+    };
+    // event
+    this.canvas.addEventListener("mousedown", this.onmousedown );
+    this.canvas.addEventListener("mouseup", this.onmouseup );
+    this.canvas.addEventListener("mousemove", this.onmousemove );
+    this.canvas.addEventListener("mouseout"), this.onmouseout );
+
 }
-URNDR.Pen.prototype.getMousePos = function (canvas, evt) {
-    var rect = canvas.getBoundingClientRect();
+URNDR.Pen.prototype.getMousePos = function (evt) {
+    var rect = this.canvas.getBoundingClientRect();
     var obj = {};
         obj.x = evt.clientX - rect.left;
         obj.y = evt.clientY - rect.top;
-        obj.ndc_x = THREE.Math.mapLinear( obj.x , 0 , window.innerWidth , -1 , 1 )
-        obj.ndc_y = THREE.Math.mapLinear( obj.y , 0 , window.innerHeight , 1 , -1 )
+        obj.ndc_x = THREE.Math.mapLinear( obj.x , 0 , this.canvas.width , -1 , 1 )
+        obj.ndc_y = THREE.Math.mapLinear( obj.y , 0 , this.canvas.height , 1 , -1 )
     return obj;
 }
 URNDR.Pen.prototype.updatePen = function ( data ) {
+    
     for (var k in data) {
         if ( PEN.hasOwnProperty(k) ) { PEN[k] = data[k]; }
+    }
+
+}
+URNDR.Pen.prototype.selectTool = function ( id ) {
+
+    if (this.tools.hasOwnProperty(id)) {
+        this.active_tool = id
+    }
+
+}
+URNDR.Pen.prototype.addTool = function ( tool , activate ) {
+
+    this.tools[tool.id] = tool
+    if (activate) {
+        this.selectTool( tool.id )
+    }
+
+}
+
+URNDR.PenTool = function(parameters) {
+    this.id = "T-" + THREE.Math.generateUUID();
+    this.name = parameters.name || "Untitled Tool";
+    this.onmousedown = parameters.onmousedown || function( evt ){ console.log("tool: "+this.name+" event: mousedown", evt); };
+    this.onmouseup = parameters.onmouseup || function( evt ){ console.log("tool: "+this.name+" event: mouseup", evt); };
+    this.onmousemove = parameters.onmousemove || function( evt ){ console.log("tool: "+this.name+" event: mousemove", evt); };
+    for (var p in parameters) {
+        var flag = true
+        // exclude these
+        for (var no in ["id","name","onmousedown","onmouseup","onmousemove"]) {
+            if (p === no) {
+                flag = false
+            }
+        }
+        if (flag === true) {
+            this[p] = parameters[p]
+        }
     }
 }
 
@@ -956,6 +1027,19 @@ URNDR.ThreeManager = function( parameters ) {
     this.scene    = new THREE.Scene();
     this.scene.fog = parameters.fog || new THREE.Fog( 0xF0F0F0, 3, 5 );
     this.animationSpeed = parameters.animationSpeed || 4
+    this.defaultMaterial = parameters.defaultMaterial || new THREE.MeshBasicMaterial( {
+        color: 0xFFFFFF,
+        vertexColors: THREE.FaceColors, 
+        
+        fog: true,
+        
+        wireframe: true, 
+        wireframeLinewidth: 0.1,
+
+        morphTargets: true,
+
+        side: THREE.CullFaceBack
+    } )
     //
     this.renderer.setSize( window.innerWidth , window.innerHeight )
     this.camera.position.set( 0 , 0 , 5 )

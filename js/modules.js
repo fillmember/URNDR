@@ -456,7 +456,7 @@ default_draw_style : function() {
     module.setFunction(function(params){
 
         var strokes = params.strokes, 
-            ctx,  = params.context, 
+            ctx = params.context, 
             stroke_i, points_count, point_j, point_prev, grad;
         
         // default drawing style
