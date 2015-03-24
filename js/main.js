@@ -4,22 +4,21 @@
 // APIs & Libraries
 //
 
-var WACOM = document.getElementById('Wacom').penAPI;
-    WACOM = WACOM || {pressure:1};
+var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 
 // Three.js
 
 var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
-    SCENE = new THREE.Scene();
-    // SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
-    CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-    RENDERER = new THREE.WebGLRenderer( {
-        canvas: document.getElementById('lighttable'),
-        precision: "lowp",
-        alpha: true
-    } );
-    RENDERER.setSize( window.innerWidth, window.innerHeight );
-    RAYCASTER = new THREE.Raycaster();
+SCENE = new THREE.Scene();
+// SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
+CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+RENDERER = new THREE.WebGLRenderer( {
+    canvas: document.getElementById('lighttable'),
+    precision: "lowp",
+    alpha: true
+} );
+RENDERER.setSize( window.innerWidth, window.innerHeight );
+RAYCASTER = new THREE.Raycaster();
 
 document.body.appendChild( RENDERER.domElement );
 
@@ -244,4 +243,12 @@ function clear(a) {
         PAPER.fillRect(0,0,CANVAS.width,CANVAS.height);
         PAPER.restore();
     }
+}
+
+//
+// Initialize
+//
+
+window.onload = function() {
+    
 }

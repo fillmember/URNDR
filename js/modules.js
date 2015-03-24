@@ -95,8 +95,6 @@ move_drawing_with_3d_model : function() {
         delayFactor : 0.5
     })
     module.setFunction(function(strokes) {
-        var obj,face,p3d,newp,delta,len;
-            len = strokes.getStrokesCount();
         // get camera's lookat vector
         var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
 
@@ -105,7 +103,7 @@ move_drawing_with_3d_model : function() {
         // iterate time
         strokes.eachStroke( es , strokes );
         function es( stroke , strokes , i ) {
-            if (strokes.getActiveStroke() === stroke) return 0;
+            // if (strokes.getActiveStroke() === stroke) return 0;
             stroke.eachPoint( ep , stroke );
             function ep( point , stroke , i) {
 
@@ -114,12 +112,14 @@ move_drawing_with_3d_model : function() {
                     // It is a 3D point!
                     var obj = point.OBJECT
                     var face = point.FACE
+
                     // check if visible
                     if ( checkVisible( obj , face , cameraVector , 0.1) === false ) {
                         point.A = 0;
                         point.PX = 0;
                         point.PY = 0;
                     }
+
                     // transform it
                     var a,b,c,p;
                     a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project(CAMERA)
@@ -129,9 +129,11 @@ move_drawing_with_3d_model : function() {
                         a.x * point.BU + b.x * point.BV + c.x * point.BW, 
                         a.y * point.BU + b.y * point.BV + c.y * point.BW
                     )
+
                     // record this point's potential movement.
                     point.PX = (p.x - point.X) * settings.delayFactor
                     point.PY = (p.y - point.Y) * settings.delayFactor
+
                     // set point X Y
                     point.X += point.PX
                     point.Y += point.PY
@@ -244,11 +246,7 @@ fade_strokes : function() {
         fade_length : 30,
     })
     module.setFunction(function(strokes) {
-        if (counter % 2 !== 0 ) return false;
-
         var settings = this.getConfiguration();
-        var visible_point_count = 0;
-        var strokes_to_be_delete = [];
         if (settings.all) {
             strokes.eachStroke( fade , settings );
         } else {
