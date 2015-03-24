@@ -8,19 +8,10 @@ var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 
 // Three.js
 
-var SCENE, CAMERA, RENDERER, MESH, RAYCASTER;
-SCENE = new THREE.Scene();
-// SCENE.fog = new THREE.Fog( 0xF0F0F0 , 3, 5);
-CAMERA = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
-RENDERER = new THREE.WebGLRenderer( {
-    canvas: document.getElementById('lighttable'),
-    precision: "lowp",
-    alpha: true
-} );
-RENDERER.setSize( window.innerWidth, window.innerHeight );
-RAYCASTER = new THREE.Raycaster();
+var U3 = new URNDR.ThreeManager( { canvas: document.getElementById('lighttable') } )
+var RAYCASTER = new THREE.Raycaster();
 
-document.body.appendChild( RENDERER.domElement );
+document.body.appendChild( U3.renderer.domElement );
 
 // Set up environment for testing; module in the future...
 var MESH, ANIMATION;
@@ -54,12 +45,12 @@ loader.load( "models/human_02.js" , function( geometry ){
     MESH.position.set( 0 , - 0.45 * y_len * scale , 0)
 
     ANIMATION = new THREE.MorphAnimation( MESH );
-    ANIMATION.play();
 
-    SCENE.add( MESH );
+    U3.scene.add( MESH );
 
 })
-CAMERA.position.set( 0 , 0 , 5)
+
+
 
 //
 // OBJECTS
@@ -67,7 +58,7 @@ CAMERA.position.set( 0 , 0 , 5)
 var STYLE, PEN, MODULES, STROKES, HUD, FRAMES, CANVAS, PAPER;
 
 CANVAS = document.getElementById('paper');
-CANVAS.width = RENDERER.domElement.width; CANVAS.height = RENDERER.domElement.height;
+CANVAS.width = U3.renderer.domElement.width; CANVAS.height = U3.renderer.domElement.height;
 PAPER = CANVAS.getContext("2d");
 
 STYLE = new URNDR.StrokeStyle();
@@ -159,9 +150,9 @@ CANVAS.addEventListener("mousemove", Cowboy.throttle( 30 , function (event) {
     // Point's 3d data
     var penNDC = new THREE.Vector2( PEN.ndc_x , PEN.ndc_y )
     
-    RAYCASTER.setFromCamera( penNDC , CAMERA )
+    RAYCASTER.setFromCamera( penNDC , U3.camera )
 
-    var intersects = RAYCASTER.intersectObjects( SCENE.children );
+    var intersects = RAYCASTER.intersectObjects( U3.scene.children );
     if (intersects.length > 0) {
         
         var i0, obj, face, vertices, a, b, c
@@ -173,9 +164,9 @@ CANVAS.addEventListener("mousemove", Cowboy.throttle( 30 , function (event) {
         point.OBJECT = obj;
         point.FACE = face
         
-        a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project(CAMERA)
-        b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project(CAMERA)
-        c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project(CAMERA)
+        a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project(U3.camera)
+        b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project(U3.camera)
+        c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project(U3.camera)
         
         var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
         
@@ -205,16 +196,7 @@ var counter = 0;
 // requestAnimationFrame
 var display = function() {
 
-    // RENDER
-    if ( MESH ) {
-
-        ANIMATION.update( 12 );
-        MESH.rotation.y += 0.003;
-
-    }
-
-
-    RENDERER.render(SCENE,CAMERA);
+    U3.renderer.render( U3.scene, U3.camera );
 
     if (STROKES.getStrokesCount() > 0) {
 
@@ -250,5 +232,5 @@ function clear(a) {
 //
 
 window.onload = function() {
-    
+
 }

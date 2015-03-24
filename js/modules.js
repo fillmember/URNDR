@@ -96,7 +96,7 @@ move_drawing_with_3d_model : function() {
     })
     module.setFunction(function(strokes) {
         // get camera's lookat vector
-        var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
+        var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( U3.camera.quaternion ).normalize();
 
         var settings = this.getConfiguration()
 
@@ -122,9 +122,9 @@ move_drawing_with_3d_model : function() {
 
                     // transform it
                     var a,b,c,p;
-                    a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project(CAMERA)
-                    b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project(CAMERA)
-                    c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project(CAMERA)
+                    a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project(U3.camera)
+                    b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project(U3.camera)
+                    c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project(U3.camera)
                     p = URNDR.Math.coordinateToPixel(
                         a.x * point.BU + b.x * point.BV + c.x * point.BW, 
                         a.y * point.BU + b.y * point.BV + c.y * point.BW
@@ -190,7 +190,7 @@ move_drawing_with_3d_model : function() {
             }
 
             if (camera instanceof THREE.Camera) {
-                camera = new THREE.Vector3(0,0, -1).applyQuaternion( CAMERA.quaternion ).normalize();
+                camera = new THREE.Vector3(0,0, -1).applyQuaternion( U3.camera.quaternion ).normalize();
             } else if ( camera instanceof THREE.Vector3 ) {
                 // camera = camera
             } else {

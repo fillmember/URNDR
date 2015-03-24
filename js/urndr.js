@@ -308,9 +308,14 @@ URNDR.Stroke = function(tags) {
 
     this.id = "S-"+THREE.Math.generateUUID();
     this.tags = tags || {}; // for future stroke-specific effect.
-    this.center = {x:0,y:0}; // for future transform function.
     this.points = []; // must be sequential. From 0 to this.length.
 
+    this.closed = false;     // for draw modules to implement close function
+
+    this.center = {x:0,y:0}; // for future transform function.
+    this.start = 0           // for future "drawing" effect.
+    this.end = 1
+    this.parent              // for future "following" effect.
 }
 URNDR.Stroke.prototype.getLength = function() {
 
@@ -814,16 +819,22 @@ URNDR.Model.prototype.updateModel = function( speed ) {
 
 // ThreeManager -- to manage all things regards Three.js
 
-URNDR.ThreeManager = function() {
-    this.renderer
-    this.camera
-    this.scene
-    this.model_list // List of URNDR.Model, stored by id
-    this.model_count
-    this.global_animation_speed
+URNDR.ThreeManager = function( parameters ) {
+    this.renderer = new THREE.WebGLRenderer({
+        canvas: parameters.canvas,
+        precision: "lowp",
+        alpha: true
+    })
+    this.camera   = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
+    this.scene    = new THREE.Scene();
+    this.scene.fog = parameters.fog || new THREE.Fog( 0xF0F0F0, 3, 5 );
+    this.animationSpeed = parameters.animationSpeed || 4
+    //
+    this.renderer.setSize( window.innerWidth , window.innerHeight )
+    this.camera.position.set( 0 , 0 , 5 )
+    //
 }
 URNDR.ThreeManager.prototype.addModel = function(scene,model) {}
-URNDR.ThreeManager.prototype.createScene = function() {}
 URNDR.ThreeManager.prototype.updateScene = function() {
     for( var i = 0; i < model_count; i++ ){
         this.model_list[i].updateModel( this.global_animation_speed );
@@ -839,17 +850,20 @@ URNDR.ThreeManager.prototype.checkVisibility = function(){};
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
     
     var target_count = this.geometry.morphTargets.length
-    if ( target_count === 0 ) {
+    var influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
+    if ( target_count === 0 || influence_sum === 0 ) {
         // there's no morphTarget. Return the original vertex.
         return this.geometry.vertices[ vertex_index ].clone()
     }
+
     // compute the vertex by morphTargets. 
-    var result = new THREE.Vector3( 0, 0, 0 )
+    var result = new THREE.Vector3( 0, 0, 0 );
     for ( var i = 0; i < target_count; i++ ) {
 
         result.add( this.geometry.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
 
     }
+
     return result
 
 }
