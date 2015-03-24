@@ -151,6 +151,9 @@ URNDR.Strokes = function(){
 
 }
 // functions
+URNDR.Strokes.prototype.reset = function() {
+    URNDR.Strokes.call(this)
+}
 URNDR.Strokes.prototype.getActiveStroke = function() {
 
     if (this.active_stroke !== 0) {
@@ -646,46 +649,65 @@ URNDR.Point.prototype.updateBarycentricCoordinate = function( camera ) {
 // PEN
 
 URNDR.Pen = function( canvas , wacom ) {
+    
     // spatial data
     this.x = 0
     this.y = 0
     this.ndc_x = 0
     this.ndc_y = 0
     this.pressure = 0
+    
     // state data
     this.isDown = 0
     this.active_tool = 0
+
     // tool data
     this.tools = {}
     this.canvas = canvas
     this.wacom = wacom
+
     // function
-    this.onmousedown = function( evt ) {
-        this.isDown = 1;
-        activeTool.onmousedown( this, evt );
-    };
-    this.onmouseup = function( evt ) {
-        this.isDown = 0;
-        activeTool.onmouseup( this, evt );
-    };
-    this.onmousemove = function( evt ) {
-
-        var d = this.getMousePos()
-        d.pressure = this.wacom.pressure
-        this.update( d )
-
-        if (this.isDown === 1) {
-            activeTool.onmousemove( this, evt );
+    this.onmousedown = function( pen, evt ) {
+        pen.isDown = 1;
+        if (pen.active_tool instanceof URNDR.PenTool) {
+            pen.active_tool.onmousedown( pen, evt );
         }
     };
-    this.onmouseout = function( evt ) {
-        this.isDown = 0;
+    this.onmouseup = function( pen, evt ) {
+        pen.isDown = 0;
+        if (pen.active_tool instanceof URNDR.PenTool) {
+            pen.active_tool.onmouseup( pen, evt );
+        }
     };
+    this.onmousemove = function( pen, evt ) {
+
+        var d = pen.getMousePos( evt )
+        d.pressure = pen.wacom.pressure
+        pen.updatePen( d )
+
+        if (this.isDown === 1 && pen.active_tool instanceof URNDR.PenTool) {
+            pen.active_tool.onmousemove( pen, evt );
+        }
+
+    };
+    this.onmouseout = function( pen, evt ) {
+        pen.isDown = 0;
+    };
+
     // event
-    this.canvas.addEventListener("mousedown", this.onmousedown );
-    this.canvas.addEventListener("mouseup", this.onmouseup );
-    this.canvas.addEventListener("mousemove", this.onmousemove );
-    this.canvas.addEventListener("mouseout"), this.onmouseout );
+    var this_pen = this
+    this.canvas.addEventListener("mousedown", function(evt){
+        this_pen.onmousedown( this_pen, evt)
+    } );
+    this.canvas.addEventListener("mouseup", function(evt){
+        this_pen.onmouseup( this_pen, evt)
+    } );
+    this.canvas.addEventListener("mousemove", function(evt){
+        this_pen.onmousemove( this_pen, evt)
+    } );
+    this.canvas.addEventListener("mouseout", function(evt){
+        this_pen.onmouseout( this_pen, evt)
+    } );
 
 }
 URNDR.Pen.prototype.getMousePos = function (evt) {
@@ -704,10 +726,10 @@ URNDR.Pen.prototype.updatePen = function ( data ) {
     }
 
 }
-URNDR.Pen.prototype.selectTool = function ( id ) {
+URNDR.Pen.prototype.selectToolByID = function ( id ) {
 
     if (this.tools.hasOwnProperty(id)) {
-        this.active_tool = id
+        this.active_tool = this.tools[id]
     }
 
 }
@@ -715,7 +737,7 @@ URNDR.Pen.prototype.addTool = function ( tool , activate ) {
 
     this.tools[tool.id] = tool
     if (activate) {
-        this.selectTool( tool.id )
+        this.selectToolByID( tool.id )
     }
 
 }
@@ -734,6 +756,7 @@ URNDR.PenTool = function(parameters) {
                 flag = false
             }
         }
+        // if not one of above, set it into the object
         if (flag === true) {
             this[p] = parameters[p]
         }

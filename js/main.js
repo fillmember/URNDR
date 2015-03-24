@@ -39,21 +39,21 @@ var CANVAS = document.getElementById('paper'),
 // PenTools
 //
 
-var pen_draw_tool = new URNDR.PenTool({
+PEN.addTool(new URNDR.PenTool({
 
     name: "Draw",
     strokes: STROKES,
     modules: MODULES,
     u3: U3,
     onmousedown: function(pen, evt){
-        STROKES.beginNewStroke();
+        this.strokes.beginNewStroke();
     },
     onmouseup: function(pen, evt){
-        STROKES.getActiveStroke().simplify();
+        this.strokes.getActiveStroke().simplify();
     },
     onmousemove: function(pen, evt){
 
-        MODULES.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
+        this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
 
         var point = new URNDR.Point({
                     X : pen.x,
@@ -64,9 +64,9 @@ var pen_draw_tool = new URNDR.PenTool({
             });
         var penNDC = new THREE.Vector2( pen.ndc_x , pen.ndc_y )
         
-        RAYCASTER.setFromCamera( penNDC , U3.camera )
+        RAYCASTER.setFromCamera( penNDC , this.u3.camera )
 
-        var intersects = RAYCASTER.intersectObjects( U3.scene.children );
+        var intersects = RAYCASTER.intersectObjects( this.u3.scene.children );
         if (intersects.length > 0) {
             
             var i0, obj, face, vertices, a, b, c
@@ -78,9 +78,9 @@ var pen_draw_tool = new URNDR.PenTool({
             point.OBJECT = obj;
             point.FACE = face
             
-            a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project(U3.camera)
-            b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project(U3.camera)
-            c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project(U3.camera)
+            a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project(this.u3.camera)
+            b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project(this.u3.camera)
+            c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project(this.u3.camera)
             
             var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
             
@@ -91,17 +91,17 @@ var pen_draw_tool = new URNDR.PenTool({
         }
         
         // Run modules that changes the point.
-        MODULES.runEnabledModulesInList( URNDR.POINT_MODULE , point )
+        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , point )
 
         // WRITE POINT INTO STROKE
-        var active_stroke = STROKES.getActiveStroke();
+        var active_stroke = this.strokes.getActiveStroke();
         if (active_stroke !== 0) {
-            STROKES.getActiveStroke().addPoint( point )
+            this.strokes.getActiveStroke().addPoint( point )
         }
 
     }
 
-})
+}), true)
 
 //
 // INIT

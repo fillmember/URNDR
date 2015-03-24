@@ -12,7 +12,7 @@ reload_web_page : function() {
 
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function(){ clear(1); STROKES = new URNDR.Strokes(); return ""; })
+    module.setFunction(function(){ STROKES.reset(); return ""; })
     return module
 },
 
@@ -218,6 +218,9 @@ smooth_data : function() {
         var stroke, settings, target_tracks, track, eArr
         stroke = strokes.getActiveStroke()
         settings = module.getConfiguration()
+        if (stroke === 0) {
+            return;
+        }
         
         target_tracks = ["R","G","B","X","Y"];
         for (var i in target_tracks) {
