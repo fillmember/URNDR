@@ -515,7 +515,7 @@ URNDR.Stroke.prototype.simplify = function() {
         return points;
     }
 
-    this.points = simplify( this.points );
+    this.points = simplify( this.points , 0.75 , false );
 
 }
 URNDR.Stroke.prototype.calculateCenterOfPoints = function() {}
