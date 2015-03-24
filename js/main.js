@@ -107,9 +107,12 @@ document.addEventListener("keydown", function (event) {
 CANVAS.addEventListener("mouseup", function (event) {
 
     if (PEN.drawingMode === 1) {
-        // STROKES.optimize( STROKES.getActiveStroke() )
+
+        // Simplify last digitized stroke
+        STROKES.getActiveStroke().simplify();
         // deselect stroke
         STROKES.active_stroke = 0
+
     }
 
     PEN.isDown = 0;
@@ -192,20 +195,13 @@ CANVAS.addEventListener("mouseout", function ( event ) {
 
 });
 
-var counter = 0;
 // requestAnimationFrame
 var display = function() {
 
     U3.renderer.render( U3.scene, U3.camera );
 
-    if (STROKES.getStrokesCount() > 0) {
-
-        MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:PAPER} );
-        
-    }
-    
-    counter = counter + 1;
+    MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
+    MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES,context:PAPER} );
     
     requestAnimationFrame( display );
 
