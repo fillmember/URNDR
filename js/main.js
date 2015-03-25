@@ -49,7 +49,8 @@ PEN.addTool(new URNDR.PenTool({
         this.strokes.beginNewStroke();
     },
     onmouseup: function(pen, evt){
-        this.strokes.getActiveStroke().simplify();
+        this.strokes.getActiveStroke().optimize();
+        // .simplify();
     },
     onmousemove: function(pen, evt){
 
@@ -102,6 +103,36 @@ PEN.addTool(new URNDR.PenTool({
     }
 
 }), true)
+PEN.addTool( new URNDR.PenTool({
+
+    name: "eraser",
+    strokes: STROKES,
+    size: 5,
+    onmousedown: function(pen, evt){},
+    onmouseup: function(pen, evt){},
+    onmousemove: function(pen, evt){
+        // var points = this.strokes.quadTree.retrieve( [], new URNDR.Rectangle(pen.x,pen.y,this.size,this.size) )
+        // for (var p in points) {
+        //     console.log( points[p] )
+        // }
+    }
+
+}));
+PEN.addTool( new URNDR.PenTool({
+
+    name: "nudger",
+    strokes: STROKES,
+    size: 5,
+    onmousedown: function(pen, evt){},
+    onmouseup: function(pen, evt){},
+    onmousemove: function(pen, evt){
+        // var points = this.strokes.quadTree.retrieve( [], new URNDR.Rectangle(pen.x,pen.y,this.size,this.size) )
+        // for (var p in points) {
+        //     console.log( points[p] )
+        // }
+    }
+
+}));
 
 //
 // INIT
