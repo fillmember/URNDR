@@ -10,9 +10,21 @@ reload_web_page : function() {
     return module
 },
 
+draw : function() {
+    var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
+    module.setFunction(function() {PEN.selectToolByName("Draw"); return ""})
+    return module
+},
+
 eraser : function() {
     var module = new URNDR.Module("Eraser",URNDR.COMMAND_MODULE,69) // e
-    module.setFunction(function() {PEN.selectToolByName("Eraser"); return "Eraser Selected"})
+    module.setFunction(function() {PEN.selectToolByName("Eraser"); return "Make Invisible"})
+    return module
+},
+
+mover : function() {
+    var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,81) // q
+    module.setFunction(function() {PEN.selectToolByName("Mover"); return "Transform Objects"})
     return module
 },
 
@@ -31,16 +43,6 @@ brush_size_up : function() {
 brush_size_down : function() {
     var module = new URNDR.Module("Reduce brush size",URNDR.COMMAND_MODULE,219)
     module.setFunction(function(){ if (STYLE.brush_size > 5) {STYLE.brush_size -= 5;} return STYLE.brush_size;})
-    return module
-},
-
-simplified_all_strokes : function() {
-    var module = new URNDR.Module("Simplfy Strokes",URNDR.COMMAND_MODULE,81)
-    module.setFunction(function() {
-        var simp_count = 0, s;
-        for( var k = 0 ; k < STROKES.getStrokesCount() ; k ++ ) { s = STROKES.getStroke(k); }
-        return "Points deleted: " + simp_count;
-    })
     return module
 },
 
@@ -81,8 +83,8 @@ random_point_position : function() {
 pressure_sensitivity : function() {
     var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
     module.setConfiguration( {
-        min_size : 1,
-        max_size : 200
+        min_size : 5,
+        max_size : 80
     } )
     module.setFunction(function(point) {
         var settings = this.getConfiguration()
@@ -196,7 +198,9 @@ move_drawing_with_3d_model : function() {
             }
 
             if (camera instanceof THREE.Camera) {
+
                 camera = new THREE.Vector3(0,0, -1).applyQuaternion( U3.camera.quaternion ).normalize();
+
             } else if ( camera instanceof THREE.Vector3 ) {
                 // camera = camera
             } else {
@@ -245,6 +249,7 @@ smooth_data : function() {
         }
 
     })
+    // MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE
     return module
 },
 
@@ -308,9 +313,9 @@ randomise_strokes : function() {
             stroke_k = strokes.getStrokeByID( target_strokes[st] )
             stroke_k.setTrack( "X" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("X") , settings.amp ) )
             stroke_k.setTrack( "Y" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("Y") , settings.amp ) )
-            // stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , settings.amp ) )
-            // stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , settings.amp ) )
-            // stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , settings.amp ) )
+            stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , 0.02 ) )
+            stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , 0.02 ) )
+            stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , 0.02 ) )
         }
     })
     return module
@@ -370,57 +375,28 @@ connection_network : function(){
 fillmember_style : function() {
     var module = new URNDR.Module("COMIC STYLE",URNDR.DRAW_MODULE,50); // 2
     module.setFunction(function(params){
-        var strokes, ctx, strokes_count, stroke_i, points_count, point_j, point_prev, grad;
         var strokes = params.strokes
         var ctx = params.context
-
-        clear(1);
+        
+        clear( 1 );
 
         strokes_count = strokes.getStrokesCount();
-        for ( var i = 0 ; i < strokes_count ; i++ ) {
+        strokes.eachStroke( function( stk ){
+            stk.eachPoint( function( pnt , stk, i ) {
+                mi( 'destination-over', pnt.S + 15, '#FFF', stk.getPoint( i - 1 ), pnt);
+                mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A+')', stk.getPoint( i - 1 ), pnt)
+            }, stk )
+        } )
 
-            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
-
-            points_count = stroke_i.getLength();
-            if (points_count === 0) { continue; }
-
-            ctx.strokeStyle = 'rgb(255,255,255)'
-            
-            for ( var k = 1 ; k < points_count ; k++ ) {
-                point_prev = stroke_i.getPoint( k - 1 )
-                point_j = stroke_i.getPoint( k )
-
-                if (point_prev.A + point_j.A === 0) { continue; }
-
-                ctx.beginPath();
-                ctx.lineWidth = point_j.S * 2;
-                ctx.moveTo(point_prev.X,point_prev.Y);
-                ctx.lineTo(point_j.X,point_j.Y);
-                ctx.closePath();
-                ctx.stroke();
-
-            }
-
-            for ( var j = 1 ; j < points_count ; j++ ) {
-                point_prev = stroke_i.getPoint( j - 1 )
-                point_j = stroke_i.getPoint( j )
-
-                if (point_prev.A + point_j.A === 0) { continue; }
-
-                ctx.lineWidth = point_j.S;
-                
-                grad = ctx.createLinearGradient( point_prev.X , point_prev.Y , point_j.X , point_j.Y );
-                grad.addColorStop(0,'rgba('+point_prev.R+','+point_prev.G+','+point_prev.B+','+point_prev.A+')')
-                grad.addColorStop(1,'rgba('+point_j.R+','+point_j.G+','+point_j.B+','+point_j.A+')')
-                
-                ctx.strokeStyle = grad;
-                ctx.beginPath();
-                ctx.moveTo( point_prev.X , point_prev.Y )
-                ctx.lineTo( point_j.X , point_j.Y )
-                ctx.closePath();
-                ctx.stroke();
-            }
-
+        function mi( gco, lineWidth , strokeStyle, prv, pnt ) {
+            ctx.globalCompositeOperation = gco;
+            ctx.beginPath();
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = strokeStyle;
+            ctx.moveTo( prv.X , prv.Y )
+            ctx.lineTo( pnt.X, pnt.Y )
+            ctx.closePath();
+            ctx.stroke();
         }
 
     })
@@ -446,17 +422,17 @@ dot_debug_style : function() {
                 ctx.lineTo( pnt.X, pnt.Y + 0.001 )
                 ctx.closePath();
                 ctx.stroke();
-                if (stk.center) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.lineWidth = 1;
-                    ctx.strokeStyle = 'rgba(30,30,30,0.3)';
-                    ctx.moveTo( stk.center.x , stk.center.y )
-                    ctx.lineTo( pnt.X , pnt.Y )
-                    ctx.closePath();
-                    ctx.stroke();
-                    ctx.restore();
-                }
+                // if (stk.center) {
+                //     ctx.save();
+                //     ctx.beginPath();
+                //     ctx.lineWidth = 1;
+                //     ctx.strokeStyle = 'rgba(30,30,30,0.3)';
+                //     ctx.moveTo( stk.center.x , stk.center.y )
+                //     ctx.lineTo( pnt.X , pnt.Y )
+                //     ctx.closePath();
+                //     ctx.stroke();
+                //     ctx.restore();
+                // }
             }, stk )
         } )
 

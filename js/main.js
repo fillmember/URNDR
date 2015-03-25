@@ -7,7 +7,9 @@
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
         canvas: document.getElementById('lighttable'),
+        fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
         defaultMaterial: new THREE.MeshBasicMaterial( {
+
             color: 0xFFFFFF,
             vertexColors: THREE.FaceColors, 
             
@@ -18,7 +20,6 @@ var U3 = new URNDR.ThreeManager( {
 
             morphTargets: true,
 
-            side: THREE.CullFaceBack
         } ),
         animationSpeed: 4
     } ),
@@ -61,7 +62,7 @@ PEN.addTool(new URNDR.PenTool({
     onmouseup: function(pen, evt){
         var astk = this.strokes.getActiveStroke()
         astk.optimize();
-        this.strokes.addToQuadTree( astk );
+        // this.strokes.addToQuadTree( astk );
     },
     onmousemove: function(pen, evt){
 
@@ -80,6 +81,8 @@ PEN.addTool(new URNDR.PenTool({
 
         var intersects = RAYCASTER.intersectObjects( this.u3.scene.children );
         if (intersects.length > 0) {
+
+            console.log( intersects.length )
             
             var i0, obj, face, vertices, a, b, c
                 i0 = intersects[0]
@@ -117,28 +120,47 @@ PEN.addTool(new URNDR.PenTool({
 PEN.addTool( new URNDR.PenTool({
 
     name: "Eraser",
+    style: STYLE,
     strokes: STROKES,
-    size: 10,
     onmousedown: function(pen, evt){},
     onmouseup: function(pen, evt){},
     onmousemove: function(pen, evt){
-        var points = this.strokes.getPointsInRegion( pen.x, pen.y, this.size, this.size )
-        console.log( points )
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, pen.pressure, pen.pressure ),
+            pnt, 
+            dist_sq,
+            size_sq = pen.pressure * this.style.brush_size * pen.pressure * this.style.brush_size,
+            power = (1.1 - pen.pressure);
+
+        power = power > 0.9 ? 0.9 : power;
+
+        for(var q in query) {
+            pnt = query[q].point
+            dist_sq = ( pen.x - pnt.X )*( pen.x - pnt.X ) + ( pen.y - pnt.Y )*( pen.y - pnt.Y )
+            if ( dist_sq < size_sq ) {
+                if (pnt.A > 0.2) {
+                    pnt.A *= power;
+                } else {
+                    pnt.A = 0
+                }
+            }
+        }
     }
 
 }));
 PEN.addTool( new URNDR.PenTool({
 
-    name: "Nudger",
-    strokes: STROKES,
-    size: 5,
+    name: "Mover",
+    threeManager: U3,
     onmousedown: function(pen, evt){},
     onmouseup: function(pen, evt){},
     onmousemove: function(pen, evt){
-        // var points = this.strokes.quadTree.retrieve( [], new URNDR.Rectangle(pen.x,pen.y,this.size,this.size) )
-        // for (var p in points) {
-        //     console.log( points[p] )
-        // }
+        
+        this.threeManager.eachModel( function(model,value) {
+
+            model.mesh.rotation.y += value;
+
+        }, pen.ndc_x * 0.05 )
+
     }
 
 }));
@@ -149,28 +171,11 @@ PEN.addTool( new URNDR.PenTool({
 
 window.onload = function() {
 
-    // Set up environment for testing; module in the future...
-    var MESH, ANIMATION;
-    var loader = new THREE.JSONLoader();
-    loader.load( "models/human_02.js" , function( geometry ){
+    //
+    // Models
+    //
 
-        //
-        // ON LOAD
-        //
-
-        MESH = new THREE.Mesh( geometry , U3.defaultMaterial )
-        MESH.geometry.computeBoundingBox()
-        var y_len = (MESH.geometry.boundingBox.max.y - MESH.geometry.boundingBox.min.y)
-        var scale = 5 / y_len
-        MESH.scale.set( scale , scale , scale )
-        MESH.rotation.set( 0 , 4 , 0 )
-        MESH.position.set( 0 , - 0.45 * y_len * scale , 0)
-
-        ANIMATION = new THREE.MorphAnimation( MESH );
-
-        U3.scene.add( MESH );
-
-    })
+    U3.createModelFromFile( "models/human_01.js" );
 
     //
     // EVENTS
@@ -212,11 +217,14 @@ window.onload = function() {
     // requestAnimationFrame
     var display = function() {
 
-        U3.renderer.render( U3.scene, U3.camera );
+        U3.update();
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
         MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER} );
+
+        STROKES.rebuildQuadTree();
         
+        // recursive
         requestAnimationFrame( display );
 
     }

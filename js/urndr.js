@@ -19,7 +19,7 @@ URNDR.QuadTree = function( pLevel , pBounds) {
     this.level = pLevel
     this.objects = []
     this.bounds = pBounds
-    this.nodes = []
+    this.nodes = [null,null,null,null]
 
 }
 URNDR.QuadTree.prototype = {
@@ -27,8 +27,10 @@ URNDR.QuadTree.prototype = {
         
         this.objects = []
         for (var i = 0; i < this.nodes.length; i++) {
-            this.nodes[i].clear()
-            this.nodes[i] = null
+            if (this.nodes[i] !== null) {
+                this.nodes[i].clear()
+                this.nodes[i] = null
+            }
         }
 
     },
@@ -83,15 +85,13 @@ URNDR.QuadTree.prototype = {
     },
     insert : function(rect) {
 
-        if (this.nodes[0] !== undefined) {
+        if (this.nodes[0]) {
 
             var index = this.getIndex(rect)
 
             if (index !== -1) {
-            
-                this.nodes[index].insert(rect)
 
-                return
+                return this.nodes[index].insert(rect)
 
             }
 
@@ -101,7 +101,7 @@ URNDR.QuadTree.prototype = {
 
         if (this.objects.length > this.MAX_OBJECTS && this.level < this.MAX_LEVELS) {
 
-            if (this.nodes[0] === undefined) {
+            if (!this.nodes[0]) {
 
                 this.split()
 
@@ -114,7 +114,7 @@ URNDR.QuadTree.prototype = {
                 var index = this.getIndex(this.objects[i])
                 
                 if (index !== -1) {
-                    this.nodes[index].insert( this.objects.splice(i,1) )
+                    this.nodes[index].insert( this.objects.splice(i,1)[0] )
                 } else {
                     i++
                 }
@@ -124,20 +124,16 @@ URNDR.QuadTree.prototype = {
         }
 
     },
-    retrieve : function( returnObjects , rect ) {
-
-        console.log("level "+this.level+" quad called retrieve();")
-        console.log("level's objects: " + this.objects.length + " objects. ")
+    retrieve : function( arr , rect ) {
 
         var index = this.getIndex(rect)
-        if (index !== -1 && this.nodes[0] !== undefined) {
-            returnObjects.concat( this.nodes[index].retrieve( returnObjects , rect ) )
+        if (index !== -1 && this.nodes[0]) {
+            arr = arr.concat( this.nodes[index].retrieve( arr , rect ) )
         }
-        console.log(this.objects)
-        returnObjects.concat( this.objects )
-        // console.log("concated returnObjects: " + returnObjects.join('/'))
 
-        return returnObjects
+        arr = arr.concat( this.objects )
+
+        return arr
 
     }
 }
@@ -312,22 +308,15 @@ URNDR.Strokes.prototype.reset = function() {
 URNDR.Strokes.prototype.rebuildQuadTree = function() {
 
     var qt = this.quadTree;
+    var active_id = this.getActiveStroke().id
 
     qt.clear();
 
-    this.eachStroke( function(stk){
-        stk.eachPoint( function(pnt,stk,i) {
-            var hit_size = pnt.S * 0.5
-            qt.insert( new URNDR.Rectangle(
-                pnt.X - hit_size * 0.5, // X
-                pnt.Y - hit_size * 0.5, // Y
-                hit_size, // W
-                hit_size, // H
-                // Reference
-                { strokeID: stk.id, stroke: stk, pointIndex: i, point: pnt }
-            ) )
-        }, stk )
-    })
+    this.eachStroke( function(stk,strokes){
+        // if (stk.id !== active_id) {
+        strokes.addToQuadTree( stk )
+        // }
+    }, this)
 
 }
 URNDR.Strokes.prototype.addToQuadTree = function( obj ) {
@@ -351,7 +340,7 @@ URNDR.Strokes.prototype.addToQuadTree = function( obj ) {
     }
 
 }
-URNDR.Strokes.prototype.getPointsInRegion = function( x , y , w , h ) {
+URNDR.Strokes.prototype.getFromQuadTree = function( x , y , w , h ) {
 
     if (!x || !y) { return 0; }
 
@@ -363,7 +352,13 @@ URNDR.Strokes.prototype.getPointsInRegion = function( x , y , w , h ) {
     var rect = new URNDR.Rectangle( _x , _y , _w , _h );
 
     // return: array contains Point objects
-    return this.quadTree.retrieve( [], rect )
+    var rects = this.quadTree.retrieve( [], rect )
+    var result = [];
+    for (var r in rects) {
+        if (rects[r].reference) { result.push( rects[r].reference ) }
+    }
+
+    return result;
 
 }
 URNDR.Strokes.prototype.getActiveStroke = function() {
@@ -1277,58 +1272,151 @@ URNDR.StrokeStyle.prototype.gradientMaker = function(ctx,p1,p2) {
 // MODEL -- an extension to displaying three objects.
 
 URNDR.Model = function() {
-    this.file_path = "";
+
+    this.id = "MODEL-" + THREE.Math.generateUUID();
+    this.name = "";
+
+    // Animation Attributes
+    this.active = false;
     this.tags = {};
-    // three
-    this.Object3D = undefined;
-    this.AnimationObject = undefined;
-    // this.movesPerUpdate
+
+    // THREE JSONLoader related attributes
+    this.file_path = "";
+    this.loader = new THREE.JSONLoader();
+    this.loaded = false;
+
+    // THREE.js Objects
+    this.mesh = undefined;
+    this.geometry = undefined;
+    this.material = undefined;
+    this.animationObject = undefined;
+
 }
-URNDR.Model.prototype.loadModel = function() {}
-URNDR.Model.prototype.updateModel = function( speed ) {
-    this.AnimationObject.update( speed )
+URNDR.Model.prototype = {
+    loadModel: function( file_path, callback ){
+
+        if (file_path) { this.file_path = file_path };
+
+        var model = this; // pass this scope into the callback function
+        this.loader.load( this.file_path, function( _geometry, _material ) {
+
+            model.geometry = _geometry;
+            model.geometry.computeBoundingBox();
+            if (_material) { model.material = _material; }
+
+            model.mesh = new THREE.Mesh( model.geometry, model.material )
+
+            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y)
+            var scale = 5 / y_len
+            model.mesh.scale.set( scale, scale, scale )
+            model.mesh.rotation.set( 0, 0, 0 )
+            model.mesh.position.set( 0, -0.45 * y_len * scale, -5 )
+
+            model.animationObject = new THREE.MorphAnimation( model.mesh )
+            model.animationObject.play();
+
+            model.loaded = true;
+            model.active = true;
+
+            callback( model );
+
+        });
+
+    },
+    update: function( animSpeed ) {
+
+        this.animationObject.update( animSpeed );
+
+    }
 }
 
 // ThreeManager -- to manage all things regards Three.js
 
-URNDR.ThreeManager = function( parameters ) {
+URNDR.ThreeManager = function( arg ) {
+
+    // Storage
+    this.models = {}
+    this.models_sequence = []
+    
+    // THREE
     this.renderer = new THREE.WebGLRenderer({
-        canvas: parameters.canvas,
+        canvas: arg.canvas,
         precision: "lowp",
         alpha: true
     })
     this.camera   = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
     this.scene    = new THREE.Scene();
-    this.scene.fog = parameters.fog || new THREE.Fog( 0xF0F0F0, 3, 5 );
-    this.animationSpeed = parameters.animationSpeed || 4
-    this.defaultMaterial = parameters.defaultMaterial || new THREE.MeshBasicMaterial( {
-        color: 0xFFFFFF,
-        vertexColors: THREE.FaceColors, 
-        
-        fog: true,
-        
-        wireframe: true, 
-        wireframeLinewidth: 0.1,
+    if (arg.fog) { this.scene.fog = arg.fog; }
+    this.defaultAnimationSpeed = arg.defaultAnimationSpeed || 4
+    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({color: 0xFFFFFF})
 
-        morphTargets: true,
-
-        side: THREE.CullFaceBack
-    } )
-    //
+    // THREE setup
     this.renderer.setSize( window.innerWidth , window.innerHeight )
-    this.camera.position.set( 0 , 0 , 5 )
-    //
-}
-URNDR.ThreeManager.prototype.addModel = function(scene,model) {}
-URNDR.ThreeManager.prototype.updateScene = function() {
-    for( var i = 0; i < model_count; i++ ){
-        this.model_list[i].updateModel( this.global_animation_speed );
-    }
-    // finally, render
-    this.renderer.render( this.scene , this.camera )
-}
-URNDR.ThreeManager.prototype.checkVisibility = function(){};
+    this.camera.position.set( 0 , 0 , 0 )
 
+}
+URNDR.ThreeManager.prototype = {
+
+    createModelFromFile: function( file_path ) {
+
+        // CREATE
+        var model = new URNDR.Model();
+            model.material = this.defaultMaterial
+
+        var manager = this
+        model.loadModel( file_path , function(){
+
+            // THREE
+            manager.scene.add( model.mesh );
+
+            // STORAGE
+            manager.models[ model.id ] = model;
+            manager.models_sequence.push( model.id )
+
+        } );
+
+    },
+    getModel: function( input ) {
+
+        if (typeof input === "string") {
+            // search by id
+            if ( this.models.hasOwnProperty( input ) ) {
+                return this.models[ input ]
+            } else {
+                return -1
+            }
+        } else if (typeof input === "number") {
+            // search by index
+            if (input >= 0 && input < this.models_sequence.length) {
+                return this.getModel( this.models_sequence[input] )
+            } else {
+                return -1
+            }
+        }
+
+    },
+    eachModel: function( my_function , parameters ) {
+
+        for( var i in this.models ){
+            my_function( this.getModel(i) , parameters, i)
+        }
+
+    },
+    update: function() {
+
+        this.eachModel( function( model , manager ){
+
+            if (model.loaded && model.active) {
+                model.update( manager.animationSpeed );
+            }
+
+        }, this )
+        
+        this.renderer.render( this.scene , this.camera )
+
+    }
+
+}
 
 // EXTEND THREE.JS for connecting my custom objects.
 
