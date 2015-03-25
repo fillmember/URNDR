@@ -118,7 +118,7 @@ PEN.addTool( new URNDR.PenTool({
 
     name: "Eraser",
     strokes: STROKES,
-    size: 50,
+    size: 10,
     onmousedown: function(pen, evt){},
     onmouseup: function(pen, evt){},
     onmousemove: function(pen, evt){

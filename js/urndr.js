@@ -113,8 +113,8 @@ URNDR.QuadTree.prototype = {
                 
                 var index = this.getIndex(this.objects[i])
                 
-                if (index != -1) {
-                    this.nodes[index].insert(this.objects.splice(i,1))
+                if (index !== -1) {
+                    this.nodes[index].insert( this.objects.splice(i,1) )
                 } else {
                     i++
                 }
@@ -126,12 +126,16 @@ URNDR.QuadTree.prototype = {
     },
     retrieve : function( returnObjects , rect ) {
 
+        console.log("level "+this.level+" quad called retrieve();")
+        console.log("level's objects: " + this.objects.length + " objects. ")
+
         var index = this.getIndex(rect)
-        if (index !== -1 && this.nodes[0] !== null) {
+        if (index !== -1 && this.nodes[0] !== undefined) {
             returnObjects.concat( this.nodes[index].retrieve( returnObjects , rect ) )
-        } else {
-            returnObjects.concat( this.objects )
         }
+        console.log(this.objects)
+        returnObjects.concat( this.objects )
+        // console.log("concated returnObjects: " + returnObjects.join('/'))
 
         return returnObjects
 
