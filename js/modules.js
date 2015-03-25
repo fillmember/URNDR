@@ -122,11 +122,7 @@ move_drawing_with_3d_model : function() {
                     var face = point.FACE
 
                     // check if visible
-                    if ( checkVisible( obj , face , cameraVector , 0.1) === false ) {
-                        point.A = 0;
-                        point.PX = 0;
-                        point.PY = 0;
-                    }
+                    if (i === 0) U3.camera.checkVisibility( obj, face )
 
                     // transform it
                     var a,b,c,p;
@@ -184,35 +180,6 @@ move_drawing_with_3d_model : function() {
             }
 
 
-        }
-        function checkVisible( obj, face, camera, threshold ) {
-
-            return true;
-
-            if ( face instanceof THREE.Face3 ) {
-                face = obj.localToWorld( face.normal.clone() ).normalize();
-            } else if ( face instanceof THREE.Vector3 ) {
-                // face = face
-            } else {
-                throw("checkVisible only accept Face3 or Vector3 object from THREE.js Library. ")
-            }
-
-            if (camera instanceof THREE.Camera) {
-
-                camera = new THREE.Vector3(0,0, -1).applyQuaternion( U3.camera.quaternion ).normalize();
-
-            } else if ( camera instanceof THREE.Vector3 ) {
-                // camera = camera
-            } else {
-                throw("checkVisible only accept Face3 or Vector3 object from THREE.js Library. ")
-            }
-
-            if ( Math.abs( camera.dot(face) ) < threshold ) {
-                return false
-            } else {
-                return true;
-            }
-            
         }
 
     })

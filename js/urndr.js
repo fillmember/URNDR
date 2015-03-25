@@ -925,6 +925,7 @@ URNDR.Pen = function( canvas , wacom ) {
     };
     this.onmouseout = function( pen, evt ) {
         pen.isDown = 0;
+        pen.active_tool.onmouseout( pen, evt );
     };
 
     // event
@@ -993,6 +994,7 @@ URNDR.PenTool = function(parameters) {
     this.onmousedown = parameters.onmousedown || function( evt ){ console.log("tool: "+this.name+" event: mousedown", evt); };
     this.onmouseup = parameters.onmouseup || function( evt ){ console.log("tool: "+this.name+" event: mouseup", evt); };
     this.onmousemove = parameters.onmousemove || function( evt ){ console.log("tool: "+this.name+" event: mousemove", evt); };
+    this.onmouseout = parameters.onmouseout || function( evt ){ console.log("tool: "+this.name+" event: mouseout", evt); };
     this.size = parameters.size || 5;
     for (var p in parameters) {
         var flag = true
@@ -1312,8 +1314,12 @@ URNDR.Model.prototype = {
             model.mesh.rotation.set( 0, 0, 0 )
             model.mesh.position.set( 0, -0.45 * y_len * scale, -5 )
 
-            model.animationObject = new THREE.MorphAnimation( model.mesh )
-            model.animationObject.play();
+            if (model.geometry.morphTargets.length > 0) {
+
+                model.animationObject = new THREE.MorphAnimation( model.mesh )
+                model.animationObject.play();
+
+            }
 
             model.loaded = true;
             model.active = true;
@@ -1325,7 +1331,12 @@ URNDR.Model.prototype = {
     },
     update: function( animSpeed ) {
 
-        this.animationObject.update( animSpeed );
+        if (this.animationObject) {
+
+            this.animationObject.update( animSpeed );
+            
+        }
+
 
     }
 }
@@ -1421,6 +1432,10 @@ URNDR.ThreeManager.prototype = {
 // EXTEND THREE.JS for connecting my custom objects.
 
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
+
+    if (this.geometry.morphTargets.length === 0) {
+        return this.geometry.vertices[ vertex_index ]
+    }
     
     var target_count = this.geometry.morphTargets.length
     var influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
@@ -1450,5 +1465,16 @@ THREE.Object3D.prototype.getMorphedFaceNormal = function( face_index ) {
     a = obj.getMorphedVertex( face.a )
     b = obj.getMorphedVertex( face.b )
     c = obj.getMorphedVertex( face.c )
+
+}
+
+// THREE.Face3.prototype.checkVisibility = function() {}
+THREE.Camera.prototype.checkVisibility = function( obj, face ) {
+
+    var faceV = obj.localToWorld( face.normal.clone() ).normalize();
+    var camV = new THREE.Vector3(0,0, -1).applyQuaternion( this.quaternion ).normalize();
+
+    // console.log( Math.abs( faceV.dot(camV) ) )
+    // console.log( Math.abs( faceV.angleTo(camV) ) )
 
 }

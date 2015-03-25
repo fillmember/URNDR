@@ -10,7 +10,8 @@ var U3 = new URNDR.ThreeManager( {
         fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
         defaultMaterial: new THREE.MeshBasicMaterial( {
 
-            color: 0xFFFFFF,
+            color: 0x336699,
+            opacity: 0.5,
             vertexColors: THREE.FaceColors, 
             
             fog: true,
@@ -81,8 +82,6 @@ PEN.addTool(new URNDR.PenTool({
 
         var intersects = RAYCASTER.intersectObjects( this.u3.scene.children );
         if (intersects.length > 0) {
-
-            console.log( intersects.length )
             
             var i0, obj, face, vertices, a, b, c
                 i0 = intersects[0]
@@ -150,18 +149,34 @@ PEN.addTool( new URNDR.PenTool({
 PEN.addTool( new URNDR.PenTool({
 
     name: "Mover",
+    timer: null,
     threeManager: U3,
-    onmousedown: function(pen, evt){},
-    onmouseup: function(pen, evt){},
-    onmousemove: function(pen, evt){
-        
-        this.threeManager.eachModel( function(model,value) {
+    onmousedown: function(pen, evt){
 
-            model.mesh.rotation.y += value;
+        var tool = this;
 
-        }, pen.ndc_x * 0.05 )
+        this.timer = setInterval( function(){
 
-    }
+            tool.threeManager.eachModel( function(model,value) {
+
+                model.mesh.rotation.y += value;
+
+            }, pen.ndc_x * 0.1 )
+
+        } , 20)
+
+    },
+    onmouseup: function(pen, evt){
+
+        clearInterval( this.timer )
+
+    },
+    onmouseout: function(){
+
+        clearInterval( this.timer )
+
+    },
+    onmousemove: function(pen, evt){}
 
 }));
 
@@ -176,6 +191,7 @@ window.onload = function() {
     //
 
     U3.createModelFromFile( "models/human_01.js" );
+    // U3.createModelFromFile( "models/tetra.js" );
 
     //
     // EVENTS
