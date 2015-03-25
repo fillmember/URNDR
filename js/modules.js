@@ -103,8 +103,6 @@ move_drawing_with_3d_model : function() {
         delayFactor : 0.5
     })
     module.setFunction(function(strokes) {
-        // get camera's lookat vector
-        var cameraVector = new THREE.Vector3(0,0, -1).applyQuaternion( U3.camera.quaternion ).normalize();
 
         var settings = this.getConfiguration()
 
@@ -120,9 +118,6 @@ move_drawing_with_3d_model : function() {
                     // It is a 3D point!
                     var obj = point.OBJECT
                     var face = point.FACE
-
-                    // check if visible
-                    if (i === 0) U3.camera.checkVisibility( obj, face )
 
                     // transform it
                     var a,b,c,p;
@@ -350,13 +345,14 @@ fillmember_style : function() {
         strokes_count = strokes.getStrokesCount();
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt , stk, i ) {
-                mi( 'destination-over', pnt.S + 15, '#FFF', stk.getPoint( i - 1 ), pnt);
-                mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A+')', stk.getPoint( i - 1 ), pnt)
+                if (pnt.A > 0.1) {
+                    mi( 'destination-over', pnt.S + 15, '#FFF', stk.getPoint( i - 1 ), pnt);
+                    mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A+')', stk.getPoint( i - 1 ), pnt)
+                }
             }, stk )
         } )
 
         function mi( gco, lineWidth , strokeStyle, prv, pnt ) {
-            ctx.globalCompositeOperation = gco;
             ctx.beginPath();
             ctx.lineWidth = lineWidth;
             ctx.strokeStyle = strokeStyle;
@@ -381,7 +377,6 @@ dot_debug_style : function() {
         ctx.lineWidth = 4;
         ctx.strokeStyle = 'rgba(0,0,255,0.8)';
 
-        strokes_count = strokes.getStrokesCount();
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt , stk ){
                 ctx.beginPath();
@@ -418,31 +413,40 @@ default_draw_style : function() {
         // default drawing style
         clear(1);
 
-        for ( var i = 0, len = strokes.getStrokesCount(); i < len; i ++ ) {
-
-            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
-            points_count = stroke_i.getLength();
-            if (points_count === 0) { continue; }
-
-            for ( var j = 1 ; j < points_count ; j ++ ) {
-
-                point_prev = stroke_i.getPoint( j - 1 )
-                point_j = stroke_i.getPoint( j )
-
-                if (point_prev.A + point_j.A === 0) { continue; }
-
-                ctx.lineWidth = point_j.S;
-                
-                ctx.strokeStyle = STYLE.gradientMaker( ctx , point_prev , point_j );
+        var prv
+        strokes.eachStroke( function( stk ){
+            stk.eachPoint( function( pnt, stk, i ){
+                prv = stk.getPoint( i - 1 )
+                if (prv.A + pnt.A <= 0.02) { return 0; }
                 ctx.beginPath();
-                ctx.moveTo( point_prev.X , point_prev.Y )
-                ctx.lineTo( point_j.X , point_j.Y )
-                ctx.stroke();
+
+                if (pnt.OBJECT && pnt.FACE) {
+                    
+                    ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE )+')'
+
+                } else {
+
+                    nearest = stk.getNearestPointWith( "FACE", i )
+                    if (nearest !== 0) {
+                        
+                        nearest = nearest.nearest;
+                        ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * U3.camera.checkVisibility( nearest.OBJECT , nearest.FACE )+')'
+                        
+                    } else {
+                        
+                        ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A+')'
+
+                    }
+
+                }
+
+                ctx.lineWidth = pnt.S;
+                ctx.moveTo( prv.X, prv.Y )
+                ctx.lineTo( pnt.X, pnt.Y )
                 ctx.closePath();
-
-            }
-
-        }
+                ctx.stroke();
+            }, stk )
+        } )
 
     })
     return module

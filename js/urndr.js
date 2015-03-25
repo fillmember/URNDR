@@ -791,7 +791,8 @@ URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
     before_me = undefined;
     after_me = undefined;
     var result = {
-        before: 0, after: 0, before_distance: 0, after_distance: 0
+        before: 0, after: 0, nearest: 0, 
+        before_distance: 0, after_distance: 0, nearest_distance: 0, 
     }
     for (b = n - 1; b >= 0; b--) {
         if (track[b] !== null && track[b] !== undefined) {
@@ -811,16 +812,27 @@ URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
         } else {
             result.before = this.getPoint( before_me )
             result.before_distance = n - before_me
+            result.nearest = result.before
+            result.nearest_distance = result.before_distance
         }
     } else {
         if (before_me === undefined) {
             result.after = this.getPoint( after_me )
             result.after_distance = after_me - n
+            result.nearest = result.after
+            result.nearest_distance = result.after_distance
         } else {
             result.before = this.getPoint( before_me )
             result.before_distance = n - before_me
             result.after = this.getPoint( after_me )
             result.after_distance = after_me - n
+            if (result.before_distance > result.after_distance) {
+                result.nearest = result.after
+                result.nearest_distance = result.after_distance
+            } else {
+                result.nearest = result.before
+                result.nearest_distance = result.before_distance
+            }
         }
     }
 
@@ -1308,22 +1320,26 @@ URNDR.Model.prototype = {
 
             model.mesh = new THREE.Mesh( model.geometry, model.material )
 
+            // POSITION
             var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y)
             var scale = 5 / y_len
             model.mesh.scale.set( scale, scale, scale )
             model.mesh.rotation.set( 0, 0, 0 )
             model.mesh.position.set( 0, -0.45 * y_len * scale, -5 )
 
+            // ANMATION
             if (model.geometry.morphTargets.length > 0) {
 
-                model.animationObject = new THREE.MorphAnimation( model.mesh )
+                model.animationObject = new THREE.MorphAnimation( model.geometry )
                 model.animationObject.play();
 
             }
 
+            // UNLOCK
             model.loaded = true;
             model.active = true;
 
+            // CALLBACK
             callback( model );
 
         });
@@ -1467,14 +1483,19 @@ THREE.Object3D.prototype.getMorphedFaceNormal = function( face_index ) {
     c = obj.getMorphedVertex( face.c )
 
 }
-
-// THREE.Face3.prototype.checkVisibility = function() {}
+THREE.Camera.prototype.calculateLookAtVector = function() {
+    this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
+}
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
-    var faceV = obj.localToWorld( face.normal.clone() ).normalize();
-    var camV = new THREE.Vector3(0,0, -1).applyQuaternion( this.quaternion ).normalize();
+    if (!this.lookAtVector) { this.calculateLookAtVector(); }
 
-    // console.log( Math.abs( faceV.dot(camV) ) )
-    // console.log( Math.abs( faceV.angleTo(camV) ) )
+    var normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
+    var N = face.normal.clone().applyMatrix3( normalMatrix ).normalize().negate();
+
+    var result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.5, 1, 0 )
+        result = THREE.Math.clamp( result, 0, 1 )
+
+    return result;
 
 }

@@ -10,8 +10,7 @@ var U3 = new URNDR.ThreeManager( {
         fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
         defaultMaterial: new THREE.MeshBasicMaterial( {
 
-            color: 0x336699,
-            opacity: 0.5,
+            color: 0x333333,
             vertexColors: THREE.FaceColors, 
             
             fog: true,
@@ -19,8 +18,7 @@ var U3 = new URNDR.ThreeManager( {
             wireframe: true, 
             wireframeLinewidth: 0.1,
 
-            morphTargets: true,
-
+            // morphTargets: true,
         } ),
         animationSpeed: 4
     } ),
@@ -122,15 +120,33 @@ PEN.addTool( new URNDR.PenTool({
     style: STYLE,
     strokes: STROKES,
     onmousedown: function(pen, evt){},
-    onmouseup: function(pen, evt){},
+    onmouseup: function(pen, evt){
+        var strokes_to_delete = [];
+        this.strokes.eachStroke(function(stk){
+            var alpha_sum = 0;
+            var alpha_flag = false;
+            stk.eachPoint( function(pnt){
+                if (pnt.A > 0.1) {
+                    alpha_flag = true;
+                }
+                alpha_sum += pnt.A
+            })
+            if (alpha_sum < 0.05 && alpha_flag === false) {
+                strokes_to_delete.push( stk.id )
+            }
+        })
+        for (var i in strokes_to_delete) {
+            this.strokes.deleteStrokeByID( strokes_to_delete[i] )
+        }
+    },
     onmousemove: function(pen, evt){
         var query = this.strokes.getFromQuadTree( pen.x, pen.y, pen.pressure, pen.pressure ),
             pnt, 
             dist_sq,
-            size_sq = pen.pressure * this.style.brush_size * pen.pressure * this.style.brush_size,
+            size_sq = pen.pressure * this.style.brush_size * pen.pressure * this.style.brush_size * 0.3,
             power = (1.1 - pen.pressure);
 
-        power = power > 0.9 ? 0.9 : power;
+        power = power > 0.95 ? 0.95 : power;
 
         for(var q in query) {
             pnt = query[q].point
@@ -154,6 +170,8 @@ PEN.addTool( new URNDR.PenTool({
     onmousedown: function(pen, evt){
 
         var tool = this;
+
+        clearInterval(this.timer)
 
         this.timer = setInterval( function(){
 
@@ -190,7 +208,7 @@ window.onload = function() {
     // Models
     //
 
-    U3.createModelFromFile( "models/human_01.js" );
+    U3.createModelFromFile( "models/human_02.js" );
     // U3.createModelFromFile( "models/tetra.js" );
 
     //
