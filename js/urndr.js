@@ -297,25 +297,25 @@ URNDR.Strokes.prototype.reset = function() {
     URNDR.Strokes.call(this)
 
 }
-URNDR.Strokes.prototype.updateQuadTree = function() {
+URNDR.Strokes.prototype.rebuildQuadTree = function() {
 
-    var i, stroke_i
+    var qt = this.quadTree;
 
-    this.quadTree.clear();
-    
-    for (i in strokes) {
+    qt.clear();
 
-        stroke_i = strokes[i]
-        
-        this.quadTree.insert( new URNDR.Rectangle(
-            stroke_i.center.x, // x
-            stroke_i.center.y, // y
-            1, // w
-            1, // h
-            { ref_id: i, object: stroke_i } // ref
-        ) );
-
-    }
+    this.eachStroke( function(stk){
+        stk.eachPoint( function(pnt,args,i) {
+            var hit_size = pnt.S * 0.5
+            qt.insert( new URNDR.Rectangle(
+                pnt.X - hit_size * 0.5, // X
+                pnt.Y - hit_size * 0.5, // Y
+                hit_size, // W
+                hit_size, // H
+                // Reference
+                { strokeID: stk.id, stroke: stk, pointIndex: i, point: pnt }
+            ) )
+        }, stk )
+    })
 
 }
 URNDR.Strokes.prototype.getPointsInRegion = function( x , y , w , h ) {
@@ -492,7 +492,7 @@ URNDR.Stroke = function(tags) {
 
     this.closed = false;     // for draw modules to implement close function
 
-    this.center = {x:0,y:0}; // for future transform function.
+    this.center = undefined; // for future transform function.
     this.start = 0           // for future "drawing" effect.
     this.end = 1
     this.parent              // for future "following" effect.
@@ -696,7 +696,7 @@ URNDR.Stroke.prototype.simplify = function() {
         return points;
     }
 
-    this.points = simplify( this.points , 0.75 , false );
+    this.points = simplify( this.points , 0.75 , true );
 
 }
 URNDR.Stroke.prototype.optimize = function() {
@@ -720,7 +720,7 @@ URNDR.Stroke.prototype.calculateCenterOfPoints = function() {
     result.x *= divider;
     result.y *= divider;
 
-    console.log(result)
+    return result;
 
 }
 URNDR.Stroke.prototype.setTag = function( tag , tag_data ) {

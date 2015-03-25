@@ -428,28 +428,33 @@ dot_debug_style : function() {
         strokes = params.strokes
         ctx = params.context
         
-        clear(.2);
+        clear(.8);
 
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(0,0,255,0.8)';
 
         strokes_count = strokes.getStrokesCount();
-        for ( var i = 0 ; i < strokes_count ; i++ ) {
-
-            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] );
-            points_count = stroke_i.getLength();
-            if (points_count === 0) { continue; }
-            
-            for ( var j = 0 ; j < points_count  ; j++ ) {
-                point_j = stroke_i.getPoint( j )
-                ctx.strokeStyle= 'rgba('+point_j.R+','+point_j.G+','+point_j.B+','+point_j.A+')';
+        strokes.eachStroke( function( stk ){
+            stk.eachPoint( function( pnt , stk ){
                 ctx.beginPath();
-                ctx.moveTo(point_j.X-0.001,point_j.Y-0.001);
-                ctx.lineTo(point_j.X,point_j.Y);
-                ctx.stroke();
+                ctx.moveTo( pnt.X, pnt.Y - 0.001 )
+                ctx.lineTo( pnt.X, pnt.Y + 0.001 )
                 ctx.closePath();
-            }
+                ctx.stroke();
+                if (stk.center) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(30,30,30,0.3)';
+                    ctx.moveTo( stk.center.x , stk.center.y )
+                    ctx.lineTo( pnt.X , pnt.Y )
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }, stk )
+        } )
 
-        }
     })
     return module
 },
