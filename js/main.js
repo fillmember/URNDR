@@ -32,8 +32,18 @@ var CANVAS = document.getElementById('paper'),
     STYLE = new URNDR.StrokeStyle(),
     PEN = new URNDR.Pen( CANVAS , WACOM ),
     MODULES = new URNDR.ModuleManager(),
-    STROKES = new URNDR.Strokes(),
     HUD = new URNDR.Hud( document.getElementById('HUD') );
+
+document.body.appendChild( U3.renderer.domElement );
+CANVAS.width = U3.renderer.domElement.width;
+CANVAS.height = U3.renderer.domElement.height;
+PAPER.lineCap = STYLE.cap
+PAPER.lineJoin = STYLE.join
+
+var STROKES = new URNDR.Strokes({
+    canvasWidth: CANVAS.width,
+    canvasHeight: CANVAS.height
+})
 
 //
 // PenTools
@@ -49,8 +59,9 @@ PEN.addTool(new URNDR.PenTool({
         this.strokes.beginNewStroke();
     },
     onmouseup: function(pen, evt){
-        this.strokes.getActiveStroke().optimize();
-        // .simplify();
+        var astk = this.strokes.getActiveStroke()
+        astk.optimize();
+        this.strokes.addToQuadTree( astk );
     },
     onmousemove: function(pen, evt){
 
@@ -105,22 +116,20 @@ PEN.addTool(new URNDR.PenTool({
 }), true)
 PEN.addTool( new URNDR.PenTool({
 
-    name: "eraser",
+    name: "Eraser",
     strokes: STROKES,
-    size: 5,
+    size: 50,
     onmousedown: function(pen, evt){},
     onmouseup: function(pen, evt){},
     onmousemove: function(pen, evt){
-        // var points = this.strokes.quadTree.retrieve( [], new URNDR.Rectangle(pen.x,pen.y,this.size,this.size) )
-        // for (var p in points) {
-        //     console.log( points[p] )
-        // }
+        var points = this.strokes.getPointsInRegion( pen.x, pen.y, this.size, this.size )
+        console.log( points )
     }
 
 }));
 PEN.addTool( new URNDR.PenTool({
 
-    name: "nudger",
+    name: "Nudger",
     strokes: STROKES,
     size: 5,
     onmousedown: function(pen, evt){},
@@ -139,15 +148,6 @@ PEN.addTool( new URNDR.PenTool({
 //
 
 window.onload = function() {
-
-    // DOM
-    document.body.appendChild( U3.renderer.domElement );
-    CANVAS.width = U3.renderer.domElement.width;
-    CANVAS.height = U3.renderer.domElement.height;
-
-    // CANVAS
-    PAPER.lineCap = STYLE.cap
-    PAPER.lineJoin = STYLE.join
 
     // Set up environment for testing; module in the future...
     var MESH, ANIMATION;

@@ -10,6 +10,12 @@ reload_web_page : function() {
     return module
 },
 
+eraser : function() {
+    var module = new URNDR.Module("Eraser",URNDR.COMMAND_MODULE,69) // e
+    module.setFunction(function() {PEN.selectToolByName("Eraser"); return "Eraser Selected"})
+    return module
+},
+
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
     module.setFunction(function(){ STROKES.reset(); return ""; })
@@ -424,9 +430,8 @@ fillmember_style : function() {
 dot_debug_style : function() {
     var module = new URNDR.Module("DEBUG MODE (FUN MODE) ",URNDR.DRAW_MODULE,51);
     module.setFunction(function(params){
-        var strokes, ctx, strokes_count, stroke_i, points_count, point_j;
-        strokes = params.strokes
-        ctx = params.context
+        var strokes = params.strokes
+        var ctx = params.context
         
         clear(.8);
 

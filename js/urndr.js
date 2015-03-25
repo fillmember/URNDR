@@ -7,21 +7,23 @@ URNDR.STROKE_MODULE = "STROKE_MODULES"
 URNDR.DRAW_MODULE = "DRAW_MODULES"
 
 // QuadTree
+// source: http://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374
 
 URNDR.QuadTree = function( pLevel , pBounds) {
     
     // Statics
-    this.MAX_OBJECTS = 10
+    this.MAX_OBJECTS = 20
     this.MAX_LEVELS = 5
 
     // Attributes
     this.level = pLevel
-    this.objects = new Array()
+    this.objects = []
     this.bounds = pBounds
-    this.nodes = new Array(4)
+    this.nodes = []
 
-    // Function
-    this.clear = function() {
+}
+URNDR.QuadTree.prototype = {
+    clear : function() {
         
         this.objects = []
         for (var i = 0; i < this.nodes.length; i++) {
@@ -29,22 +31,22 @@ URNDR.QuadTree = function( pLevel , pBounds) {
             this.nodes[i] = null
         }
 
-    }
-    this.split = function() {
+    },
+    split : function() {
 
         var subWidth,subHeight,x,y
             subWidth = this.bounds.width / 2
-            subWidth = this.bounds.height / 2
+            subHeight = this.bounds.height / 2
             x = this.bounds.x
             y = this.bounds.y
 
-        nodes[0] = new Quadtree(this.level+1, new Rectangle(x + subWidth, y, subWidth, subHeight) )
-        nodes[1] = new Quadtree(this.level+1, new Rectangle(x, y, subWidth, subHeight) )
-        nodes[2] = new Quadtree(this.level+1, new Rectangle(x, y + subHeight, subWidth, subHeight) )
-        nodes[3] = new Quadtree(this.level+1, new Rectangle(x + subWidth, y + subHeight, subWidth, subHeight) )
+        this.nodes[0] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x + subWidth, y, subWidth, subHeight) )
+        this.nodes[1] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x, y, subWidth, subHeight) )
+        this.nodes[2] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x, y + subHeight, subWidth, subHeight) )
+        this.nodes[3] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x + subWidth, y + subHeight, subWidth, subHeight) )
 
-    }
-    this.getIndex = function(rect){
+    },
+    getIndex : function(rect){
 
         var index,verticalMidPoint,horizontalMidPoint,topQuadrant,bottomQuadrant
             index = -1
@@ -78,8 +80,8 @@ URNDR.QuadTree = function( pLevel , pBounds) {
 
         return index
 
-    }
-    this.insert = function(rect) {
+    },
+    insert : function(rect) {
 
         if (this.nodes[0] !== undefined) {
 
@@ -95,7 +97,7 @@ URNDR.QuadTree = function( pLevel , pBounds) {
 
         }
 
-        this.objects.add(rect)
+        this.objects.push(rect)
 
         if (this.objects.length > this.MAX_OBJECTS && this.level < this.MAX_LEVELS) {
 
@@ -121,15 +123,15 @@ URNDR.QuadTree = function( pLevel , pBounds) {
 
         }
 
-    }
-    this.retrieve = function( returnObjects , rect ) {
+    },
+    retrieve : function( returnObjects , rect ) {
 
         var index = this.getIndex(rect)
         if (index !== -1 && this.nodes[0] !== null) {
-            this.nodes[index].retrieve( returnObjects , rect )
+            returnObjects.concat( this.nodes[index].retrieve( returnObjects , rect ) )
+        } else {
+            returnObjects.concat( this.objects )
         }
-
-        returnObjects.concat(this.objects)
 
         return returnObjects
 
@@ -288,13 +290,19 @@ URNDR.Strokes = function(){
     // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
     this.active_stroke = 0;
     // QuadTree
-    this.quadTree = new URNDR.QuadTree()
+    var _qtw = arguments[0].canvasWidth || window.innerWidth
+    var _qth = arguments[0].canvasHeight || window.innerWidth
+    this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
 
 }
 // functions
 URNDR.Strokes.prototype.reset = function() {
 
-    URNDR.Strokes.call(this)
+    this.strokes = {};
+    this.strokesHistory = [];
+    this.strokesZDepth = [];
+    this.active_stroke = 0;
+    this.quadTree.clear();
 
 }
 URNDR.Strokes.prototype.rebuildQuadTree = function() {
@@ -304,7 +312,7 @@ URNDR.Strokes.prototype.rebuildQuadTree = function() {
     qt.clear();
 
     this.eachStroke( function(stk){
-        stk.eachPoint( function(pnt,args,i) {
+        stk.eachPoint( function(pnt,stk,i) {
             var hit_size = pnt.S * 0.5
             qt.insert( new URNDR.Rectangle(
                 pnt.X - hit_size * 0.5, // X
@@ -318,17 +326,40 @@ URNDR.Strokes.prototype.rebuildQuadTree = function() {
     })
 
 }
+URNDR.Strokes.prototype.addToQuadTree = function( obj ) {
+
+    var qt = this.quadTree;
+
+    if (obj instanceof URNDR.Stroke) {
+
+        obj.eachPoint( function(pnt,stk,i){
+            var hit_size = pnt.S * 0.5
+            qt.insert( new URNDR.Rectangle(
+                pnt.X - hit_size * 0.5, // X
+                pnt.Y - hit_size * 0.5, // Y
+                hit_size, // W
+                hit_size, // H
+                // Reference
+                { strokeID: stk.id, stroke: stk, pointIndex: i, point: pnt }
+            ) );
+        }, obj );
+
+    }
+
+}
 URNDR.Strokes.prototype.getPointsInRegion = function( x , y , w , h ) {
 
     if (!x || !y) { return 0; }
-    
-    _w = w || 1;
-    _h = h || 1;
 
-    var rect = new Rectangle( x , y , _w , _h );
+    _w = w || 2;
+    _h = h || 2;
+    _x = x - _w * 0.5;
+    _y = y - _h * 0.5;
+
+    var rect = new URNDR.Rectangle( _x , _y , _w , _h );
 
     // return: array contains Point objects
-    return this.quadTree.retrieve( rect )
+    return this.quadTree.retrieve( [], rect )
 
 }
 URNDR.Strokes.prototype.getActiveStroke = function() {
