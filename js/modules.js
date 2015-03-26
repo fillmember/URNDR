@@ -430,13 +430,13 @@ default_draw_style : function() {
                     if (nearests instanceof Object) {
                         
                         nearest = nearests.nearest;
-                        beforeA = 0;
-                        afterA = 0;
-                        if (nearests.before) { beforeA = U3.camera.checkVisibility( nearests.before.OBJECT, nearests.before.FACE ); }
-                        if (nearests.after) { afterA = U3.camera.checkVisibility( nearests.after.OBJECT, nearests.after.FACE ); }
-                        factor = (beforeA * nearests.after_distance + afterA * nearests.before_distance) / ( nearests.before_distance + nearests.after_distance)
-                        // ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * U3.camera.checkVisibility( nearest.OBJECT , nearest.FACE )+')'
-                        ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor+')'
+                        // beforeA = 0;
+                        // afterA = 0;
+                        // if (nearests.before) { beforeA = U3.camera.checkVisibility( nearests.before.OBJECT, nearests.before.FACE ); }
+                        // if (nearests.after) { afterA = U3.camera.checkVisibility( nearests.after.OBJECT, nearests.after.FACE ); }
+                        // factor = (beforeA * nearests.after_distance + afterA * nearests.before_distance) / ( nearests.before_distance + nearests.after_distance)
+                        ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * U3.camera.checkVisibility( nearest.OBJECT , nearest.FACE )+')'
+                        // ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor+')'
                         
                     } else {
                         
