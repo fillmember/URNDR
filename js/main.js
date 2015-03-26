@@ -18,7 +18,7 @@ var U3 = new URNDR.ThreeManager( {
             wireframe: true, 
             wireframeLinewidth: 0.1,
 
-            // morphTargets: true,
+            morphTargets: true,
         } ),
         animationSpeed: 4
     } ),
@@ -179,6 +179,8 @@ PEN.addTool( new URNDR.PenTool({
 
                 model.mesh.rotation.y += value;
 
+                model.animationObject.update( 10 )
+
             }, pen.ndc_x * 0.1 )
 
         } , 20)
@@ -209,7 +211,6 @@ window.onload = function() {
     //
 
     U3.createModelFromFile( "models/human_02.js" );
-    // U3.createModelFromFile( "models/tetra.js" );
 
     //
     // EVENTS

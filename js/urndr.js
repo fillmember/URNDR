@@ -1328,9 +1328,10 @@ URNDR.Model.prototype = {
             model.mesh.position.set( 0, -0.45 * y_len * scale, -5 )
 
             // ANMATION
+            // console.log( model.geometry.morphTargets.length )
             if (model.geometry.morphTargets.length > 0) {
 
-                model.animationObject = new THREE.MorphAnimation( model.geometry )
+                model.animationObject = new THREE.MorphAnimation( model.mesh )
                 model.animationObject.play();
 
             }
@@ -1347,7 +1348,7 @@ URNDR.Model.prototype = {
     },
     update: function( animSpeed ) {
 
-        if (this.animationObject) {
+        if (this.animationObject !== undefined) {
 
             this.animationObject.update( animSpeed );
             
@@ -1434,7 +1435,7 @@ URNDR.ThreeManager.prototype = {
         this.eachModel( function( model , manager ){
 
             if (model.loaded && model.active) {
-                model.update( manager.animationSpeed );
+                model.update( 0 );
             }
 
         }, this )
