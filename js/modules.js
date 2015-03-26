@@ -420,29 +420,42 @@ default_draw_style : function() {
                 if (prv.A + pnt.A <= 0.02) { return 0; }
                 ctx.beginPath();
 
+                var factor = 1;
+                
                 if (pnt.OBJECT && pnt.FACE) {
                     
-                    ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE )+')'
+                    factor = U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
 
                 } else {
 
                     nearests = stk.getNearestPointWith( "FACE", i )
                     if (nearests instanceof Object) {
                         
-                        nearest = nearests.nearest;
-                        // beforeA = 0;
-                        // afterA = 0;
-                        // if (nearests.before) { beforeA = U3.camera.checkVisibility( nearests.before.OBJECT, nearests.before.FACE ); }
-                        // if (nearests.after) { afterA = U3.camera.checkVisibility( nearests.after.OBJECT, nearests.after.FACE ); }
-                        // factor = (beforeA * nearests.after_distance + afterA * nearests.before_distance) / ( nearests.before_distance + nearests.after_distance)
-                        ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * U3.camera.checkVisibility( nearest.OBJECT , nearest.FACE )+')'
-                        // ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor+')'
-                        
-                    } else {
-                        
-                        ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A+')'
+                        var before_present = nearests.before instanceof URNDR.Point;
+                        var after_present = nearests.after instanceof URNDR.Point;
+                        if (before_present && after_present) {
 
+                            factor  = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE ) * nearests.after_distance
+                            factor += U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )   * nearests.before_distance
+                            factor *= 1 / ( nearests.after_distance + nearests.before_distance )
+
+                        } else if (before_present || after_present) {
+
+                            if ( before_present ){
+
+                                factor = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )
+
+                            } else {
+
+                                factor = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )
+                                
+                            }
+
+                        }
+                        
                     }
+
+                    ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor+')'
 
                 }
 
