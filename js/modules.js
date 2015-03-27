@@ -347,7 +347,7 @@ fillmember_style : function() {
             stk.eachPoint( function( pnt , stk, i ) {
                 if (pnt.A > 0.1) {
                     mi( 'destination-over', pnt.S + 15, '#FFF', stk.getPoint( i - 1 ), pnt);
-                    mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A+')', stk.getPoint( i - 1 ), pnt)
+                    mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor(pnt, stk, i)+')', stk.getPoint( i - 1 ), pnt)
                 }
             }, stk )
         } )
@@ -384,17 +384,6 @@ dot_debug_style : function() {
                 ctx.lineTo( pnt.X, pnt.Y + 0.001 )
                 ctx.closePath();
                 ctx.stroke();
-                // if (stk.center) {
-                //     ctx.save();
-                //     ctx.beginPath();
-                //     ctx.lineWidth = 1;
-                //     ctx.strokeStyle = 'rgba(30,30,30,0.3)';
-                //     ctx.moveTo( stk.center.x , stk.center.y )
-                //     ctx.lineTo( pnt.X , pnt.Y )
-                //     ctx.closePath();
-                //     ctx.stroke();
-                //     ctx.restore();
-                // }
             }, stk )
         } )
 
@@ -413,57 +402,9 @@ default_draw_style : function() {
         // default drawing style
         clear(1);
 
-        var prv
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt, stk, i ){
-                prv = stk.getPoint( i - 1 )
-                if (prv.A + pnt.A <= 0.02) { return 0; }
-                ctx.beginPath();
-
-                var factor = 1;
-                
-                if (pnt.OBJECT && pnt.FACE) {
-                    
-                    factor = U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
-
-                } else {
-
-                    nearests = stk.getNearestPointWith( "FACE", i )
-                    if (nearests instanceof Object) {
-                        
-                        var before_present = nearests.before instanceof URNDR.Point;
-                        var after_present = nearests.after instanceof URNDR.Point;
-                        if (before_present && after_present) {
-
-                            factor  = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE ) * nearests.after_distance
-                            factor += U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )   * nearests.before_distance
-                            factor *= 1 / ( nearests.after_distance + nearests.before_distance )
-
-                        } else if (before_present || after_present) {
-
-                            if ( before_present ){
-
-                                factor = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )
-
-                            } else {
-
-                                factor = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )
-                                
-                            }
-
-                        }
-                        
-                    }
-
-                    ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor+')'
-
-                }
-
-                ctx.lineWidth = pnt.S;
-                ctx.moveTo( prv.X, prv.Y )
-                ctx.lineTo( pnt.X, pnt.Y )
-                ctx.closePath();
-                ctx.stroke();
+                normalDraw( ctx, pnt, stk, i )
             }, stk )
         } )
 
@@ -472,3 +413,62 @@ default_draw_style : function() {
 }
 
 } );
+
+function normalDraw( ctx, pnt, stk, i ){
+
+    var prv = stk.getPoint( i - 1 )
+
+    if (prv.A + pnt.A <= 0.02) { return 0; }
+    
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
+    ctx.lineWidth = pnt.S;
+    ctx.moveTo( prv.X, prv.Y )
+    ctx.lineTo( pnt.X, pnt.Y )
+    ctx.closePath();
+    ctx.stroke();
+
+}
+
+function getAlphaFactor( pnt, stk, i ){
+
+    var factor = 1;
+
+    if (pnt.OBJECT && pnt.FACE) {
+                    
+        factor = U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
+
+    } else {
+
+        nearests = stk.getNearestPointWith( "FACE", i )
+        if (nearests instanceof Object) {
+            
+            var before_present = nearests.before instanceof URNDR.Point;
+            var after_present = nearests.after instanceof URNDR.Point;
+            if (before_present && after_present) {
+
+                factor  = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE ) * nearests.after_distance
+                factor += U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )   * nearests.before_distance
+                factor *= 1 / ( nearests.after_distance + nearests.before_distance )
+
+            } else if (before_present || after_present) {
+
+                if ( before_present ){
+
+                    factor = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )
+
+                } else {
+
+                    factor = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )
+
+                }
+
+            }
+            
+        }
+
+    }
+
+    return factor
+
+}

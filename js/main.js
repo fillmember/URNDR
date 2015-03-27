@@ -88,11 +88,11 @@ PEN.addTool(new URNDR.PenTool({
                 vertices = obj.geometry.vertices
 
             point.OBJECT = obj;
-            point.FACE = face
+            point.FACE = face;
             
-            a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project(this.u3.camera)
-            b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project(this.u3.camera)
-            c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project(this.u3.camera)
+            a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project( this.u3.camera )
+            b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project( this.u3.camera )
+            c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project( this.u3.camera )
             
             var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
             
@@ -179,7 +179,7 @@ PEN.addTool( new URNDR.PenTool({
 
                 model.mesh.rotation.y += value;
 
-                model.animationObject.update( 10 )
+                model.animationObject.update( 4 )
 
             }, pen.ndc_x * 0.1 )
 

@@ -1320,19 +1320,20 @@ URNDR.Model.prototype = {
 
             model.mesh = new THREE.Mesh( model.geometry, model.material )
 
-            // POSITION
-            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y)
-            var scale = 5 / y_len
+            // SET MODEL POSITION
+            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y),
+                scale = 5 / y_len;
             model.mesh.scale.set( scale, scale, scale )
             model.mesh.rotation.set( 0, 0, 0 )
             model.mesh.position.set( 0, -0.45 * y_len * scale, -5 )
 
             // ANMATION
-            // console.log( model.geometry.morphTargets.length )
             if (model.geometry.morphTargets.length > 0) {
 
                 model.animationObject = new THREE.MorphAnimation( model.mesh )
                 model.animationObject.play();
+                // initialize the morphTarget array...
+                model.animationObject.update( model.animationObject.duration / model.animationObject.frames )
 
             }
 
@@ -1388,10 +1389,10 @@ URNDR.ThreeManager.prototype = {
     createModelFromFile: function( file_path ) {
 
         // CREATE
-        var model = new URNDR.Model();
+        var manager = this,
+            model = new URNDR.Model();
             model.material = this.defaultMaterial
 
-        var manager = this
         model.loadModel( file_path , function(){
 
             // THREE
@@ -1450,22 +1451,18 @@ URNDR.ThreeManager.prototype = {
 
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 
-    if (this.geometry.morphTargets.length === 0) {
-        return this.geometry.vertices[ vertex_index ]
-    }
-    
-    var target_count = this.geometry.morphTargets.length
-    var influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
+    var geo = this.geometry,
+        target_count = geo.morphTargets.length,
+        influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
     if ( target_count === 0 || influence_sum === 0 ) {
-        // there's no morphTarget. Return the original vertex.
-        return this.geometry.vertices[ vertex_index ].clone()
+        return geo.vertices[ vertex_index ].clone();
     }
 
     // compute the vertex by morphTargets. 
-    var result = new THREE.Vector3( 0, 0, 0 );
+    var result = new THREE.Vector3();
     for ( var i = 0; i < target_count; i++ ) {
 
-        result.add( this.geometry.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
+        result.add( geo.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
 
     }
 
@@ -1473,26 +1470,17 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 
 }
 
-THREE.Object3D.prototype.getMorphedFaceNormal = function( face_index ) {
-
-    var target_face = this.geometry.faces[ face_index ]
-    if (!target_face) { return 0; }
-
-    var a,b,c
-    a = obj.getMorphedVertex( face.a )
-    b = obj.getMorphedVertex( face.b )
-    c = obj.getMorphedVertex( face.c )
-
-}
 THREE.Camera.prototype.calculateLookAtVector = function() {
+
     this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
+
 }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (!this.lookAtVector) { this.calculateLookAtVector(); }
 
     var normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
-    var N = face.normal.clone().applyMatrix3( normalMatrix ).normalize().negate();
+    var N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
 
     var result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.5, 1, 0 )
         result = THREE.Math.clamp( result, 0, 1 )
