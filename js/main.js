@@ -61,19 +61,18 @@ PEN.addTool(new URNDR.PenTool({
     onmouseup: function(pen, evt){
         var astk = this.strokes.getActiveStroke()
         astk.optimize();
-        // this.strokes.addToQuadTree( astk );
     },
     onmousemove: function(pen, evt){
 
         this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
 
         var point = new URNDR.Point({
-                    X : pen.x,
-                    Y : pen.y,
-                    S : STYLE.brush_size,
-                    R : STYLE.color.r, G : STYLE.color.g, B : STYLE.color.b,
-                    A : STYLE.color.a
-            });
+            X : pen.x,
+            Y : pen.y,
+            S : STYLE.brush_size,
+            R : STYLE.color.r, G : STYLE.color.g, B : STYLE.color.b,
+            A : STYLE.color.a
+        });
         var penNDC = new THREE.Vector2( pen.ndc_x , pen.ndc_y )
         
         RAYCASTER.setFromCamera( penNDC , this.u3.camera )
@@ -86,16 +85,17 @@ PEN.addTool(new URNDR.PenTool({
                 obj = i0.object
                 face = i0.face
                 vertices = obj.geometry.vertices
-
-            point.OBJECT = obj;
-            point.FACE = face;
             
             a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project( this.u3.camera )
             b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project( this.u3.camera )
             c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project( this.u3.camera )
             
             var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
+
+            // write to point
             
+            point.OBJECT = obj;
+            point.FACE = face;
             point.BU = bco.u
             point.BV = bco.v
             point.BW = bco.w

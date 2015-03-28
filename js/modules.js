@@ -430,6 +430,12 @@ function normalDraw( ctx, pnt, stk, i ){
 
 }
 
+function closePath( ctx, stk ) {
+    if (stk.closed) {
+        ctx.closePath();
+    }
+}
+
 function getAlphaFactor( pnt, stk, i ){
 
     var factor = 1;

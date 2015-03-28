@@ -301,7 +301,9 @@ URNDR.Strokes.prototype.reset = function() {
     this.strokes = {};
     this.strokesHistory = [];
     this.strokesZDepth = [];
+    
     this.active_stroke = 0;
+
     this.quadTree.clear();
 
 }
@@ -313,9 +315,7 @@ URNDR.Strokes.prototype.rebuildQuadTree = function() {
     qt.clear();
 
     this.eachStroke( function(stk,strokes){
-        // if (stk.id !== active_id) {
         strokes.addToQuadTree( stk )
-        // }
     }, this)
 
 }
@@ -1093,18 +1093,20 @@ URNDR.FramesManager = function() {
     this.DEFAULT_FRAME_TYPE = "keyframe";
     this.DEFAULT_FRAME_DURATION = 1;
     this.activeFrame = 0;
-    this.getFrame = function ( frame_n ) {
+}
+URNDR.FramesManager.prototype = {
+    getFrame : function ( frame_n ) {
         var f = this.KEY_PREFIX+frame_n;
         if ( this.data.hasOwnProperty(f) ) {
             return this.data[f];
         } else {
             return false;
         }
-    }
-    this.getFramesCount = function() {
+    },
+    getFramesCount : function() {
         return Object.keys(this.data).length;
-    }
-    this.setFrame = function ( frame_n , data ) {
+    },
+    setFrame : function ( frame_n , data ) {
         var this_frame = this.getFrame(frame_n);
         if (this_frame) {
             if (data === undefined) return HUD.display("Error","Set exisiting frame "+frame_n+" but without data. ")
@@ -1112,8 +1114,8 @@ URNDR.FramesManager = function() {
         } else {
             this.createNewFrame(frame_n, data);
         }
-    }
-    this.deleteFrame = function ( frame_n ) {
+    },
+    deleteFrame : function ( frame_n ) {
         try {
             delete this.data[this.KEY_PREFIX + frame_n]
             return true;
@@ -1121,19 +1123,19 @@ URNDR.FramesManager = function() {
             console.log(error)
             return false;
         }
-    }
-    this.clearFrame = function ( frame_n ) {
+    },
+    clearFrame : function ( frame_n ) {
         var f = getFrame(frame_n)
         if (f) {
             f.strokes_data = null;
         } else {
             return false;
         }
-    }
-    this.createNewFrame = function ( frame_n , data ) {
+    },
+    createNewFrame : function ( frame_n , data ) {
         this.data[this.KEY_PREFIX + frame_n] = this.createFrameInstance( data );
-    }
-    this.createFrameInstance = function ( data ) {
+    },
+    createFrameInstance : function ( data ) {
         var obj = {
             frame_name : this.DEFAULT_FRAME_NAME,
             frame_type : this.DEFAULT_FRAME_TYPE,
@@ -1142,8 +1144,8 @@ URNDR.FramesManager = function() {
         };
         if(data) { for ( var p in obj ){ if( data.hasOwnProperty(p) ){ obj[p] = data[p] } } }
         return obj;
-    }
-    this.getNearestFrameNumber = function ( frame_n , direction , frame_type ) {
+    },
+    getNearestFrameNumber : function ( frame_n , direction , frame_type ) {
         var keys,leng,pos;
             keys = Object.keys(this.data).sort();
             leng = keys.length;
@@ -1152,10 +1154,8 @@ URNDR.FramesManager = function() {
         if (pos === keys.length - 1 ) return false;
         if (pos === 0) return false;
         return pos + direction;
-    }
-    // TODO: to integrate this into frame manager. 
-    // TODO: Make a new canvas that provide background render??
-    this.requestCanvasExport = function() {
+    },
+    requestCanvasExport : function() {
         var req = new XMLHttpRequest();
         var i = new Date().getTime();
         var data = PAPER.toDataURL();
@@ -1172,7 +1172,6 @@ URNDR.FramesManager = function() {
         req.send(data)
     }
 }
-
 // MATH
 
 URNDR.Math = {
@@ -1373,11 +1372,12 @@ URNDR.ThreeManager = function( arg ) {
         precision: "lowp",
         alpha: true
     })
-    this.camera   = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
-    this.scene    = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
+    this.scene = new THREE.Scene();
+    this.raycaster = new THREE.Raycaster();
+    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({color: 0xCCCCCC})
     if (arg.fog) { this.scene.fog = arg.fog; }
     this.defaultAnimationSpeed = arg.defaultAnimationSpeed || 4
-    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({color: 0xFFFFFF})
 
     // THREE setup
     this.renderer.setSize( window.innerWidth , window.innerHeight )
@@ -1431,17 +1431,19 @@ URNDR.ThreeManager.prototype = {
         }
 
     },
-    update: function() {
+    update: function( speed ) {
 
-        this.eachModel( function( model , manager ){
+        var manager = this;
+
+        manager.eachModel( function( model , manager ){
 
             if (model.loaded && model.active) {
-                model.update( 0 );
+                model.update( speed, manager.defaultAnimationSpeed );
             }
 
-        }, this )
+        }, manager )
         
-        this.renderer.render( this.scene , this.camera )
+        manager.renderer.render( this.scene , this.camera )
 
     }
 
@@ -1461,9 +1463,7 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
     // compute the vertex by morphTargets. 
     var result = new THREE.Vector3();
     for ( var i = 0; i < target_count; i++ ) {
-
         result.add( geo.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
-
     }
 
     return result
@@ -1471,19 +1471,18 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 }
 
 THREE.Camera.prototype.calculateLookAtVector = function() {
-
     this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
-
 }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (!this.lookAtVector) { this.calculateLookAtVector(); }
 
-    var normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
-    var N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
+    var normalMatrix, N, result;
 
-    var result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.5, 1, 0 )
-        result = THREE.Math.clamp( result, 0, 1 )
+    normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
+    N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
+    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.5, 1, 0 )
+    result = THREE.Math.clamp( result, 0, 1 )
 
     return result;
 
