@@ -1386,7 +1386,7 @@ URNDR.ThreeManager = function( arg ) {
 }
 URNDR.ThreeManager.prototype = {
 
-    createModelFromFile: function( file_path ) {
+    createModelFromFile: function( file_path, callback ) {
 
         // CREATE
         var manager = this,
@@ -1401,6 +1401,9 @@ URNDR.ThreeManager.prototype = {
             // STORAGE
             manager.models[ model.id ] = model;
             manager.models_sequence.push( model.id )
+
+            // CALLBACK
+            callback( model );
 
         } );
 
@@ -1438,7 +1441,12 @@ URNDR.ThreeManager.prototype = {
         manager.eachModel( function( model , manager ){
 
             if (model.loaded && model.active) {
-                model.update( speed, manager.defaultAnimationSpeed );
+
+                if (typeof speed !== "number") {
+                    speed = manager.defaultAnimationSpeed
+                }
+                model.update( speed );
+
             }
 
         }, manager )

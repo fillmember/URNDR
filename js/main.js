@@ -21,8 +21,7 @@ var U3 = new URNDR.ThreeManager( {
             morphTargets: true,
         } ),
         animationSpeed: 4
-    } ),
-    RAYCASTER = new THREE.Raycaster();
+    } )
 
 //
 // OBJECTS
@@ -75,9 +74,9 @@ PEN.addTool(new URNDR.PenTool({
         });
         var penNDC = new THREE.Vector2( pen.ndc_x , pen.ndc_y )
         
-        RAYCASTER.setFromCamera( penNDC , this.u3.camera )
+        U3.raycaster.setFromCamera( penNDC , this.u3.camera )
 
-        var intersects = RAYCASTER.intersectObjects( this.u3.scene.children );
+        var intersects = U3.raycaster.intersectObjects( this.u3.scene.children );
         if (intersects.length > 0) {
             
             var i0, obj, face, vertices, a, b, c
@@ -93,7 +92,7 @@ PEN.addTool(new URNDR.PenTool({
             var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
 
             // write to point
-            
+
             point.OBJECT = obj;
             point.FACE = face;
             point.BU = bco.u
@@ -179,7 +178,7 @@ PEN.addTool( new URNDR.PenTool({
 
                 model.mesh.rotation.y += value;
 
-                model.animationObject.update( 4 )
+                model.animationObject.update( 10 )
 
             }, pen.ndc_x * 0.1 )
 
@@ -210,7 +209,13 @@ window.onload = function() {
     // Models
     //
 
-    U3.createModelFromFile( "models/human_02.js" );
+    U3.createModelFromFile( "models/urndr.js", function( model ){
+
+        model.mesh.scale.multiplyScalar(0.5)
+        model.mesh.rotation.y = Math.PI / 2
+        model.mesh.position.y = -1
+
+    } );
 
     //
     // EVENTS
@@ -252,7 +257,7 @@ window.onload = function() {
     // requestAnimationFrame
     var display = function() {
 
-        U3.update();
+        U3.update( 0 );
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
         MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER} );
