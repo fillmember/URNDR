@@ -1,23 +1,23 @@
+/*Document Elements*/
+
 body {
   background-color: #F0F0F0;
 }
+
+/*Interface*/
 
 canvas {
   position:absolute;
   top:0; left:0;
   cursor:crosshair;
 }
-  #canvas_urndr { z-index: 10; }
-  #canvas_three { z-index: 0; }
+  #canvas_urndr { z-index:  10; }
+  #canvas_three { z-index: -10; }
 
-#GUI {
-  z-index: 30;
-}
+#GUI, #HUD {
 
-#HUD {
-  z-index: 20;
   position: fixed;
-  top:1em; left:1em;
+  top: 1em;
 
   padding: .5em;
   border: 1px solid #999;
@@ -25,7 +25,20 @@ canvas {
   font-family: "Menlo", sans-serif;
   font-size: 9pt;
   color: #666;
+
 }
+
+#GUI {
+  z-index: 30;
+  right: 1em;
+}
+
+#HUD {
+  z-index: 20;
+  left:1em;
+}
+
+/*Minor Objects*/
 
 #WACOM {
 	position: absolute;

@@ -62,6 +62,8 @@ PEN.addTool(new URNDR.PenTool({
     },
     onmousemove: function(pen, evt){
 
+        if (pen.isDown !== 1) { return; }
+
         this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
 
         var point = new URNDR.Point({
@@ -138,6 +140,9 @@ PEN.addTool( new URNDR.PenTool({
         }
     },
     onmousemove: function(pen, evt){
+
+        if (pen.isDown !== 1) { return; }
+
         var query = this.strokes.getFromQuadTree( pen.x, pen.y, pen.pressure, pen.pressure ),
             pnt, 
             dist_sq,
@@ -188,15 +193,30 @@ PEN.addTool( new URNDR.PenTool({
 
         clearInterval( this.timer )
 
-    },
-    onmouseout: function(){
-
-        clearInterval( this.timer )
-
-    },
-    onmousemove: function(pen, evt){}
+    }
 
 }));
+PEN.addTool( new URNDR.PenTool({
+
+    name: "Stroke Selector",
+    strokes: STROKES,
+    onmouseup: function(pen,evt){
+
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, pen.pressure, pen.pressure );
+        if (query.length > 0) {
+            if (query[0].hasOwnProperty("strokeID")) {
+                if (query[0].strokeID !== 0) {
+
+                    this.strokes.active_stroke = query[0].strokeID
+                    console.log( this.strokes.active_stroke )
+
+                }
+            }
+        }
+        
+    }
+
+}))
 
 //
 // INIT

@@ -323,26 +323,33 @@ URNDR.Strokes.prototype.rebuildQuadTree = function() {
     qt.clear();
 
     this.eachStroke( function(stk,strokes){
+
         strokes.addToQuadTree( stk )
+    
     }, this)
 
 }
 URNDR.Strokes.prototype.addToQuadTree = function( obj ) {
 
-    var qt = this.quadTree;
+    var hit_size, half_hit,
+        qt = this.quadTree;
 
     if (obj instanceof URNDR.Stroke) {
 
         obj.eachPoint( function(pnt,stk,i){
-            var hit_size = pnt.S * 0.5
+
+            hit_size = pnt.S,
+            half_hit = - hit_size * 0.5;
+            
             qt.insert( new URNDR.Rectangle(
-                pnt.X - hit_size * 0.5, // X
-                pnt.Y - hit_size * 0.5, // Y
+                pnt.X + half_hit, // X
+                pnt.Y + half_hit, // Y
                 hit_size, // W
                 hit_size, // H
                 // Reference
                 { strokeID: stk.id, stroke: stk, pointIndex: i, point: pnt }
             ) );
+
         }, obj );
 
     }
@@ -938,7 +945,7 @@ URNDR.Pen = function( canvas , wacom ) {
         d.pressure = pen.wacom.pressure
         pen.updatePen( d )
 
-        if (this.isDown === 1 && pen.active_tool instanceof URNDR.PenTool) {
+        if (pen.active_tool instanceof URNDR.PenTool) {
             pen.active_tool.onmousemove( pen, evt );
         }
 
@@ -1011,10 +1018,10 @@ URNDR.Pen.prototype.addTool = function ( tool , activate ) {
 URNDR.PenTool = function(parameters) {
     this.id = "T-" + THREE.Math.generateUUID();
     this.name = parameters.name || "Untitled Tool";
-    this.onmousedown = parameters.onmousedown || function( evt ){ console.log("tool: "+this.name+" event: mousedown", evt); };
-    this.onmouseup = parameters.onmouseup || function( evt ){ console.log("tool: "+this.name+" event: mouseup", evt); };
-    this.onmousemove = parameters.onmousemove || function( evt ){ console.log("tool: "+this.name+" event: mousemove", evt); };
-    this.onmouseout = parameters.onmouseout || function( evt ){ console.log("tool: "+this.name+" event: mouseout", evt); };
+    this.onmousedown = parameters.onmousedown || function(){};
+    this.onmouseup = parameters.onmouseup || function(){};
+    this.onmousemove = parameters.onmousemove || function(){};
+    this.onmouseout = parameters.onmouseout || function(){};
     this.size = parameters.size || 5;
     for (var p in parameters) {
         var flag = true
@@ -1490,6 +1497,10 @@ THREE.Camera.prototype.calculateLookAtVector = function() {
     this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
 }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
+
+    if (obj.visible === false) {
+        return 0;
+    }
 
     if (!this.lookAtVector) { this.calculateLookAtVector(); }
 
