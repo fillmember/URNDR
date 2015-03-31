@@ -27,6 +27,12 @@ canvas {
   color: #666;
 }
 
+#WACOM {
+	position: absolute;
+	left: -999px; top: -999px;
+	width: 0; height: 0;
+}
+
 /* addtional classes */
 
 .hide {
