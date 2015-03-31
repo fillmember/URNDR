@@ -154,6 +154,8 @@ URNDR.Module = function(n,t,k,e) {
     this.priority = 1
     this.type = t
     this.name = n
+    this.enabled = false
+    //
     if ( typeof k === "boolean" && e === undefined ) {
         // no keycode data is sent
         this.enabled = k
@@ -166,7 +168,7 @@ URNDR.Module.prototype.setFunction = function ( f ) { this.func = f }
 URNDR.Module.prototype.getFunction = function () { return this.func }
 URNDR.Module.prototype.setConfiguration = function ( s ) {
     this.configuration = s
-    this.initialConfiguration = Object.create(s)
+    this.initialConfiguration = Object.create( this.configuration )
 }
 URNDR.Module.prototype.getConfiguration = function () { return this.configuration }
 
@@ -174,22 +176,24 @@ URNDR.Module.prototype.getConfiguration = function () { return this.configuratio
 
 URNDR.ModuleManager = function() {
     this.modules = {};
-    this[URNDR.COMMAND_MODULE] = {};
-    this[URNDR.STYLE_MODULE] = {};
-    this[URNDR.POINT_MODULE] = {};
-    this[URNDR.STROKE_MODULE] = {};
-    this[URNDR.DRAW_MODULE] = {};
+    this[ URNDR.COMMAND_MODULE ] = {};
+    this[ URNDR.STYLE_MODULE ] = {};
+    this[ URNDR.POINT_MODULE ] = {};
+    this[ URNDR.STROKE_MODULE ] = {};
+    this[ URNDR.DRAW_MODULE ] = {};
     this.key_map = {};
     // functions
-    this.KEY_PREFIX = "KEY";
+    this.KEY_PREFIX = "key";
     this.setKeyMap = function( keyCode , id ) {
 
         this.key_map[ this.KEY_PREFIX + keyCode ] = { id: id }
 
     }
     this.getModuleIDbyKey = function( keyCode ) {
+
         var result = this.key_map[ this.KEY_PREFIX + keyCode ];
         return (result? result : false)
+
     }
     this.loadModule = function ( module ) {
 
@@ -199,25 +203,22 @@ URNDR.ModuleManager = function() {
             module = module()
 
         }
-        
-        var id = module.id;
 
         // put in general modules list
-        this.modules[id] = module
-        
-        try {
-            // put in each categories
-            this[ module.type ][id] = this.modules[id]
-        } catch(err) {
-            HUD.appendToDisplay("failed to load a module into category: "+module.type||"type unknown",err)
+        this.modules[ module.id ] = module
+
+        if (this.hasOwnProperty( module.type )) {
+            this[ module.type ][ module.id ] = this.modules[ module.id ]
         }
 
-        if (typeof module.keyCode === "number") this.setKeyMap( module.keyCode , id )
+        if (typeof module.keyCode === "number") {
+            this.setKeyMap( module.keyCode , module.id )
+        }
 
     }
     this.loadModules = function ( list ) {
     
-        for ( var l in list ) { this.loadModule( list[l] ) }
+        for ( var l in list ) { this.loadModule( list[l] ); }
     
     }
 
@@ -261,22 +262,29 @@ URNDR.ModuleManager = function() {
 
     }
     this.runEnabledModulesInList = function (list_name, params) {
+
         var list = this[list_name],
             enabled_count = 0;
+
         for ( var m in list ) {
             if (list[m].enabled) {
                 list[m].func(params);
                 enabled_count ++;
             }
         }
+
         return enabled_count;
+
     }
     this.getEnabledModulesCount = function( list_name ) {
+
         var list = this[list_name], enabled_count = 0;
         for (m in list) { if (list[m].enabled) { enabled_count ++; } }
+
         return enabled_count;
+
     }
-    this.resetModules = function( list_name ) { }
+    this.resetModules = function( list_name ) {}
 };
 
 // Strokes
@@ -1489,7 +1497,7 @@ THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
     N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
-    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.5, 1, 0 )
+    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.57, 1, 0 )
     result = THREE.Math.clamp( result, 0, 1 )
 
     return result;

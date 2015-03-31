@@ -1,0 +1,42 @@
+body {
+  background-color: #F0F0F0;
+}
+
+canvas {
+  position:absolute;
+  top:0; left:0;
+  cursor:crosshair;
+}
+  #canvas_urndr { z-index: 10; }
+  #canvas_three { z-index: 0; }
+
+#GUI {
+  z-index: 30;
+}
+
+#HUD {
+  z-index: 20;
+  position: fixed;
+  top:1em; left:1em;
+
+  padding: .5em;
+  border: 1px solid #999;
+
+  font-family: "Menlo", sans-serif;
+  font-size: 9pt;
+  color: #666;
+}
+
+/* addtional classes */
+
+.hide {
+  display: none;
+}
+
+.unselectable {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}

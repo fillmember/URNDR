@@ -1,29 +1,27 @@
 <html>
-	<head>
-		<title>URRndR</title>
-		<style>
-			body {background-color: #F0F0F0;}
-			canvas {position:absolute;top:0;left:0;cursor:crosshair;}
-			canvas#paper {z-index: 10;}
-			canvas#lighttable {z-index: 0;}
-			div#HUD {display:block;position:fixed;top:1em;left:1em;z-index:999;
-				padding: .5em;
-				border: 1px solid #999; opacity: 0.75;
-				font-size: 9pt; font-family: Menlo; color: #666;
-			}
-			#Wacom {z-index: -100; width:0; height:0;}
-		</style>
-	</head>
-	<body>
-		<canvas id="paper"></canvas>
-		<canvas id="lighttable"></canvas>
-		<div id="HUD"></div>
-		<object type="application/x-wacomtabletplugin" id="Wacom"></object>
-		
-		<script src="js/three.js" type="text/javascript"></script>
-		<script src="js/urndr.js" type="text/javascript"></script>
-		<script src="js/main.js" type="text/javascript"></script>
-		<script src="js/modules.js" type="text/javascript"></script>
-		
-	</body>
+
+  <head>
+
+    <title>URNDR</title>
+    <link rel="stylesheet" href="css/main.css">
+    
+  </head>
+
+  <body>
+
+    <canvas id="canvas_urndr" class="unselectable"></canvas>
+    <canvas id="canvas_three" class="unselectable"></canvas>
+
+    <div id="HUD" class="unselectable"></div>
+    <div id="GUI"></div>
+    
+    <object type="application/x-wacomtabletplugin" id="Wacom"></object>
+
+    <script src="js/three.js" type="text/javascript"></script>
+    <script src="js/urndr.js" type="text/javascript"></script>
+    <script src="js/main.js" type="text/javascript"></script>
+    <script src="js/modules.js" type="text/javascript"></script>
+
+  </body>
+
 </html>

@@ -6,27 +6,26 @@
 
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
-        canvas: document.getElementById('lighttable'),
-        fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
-        defaultMaterial: new THREE.MeshBasicMaterial( {
+    canvas: document.getElementById('canvas_three'),
+    fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
+    defaultMaterial: new THREE.MeshBasicMaterial( {
 
-            color: 0x333333,
-            vertexColors: THREE.FaceColors, 
-            
-            fog: true,
-            
-            wireframe: true, 
-            wireframeLinewidth: 0.1,
+        color: 0xFFFFFF,
+        vertexColors: THREE.FaceColors, 
+        
+        fog: true,
+        
+        wireframe: true, 
+        wireframeLinewidth: 0.1,
 
-            morphTargets: true,
-        } ),
-        animationSpeed: 4
+        morphTargets: true,
     } )
+} )
 
 //
 // OBJECTS
 //
-var CANVAS = document.getElementById('paper'), 
+var CANVAS = document.getElementById('canvas_urndr'),
     PAPER = CANVAS.getContext("2d"),
     STYLE = new URNDR.StrokeStyle(),
     PEN = new URNDR.Pen( CANVAS , WACOM ),
@@ -209,12 +208,18 @@ window.onload = function() {
     // Models
     //
 
-    U3.createModelFromFile( "models/urndr.js", function( model ){
+    // U3.createModelFromFile( "models/sphere.js", function( model ){
 
-        model.mesh.scale.multiplyScalar(0.5)
-        model.mesh.rotation.y = Math.PI / 2
-        model.mesh.position.y = -1
+    //     model.mesh.scale.multiplyScalar(0.7)
+    //     model.mesh.position.y = 0
 
+    // } );
+
+    U3.createModelFromFile( "models/human_01.js", function( model ) {
+        model.mesh.position.x = 2
+    }  );
+    U3.createModelFromFile( "models/human_02.js", function( model ) {
+        model.mesh.position.x = -2
     } );
 
     //
@@ -248,9 +253,13 @@ window.onload = function() {
 
                 event.preventDefault();
 
-                HUD.display(result.name,( result.enabled ? "ON" : "OFF" ))
+                HUD.display(result.name,( result.enabled ? "ON" : "OFF" ));
 
-            } else { HUD.display("key_pressed: "+key) }
+            } else {
+
+                HUD.display("key_pressed: "+key);
+
+            }
 
     });
 

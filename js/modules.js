@@ -194,7 +194,7 @@ smooth_data : function() {
             return;
         }
         
-        target_tracks = ["R","G","B","X","Y"];
+        target_tracks = ["R","G","B","A","S"]; // ,"X","Y"
         for (var i in target_tracks) {
 
             track = stroke.getTrack( target_tracks[i] );
@@ -345,15 +345,17 @@ fillmember_style : function() {
         strokes_count = strokes.getStrokesCount();
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt , stk, i ) {
-                if (pnt.A > 0.1) {
+                f = getAlphaFactor(pnt, stk, i);
+                if (pnt.A * f > 0.5) {
                     mi( 'destination-over', pnt.S + 15, '#FFF', stk.getPoint( i - 1 ), pnt);
-                    mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor(pnt, stk, i)+')', stk.getPoint( i - 1 ), pnt)
+                    mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * f+')', stk.getPoint( i - 1 ), pnt)
                 }
             }, stk )
         } )
 
         function mi( gco, lineWidth , strokeStyle, prv, pnt ) {
             ctx.beginPath();
+            ctx.globalCompositeOperation = gco;
             ctx.lineWidth = lineWidth;
             ctx.strokeStyle = strokeStyle;
             ctx.moveTo( prv.X , prv.Y )
