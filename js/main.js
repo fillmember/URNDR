@@ -152,7 +152,7 @@ PEN.addTool( new URNDR.PenTool({
         power = power > 0.95 ? 0.95 : power;
 
         for(var q in query) {
-            pnt = query[q].point
+            pnt = query[q].reference.point
             dist_sq = ( pen.x - pnt.X )*( pen.x - pnt.X ) + ( pen.y - pnt.Y )*( pen.y - pnt.Y )
             if ( dist_sq < size_sq ) {
                 if (pnt.A > 0.2) {
@@ -202,18 +202,44 @@ PEN.addTool( new URNDR.PenTool({
     strokes: STROKES,
     onmouseup: function(pen,evt){
 
-        var query = this.strokes.getFromQuadTree( pen.x, pen.y, pen.pressure, pen.pressure );
-        if (query.length > 0) {
-            if (query[0].hasOwnProperty("strokeID")) {
-                if (query[0].strokeID !== 0) {
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 ),
 
-                    this.strokes.active_stroke = query[0].strokeID
-                    console.log( this.strokes.active_stroke )
+            nearest_id = 0, 
+            nearest_distance = 360,
+            limit = 360,
+
+            bufferX, bufferY, buffer;
+
+        if (query.length > 0) {
+
+            for (var q in query) {
+                
+                if ( query[q].reference && query[q].reference.strokeID ) {
+                
+                    bufferX = pen.x - query[q].x
+                    bufferY = pen.y - query[q].y
+                    buffer = bufferX * bufferX + bufferY * bufferY
+
+                    if (buffer < limit && buffer < nearest_distance) {
+
+                        nearest_distance = buffer;
+                        nearest_id = query[q].reference.strokeID
+
+                    }
 
                 }
+
             }
+
+            if (nearest_id !== 0) {
+
+                this.strokes.active_stroke = nearest_id;
+                HUD.display( "stroke selected: " + nearest_id )
+
+            }
+
         }
-        
+
     }
 
 }))

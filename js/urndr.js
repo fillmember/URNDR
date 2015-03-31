@@ -370,7 +370,7 @@ URNDR.Strokes.prototype.getFromQuadTree = function( x , y , w , h ) {
     var rects = this.quadTree.retrieve( [], rect )
     var result = [];
     for (var r in rects) {
-        if (rects[r].reference) { result.push( rects[r].reference ) }
+        result.push( rects[r] )
     }
 
     return result;

@@ -28,6 +28,12 @@ mover : function() {
     return module
 },
 
+selector : function() {
+    var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,83) // s
+    module.setFunction(function() {PEN.selectToolByName("Stroke Selector"); return "Select Stroke"})
+    return module
+},
+
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
     module.setFunction(function(){ STROKES.reset(); return ""; })
@@ -377,9 +383,13 @@ dot_debug_style : function() {
         clear(.8);
 
         ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(0,0,255,0.8)';
 
         strokes.eachStroke( function( stk ){
+            if (stk.id === strokes.active_stroke) {
+                ctx.strokeStyle = 'rgb(255,0,0)';
+            } else {
+                ctx.strokeStyle = 'rgb(100,100,100)';
+            }
             stk.eachPoint( function( pnt , stk ){
                 ctx.beginPath();
                 ctx.moveTo( pnt.X, pnt.Y - 0.001 )
