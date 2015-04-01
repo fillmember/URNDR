@@ -96,17 +96,7 @@ PEN.addTool( new URNDR.PenTool({
     strokes: STROKES,
     onmousedown: function(pen, evt){},
     onmouseup: function(pen, evt){
-        var strokes_to_delete = [];
-        this.strokes.eachStroke(function(stk){
-            var alpha_sum = 0;
-            var alpha_flag = false;
-            stk.eachPoint( function(pnt){
-                if (pnt.A > 0.1) { alpha_flag = true; }
-                alpha_sum += pnt.A
-            })
-            if (alpha_flag === false && alpha_sum < 0.05) { strokes_to_delete.push( stk.id ) }
-        })
-        for (var i in strokes_to_delete) { this.strokes.deleteStrokeByID( strokes_to_delete[i] ) }
+        MODULES.getModuleByName( "delete flagged strokes" ).func( this.strokes );
     },
     onmousemove: function(pen, evt){
 

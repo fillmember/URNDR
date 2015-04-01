@@ -97,6 +97,23 @@ pressure_sensitivity : function() {
 
 // STROKE DATA MODULES
 
+delete_flagged_strokes : function(){
+    var module = new URNDR.Module("delete flagged strokes",URNDR.STROKE_MODULE,99,true);
+    module.setFunction( function(strokes){
+        var strokes_to_delete = [];
+        strokes.eachStroke(function(stk){
+            if (stk.flag_to_delete) {
+                strokes_to_delete.push( stk.id )
+                if (stk.id === strokes.active_stroke) {
+                    strokes.active_stroke = 0;
+                }
+            }
+        })
+        for (var i in strokes_to_delete) { strokes.deleteStrokeByID( strokes_to_delete[i] ) }
+    })
+    return module;
+},
+
 move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
     module.setConfiguration({
@@ -215,44 +232,38 @@ smooth_data : function() {
 },
 
 fade_strokes : function() {
-    var module = new URNDR.Module("Fading Strokes",URNDR.STROKE_MODULE,70,false);
-    module.setConfiguration({
-        all : true,
-        fade_length : 30,
-    })
+    var module = new URNDR.Module("Fade Strokes",URNDR.STROKE_MODULE,70,false);
+    module.setConfiguration({ all : true , speed : 1.5 })
     module.setFunction(function(strokes) {
-        var settings = this.getConfiguration();
+        var settings = this.getConfiguration()
         if (settings.all) {
             strokes.eachStroke( fade , settings );
         } else {
-            fade( strokes.getActiveStroke() , settings )
+            var stroke = strokes.getActiveStroke()
+            if ( stroke === 0 ) {return 0;}
+            fade( stroke , settings );
         }
 
         function fade( stroke , settings ){
 
-            var n, len
-            
-            if (stroke.checkTag("fade_strokes")) {
-                n = stroke.getTag("fade_strokes");
-            } else {
-                n = 0
-            }
+            var n = stroke.getTag("fade_strokes");
+            if (n > 0 === false) { n = 0; }
 
-            len = stroke.length;
+            var len = stroke.length;
+
             for ( var i = 0; i < len; i++ ) {
 
-                if ( i <= n ) {
-                    stroke.getPoint( i ).A *= 0.5;
-                    if ( stroke.getPoint( i ).A <= 0.1) {
-                        stroke.removePoint( i )
-                        len --;
-                        i --;
-                    }
+                if ( i < n ) {
+                    stroke.points[ i ].A = stroke.points[ i ].A < 0.05 ? 0 : stroke.points[ i ].A * THREE.Math.mapLinear( settings.speed , 1 , 5 , 1 , 0.5)
+                } else {
+                    break;
                 }
 
             }
 
-            stroke.setTag("fade_strokes", Math.min(n + 1 , len) )
+            n = Math.min(n + THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 1 ) , len);
+
+            stroke.setTag("fade_strokes", n )
 
         }
 
@@ -346,10 +357,12 @@ default_draw_style : function() {
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt, stk, i ){
 
+                var factor = getAlphaFactor(pnt,stk,i)
+
                 var prv = stk.getPoint( i - 1 );
                 
                 if(settings.fillmember) {
-                    if (pnt.A * getAlphaFactor(pnt,stk,i) > 0.1) {
+                    if (pnt.A * factor > 0.1) {
                         ctx.save();
                         ctx.globalCompositeOperation = 'destination-over'
                         stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF")
@@ -358,7 +371,7 @@ default_draw_style : function() {
                 }
 
                 stroke_basic(ctx, prv, pnt, pnt.S, 
-                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
+                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')'
                 )
                 if ( stk.hovered ) {
                     hudCtx.lineWidth = 2;
@@ -373,12 +386,19 @@ default_draw_style : function() {
                 }
             } , stk)
             if (stk.closed) {
-                var pnt = stk.points[ stk.length - 1 ];
-                stroke_basic(ctx, 
-                    pnt, 
-                    stk.points[ 0 ], 
-                    pnt.S, 
-                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, 0 ) +')'
+                var prv = stk.points[ 0 ],
+                    pnt = stk.points[ stk.length - 1 ]
+                    factor = getAlphaFactor(pnt,stk,0);
+                if(settings.fillmember) {
+                    if (pnt.A * factor > 0.1) {
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'destination-over'
+                        stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF")
+                        ctx.restore();
+                    }
+                }
+                stroke_basic(ctx, pnt, prv, pnt.S, 
+                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')'
                 )
             }
         } )

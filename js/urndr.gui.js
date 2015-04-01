@@ -1,38 +1,44 @@
 var GUI = new dat.GUI();
 
-var basic_folder = GUI.addFolder("Basic");
+var gp;
 
-basic_folder.add(STYLE, "brush_size", 5, 80).listen();
-basic_folder.add(STYLE.color, "0", 0, 255).step(1).name("R").listen();
-basic_folder.add(STYLE.color, "1", 0, 255).step(1).name("G").listen();
-basic_folder.add(STYLE.color, "2", 0, 255).step(1).name("B").listen();
-basic_folder.add(STYLE.color, "3", 0, 1).name("A").listen();
+gp = GUI.addFolder("Basic");
 
-var tool_f = GUI.addFolder("Tools")
+gp.add(STYLE, "brush_size", 5, 80).listen();
+gp.add(STYLE.color, "0", 0, 255).step(1).name("R").listen();
+gp.add(STYLE.color, "1", 0, 255).step(1).name("G").listen();
+gp.add(STYLE.color, "2", 0, 255).step(1).name("B").listen();
+gp.add(STYLE.color, "3", 0, 1).name("A").listen();
 
-tool_f.add( MODULES.getModuleByName("Draw") , "func").name("Draw")
-tool_f.add( MODULES.getModuleByName("Eraser") , "func").name("Eraser")
-tool_f.add( MODULES.getModuleByName("Mover") , "func").name("Mover")
-tool_f.add( MODULES.getModuleByName("Selector") , "func").name("Selector")
-tool_f.add( MODULES.getModuleByName("Clear Canvas") , "func").name("Clear")
+gp = GUI.addFolder("Tools")
 
-var mod_f = GUI.addFolder("Modules")
+gp.add( MODULES.getModuleByName("Draw") , "func").name("Draw")
+gp.add( MODULES.getModuleByName("Eraser") , "func").name("Eraser")
+gp.add( MODULES.getModuleByName("Mover") , "func").name("Mover")
+gp.add( MODULES.getModuleByName("Selector") , "func").name("Selector")
+gp.add( MODULES.getModuleByName("Clear Canvas") , "func").name("Clear")
 
-mod_f.add( MODULES.getModuleByName("Pressure Sensitivity") , "enabled").name("Pressure").listen()
-mod_f.add( MODULES.getModuleByName("Random Stroke Color") , "enabled").name("Random Color").listen()
-mod_f.add( MODULES.getModuleByName("Random Point") , "enabled").name("Random").listen()
-mod_f.add( MODULES.getModuleByName("Wiggle") , "enabled").name("Wiggle").listen()
-mod_f.add( MODULES.getModuleByName("Smooth") , "enabled").name("Smooth").listen()
+gp = GUI.addFolder("Modules")
 
-var render_f = GUI.addFolder("Render")
+gp.add( MODULES.getModuleByName("Pressure Sensitivity") , "enabled").name("Pressure").listen()
+gp.add( MODULES.getModuleByName("Random Stroke Color") , "enabled").name("Random Color").listen()
+gp.add( MODULES.getModuleByName("Random Point") , "enabled").name("Random").listen()
+gp.add( MODULES.getModuleByName("Wiggle") , "enabled").name("Wiggle").listen()
+gp.add( MODULES.getModuleByName("Smooth") , "enabled").name("Smooth").listen()
+gp.add( MODULES.getModuleByName("Fade Strokes") , "enabled").name("Fade Strokes").listen();
+    gp = gp.addFolder( "settings" )
+    gp.add( MODULES.getModuleByName("Fade Strokes").getConfiguration() , "all");
+    gp.add( MODULES.getModuleByName("Fade Strokes").getConfiguration() , "speed", 1, 5);
 
-render_f.add( MODULES.getModuleByName("VANILLA DRAW").configuration , "fillmember" ).name("Comic")
+gp = GUI.addFolder("Render")
+
+gp.add( MODULES.getModuleByName("VANILLA DRAW").configuration , "fillmember" ).name("Comic")
 
 // Active Stroke
 
 watch(STROKES, "active_stroke", function(){
 
-    var str = "Selected Stroke",
+    var str = "Stroke",
         closed = true;
     
     if ( GUI.__folders.hasOwnProperty( str ) ){
@@ -47,6 +53,7 @@ watch(STROKES, "active_stroke", function(){
     // asf.add( stk, "id" )
     asf.add( stk, "closed" )
     asf.add( stk, "simplify_more").name("Simplify")
+    asf.add( stk, "deleteStroke").name("DeleteStroke")
 
     if (closed === false) {
         asf.open()

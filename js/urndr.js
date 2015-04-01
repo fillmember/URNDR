@@ -537,8 +537,9 @@ URNDR.Strokes.prototype.checkConsistency = function (id) {
 }
 URNDR.Strokes.prototype.eachStroke = function( my_function , parameters ) {
     var len = this.strokeCount;
+    var arr = this.strokesHistory.slice(0)
     for( var i = 0; i < len; i++ ){
-        my_function( this.getStrokeByID( this.strokesHistory[ i ] ) , parameters , i );
+        my_function( this.getStrokeByID( arr[ i ] ) , parameters , i );
     }
 }
 
@@ -554,16 +555,26 @@ URNDR.Stroke = function(tags) {
     this.center = undefined; // for future transform function.
     this.start = 0           // for future "drawing" effect.
     this.end = 1
-    this.parent = ""         // for future "following" effect.
+    this.link = ""         // for future "following" effect.
 
     this.hovered = false;
     this.selected = false;
+
+    this._flag_to_delete = false;
 
 }
 URNDR.Stroke.prototype = {
     get length() {
         return this.points.length;
-    }
+    },
+    get flag_to_delete() {
+        if (this.length < 1) { return false; }
+        if (this._flag_to_delete === true) { return true; }
+        var s = 0;
+        this.eachPoint(function(pnt){s+=pnt.A})
+        if (s < 0.05) { return true; } else { return false; }
+    },
+    deleteStroke: function(){ this._flag_to_delete = true; }
 }
 URNDR.Stroke.prototype.addPoint = function( point ) {
 
@@ -573,7 +584,6 @@ URNDR.Stroke.prototype.addPoint = function( point ) {
     } else {
         // copy the values to a newly created point.
         this.points.push( new URNDR.Point( point ) )
-
     }
 
 }
@@ -592,19 +602,10 @@ URNDR.Stroke.prototype.getTrack = function( track_name ) {
     len = this.length;
     result = [];
 
-    if (len === 0) {
-        return result;
-    }
+    if (len === 0) { return result; }
+    if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
 
-    if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) {
-        return 0
-    }
-
-    for ( var i = 0; i < len; i++ ) {
-
-        result.push( this.getPoint(i)[ track_name ] )
-
-    }
+    for ( var i = 0; i < len; i++ ) { result.push( this.getPoint(i)[ track_name ] ) }
     return result;
 
 }
@@ -612,15 +613,9 @@ URNDR.Stroke.prototype.setTrack = function( track_name , arr ) {
 
     var len = this.length
 
-    if (len !== arr.length) {
-        return 0
-    }
+    if (len !== arr.length) { return 0 }
 
-    for ( var i = 0; i < len; i++ ) {
-
-        this.getPoint(i)[ track_name ] = arr[i]
-
-    }
+    for ( var i = 0; i < len; i++ ) { this.getPoint(i)[ track_name ] = arr[i]; }
 
 }
 
@@ -807,13 +802,6 @@ URNDR.Stroke.prototype.setTag = function( tag , tag_data ) {
     this.tags[tag] = tag_data;
 
 }
-URNDR.Stroke.prototype.checkTag = function( tag ) {
-    if (this.tags.hasOwnProperty(tag)) {
-        return true;
-    } else {
-        return false;
-    }
-}
 URNDR.Stroke.prototype.getTag = function( tag ) {
 
     if (this.tags.hasOwnProperty(tag)) {
@@ -825,8 +813,9 @@ URNDR.Stroke.prototype.getTag = function( tag ) {
 }
 URNDR.Stroke.prototype.eachPoint = function( my_function , parameters ) {
     var len = this.length
+    var arr = this.points.slice(0)
     for (var j = 0; j < len; j++ ) {
-        my_function( this.getPoint( j ) , parameters , j )
+        my_function( arr[ j ] , parameters , j )
     }
 }
 URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
