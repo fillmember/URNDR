@@ -361,15 +361,15 @@ default_draw_style : function() {
                     'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
                 )
                 if ( stk.hovered ) {
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = "#FFF"
-                    ctx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                    hudCtx.lineWidth = 2;
+                    hudCtx.strokeStyle = "#FFF"
+                    hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
                 }
                 if ( stk.selected ) {
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = "#FF0"
-                    ctx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
-                    stroke_basic(ctx, prv, pnt, 1, "#FF0" )
+                    hudCtx.lineWidth = 2;
+                    hudCtx.strokeStyle = "#FF0"
+                    hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
+                    stroke_basic(hudCtx, prv, pnt, 1, "#FF0" )
                 }
             } , stk)
             if (stk.closed) {

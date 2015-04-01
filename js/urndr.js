@@ -985,7 +985,7 @@ URNDR.Point.prototype.refreshBinding = function( threeManager ) {
 
 // PEN
 
-URNDR.Pen = function( canvas , wacom ) {
+URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
     
     // spatial data
     this.x = 0
@@ -998,7 +998,8 @@ URNDR.Pen = function( canvas , wacom ) {
 
     // tool data
     this.tools = {}
-    this.canvas = canvas
+    this.canvas = canvas_draw
+    this.canvas_hud = canvas_hud
     this.wacom = wacom
 
     // function
@@ -1035,16 +1036,16 @@ URNDR.Pen = function( canvas , wacom ) {
 
     // event
     var this_pen = this
-    this.canvas.addEventListener("mousedown", function(evt){
+    canvas_hud.addEventListener("mousedown", function(evt){
         this_pen.onmousedown( this_pen, evt)
     } );
-    this.canvas.addEventListener("mouseup", function(evt){
+    canvas_hud.addEventListener("mouseup", function(evt){
         this_pen.onmouseup( this_pen, evt)
     } );
-    this.canvas.addEventListener("mousemove", function(evt){
+    canvas_hud.addEventListener("mousemove", function(evt){
         this_pen.onmousemove( this_pen, evt)
     } );
-    this.canvas.addEventListener("mouseout", function(evt){
+    canvas_hud.addEventListener("mouseout", function(evt){
         this_pen.onmouseout( this_pen, evt)
     } );
 

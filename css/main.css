@@ -11,6 +11,7 @@ canvas {
   top:0; left:0;
   cursor:crosshair;
 }
+  #canvas_hud { z-index:  20; }
   #canvas_urndr { z-index:  10; }
   #canvas_three { z-index: -10; }
 

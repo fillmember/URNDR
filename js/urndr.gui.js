@@ -32,8 +32,6 @@ render_f.add( MODULES.getModuleByName("VANILLA DRAW").configuration , "fillmembe
 
 watch(STROKES, "active_stroke", function(){
 
-    console.log("mi")
-
     var str = "Selected Stroke",
         closed = true;
     
@@ -46,7 +44,7 @@ watch(STROKES, "active_stroke", function(){
 
     var asf = GUI.addFolder( str )
 
-    asf.add( stk, "id" )
+    // asf.add( stk, "id" )
     asf.add( stk, "closed" )
     asf.add( stk, "simplify_more").name("Simplify")
 

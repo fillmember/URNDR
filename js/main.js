@@ -19,22 +19,25 @@ var U3 = new URNDR.ThreeManager( {
         wireframeLinewidth: 0.1,
 
         morphTargets: true,
+
     } )
 } )
 
 //
 // OBJECTS
 //
+var CANVAS_HUD = document.getElementById('canvas_hud');
+var hudCtx = CANVAS_HUD.getContext("2d");
 var CANVAS = document.getElementById('canvas_urndr'),
     PAPER = CANVAS.getContext("2d"),
     STYLE = new URNDR.StrokeStyle(),
-    PEN = new URNDR.Pen( CANVAS , WACOM ),
+    PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM ),
     MODULES = new URNDR.ModuleManager(),
     HUD = new URNDR.Hud( document.getElementById('HUD') );
 
 document.body.appendChild( U3.renderer.domElement );
-CANVAS.width = U3.renderer.domElement.width;
-CANVAS.height = U3.renderer.domElement.height;
+CANVAS_HUD.width = CANVAS.width = U3.renderer.domElement.width;
+CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
 PAPER.lineCap = STYLE.cap
 PAPER.lineJoin = STYLE.join
 
@@ -98,18 +101,12 @@ PEN.addTool( new URNDR.PenTool({
             var alpha_sum = 0;
             var alpha_flag = false;
             stk.eachPoint( function(pnt){
-                if (pnt.A > 0.1) {
-                    alpha_flag = true;
-                }
+                if (pnt.A > 0.1) { alpha_flag = true; }
                 alpha_sum += pnt.A
             })
-            if (alpha_sum < 0.05 && alpha_flag === false) {
-                strokes_to_delete.push( stk.id )
-            }
+            if (alpha_flag === false && alpha_sum < 0.05) { strokes_to_delete.push( stk.id ) }
         })
-        for (var i in strokes_to_delete) {
-            this.strokes.deleteStrokeByID( strokes_to_delete[i] )
-        }
+        for (var i in strokes_to_delete) { this.strokes.deleteStrokeByID( strokes_to_delete[i] ) }
     },
     onmousemove: function(pen, evt){
 
@@ -123,11 +120,11 @@ PEN.addTool( new URNDR.PenTool({
             size_sq = s * this.style.brush_size * s * this.style.brush_size * 0.3,
             power = (1.1 - s);
 
-        power = power > 0.95 ? 0.95 : power;
+        power = power > 0.9 ? 0.9 : power;
 
         for(var q in query) {
-            pnt = query[q].reference.point
-            dist_sq = ( pen.x - pnt.X )*( pen.x - pnt.X ) + ( pen.y - pnt.Y )*( pen.y - pnt.Y )
+            pnt = query[q].reference.point;
+            dist_sq = ( pen.x - pnt.X )*( pen.x - pnt.X ) + ( pen.y - pnt.Y )*( pen.y - pnt.Y );
             if ( dist_sq < size_sq ) {
                 if (pnt.A > 0.2) {
                     pnt.A *= power;
@@ -338,12 +335,16 @@ window.onload = function() {
 //
 
 function clear(a) {
-    if (a === 1) { PAPER.clearRect(0,0,CANVAS.width,CANVAS.height)
-    } else {
-        PAPER.save();
-        PAPER.globalAlpha = a;
-        PAPER.globalCompositeOperation = "destination-out";
-        PAPER.fillRect(0,0,CANVAS.width,CANVAS.height);
-        PAPER.restore();
+    function func( ctx ){
+        if (a === 1) { ctx.clearRect(0,0,CANVAS.width,CANVAS.height)
+        } else {
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.globalCompositeOperation = "destination-out";
+            ctx.fillRect(0,0,CANVAS.width,CANVAS.height);
+            ctx.restore();
+        }
     }
+    func( PAPER )
+    func( hudCtx )
 }
