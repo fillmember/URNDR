@@ -570,9 +570,19 @@ URNDR.Stroke.prototype = {
     get flag_to_delete() {
         if (this.length < 1) { return false; }
         if (this._flag_to_delete === true) { return true; }
-        var s = 0;
-        this.eachPoint(function(pnt){s+=pnt.A})
-        if (s < 0.05) { return true; } else { return false; }
+        var sum_A = 0;
+        var flag_invisible = true;
+        this.eachPoint(function(pnt){
+            sum_A+=pnt.A
+            if (flag_invisible) {
+                var ndc = pnt.ndc
+                if (ndc.x > -1 && ndc.x < 1 && ndc.y > -1 && ndc.y < 1) {
+                    flag_invisible = false;
+                }
+            }
+        })
+        if (flag_invisible) { return true; }
+        if (sum_A < 0.05) { return true; } else { return false; }
     },
     deleteStroke: function(){ this._flag_to_delete = true; }
 }
@@ -1298,9 +1308,7 @@ URNDR.Helpers = {
 
     getLastElements : function(arr,n) {
 
-        if (n > arr.length) {
-            return Object.create(arr);
-        }
+        if (n > arr.length) { return Object.create(arr); }
 
         return arr.slice( - n );
 
@@ -1396,11 +1404,10 @@ URNDR.Model.prototype = {
             model.mesh = new THREE.Mesh( model.geometry, model.material )
 
             // SET MODEL POSITION
-            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y),
-                scale = 5 / y_len;
-            model.mesh.scale.set( scale, scale, scale )
+            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y);
+            model.mesh.scale.multiplyScalar( 5 / y_len )
             model.mesh.rotation.set( 0, 0, 0 )
-            model.mesh.position.set( 0, -0.45 * y_len * scale, -5 )
+            model.mesh.position.set( 0, 0 , -5 )
 
             // ANMATION
             if (model.geometry.morphTargets.length > 0) {

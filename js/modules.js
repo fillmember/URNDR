@@ -198,29 +198,44 @@ move_drawing_with_3d_model : function() {
     return module
 },
 
+expand : function() {
+    var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,71,false); // g
+    module.setConfiguration({ speed : 1 });
+    module.setFunction(function(strokes){
+        var s = this.getConfiguration();
+        strokes.eachStroke( function( stk , strokes, i) {
+            if (stk.center) {
+                stk.eachPoint( function( pnt, stk, j) {
+                    var vector = new THREE.Vector2( pnt.X - stk.center.x, pnt.Y - stk.center.y ).normalize();
+                        vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.1, 3) )
+                    pnt.X += vector.x;
+                    pnt.Y += vector.y;
+                    pnt.refreshBinding( U3 )
+                }, stk )
+            }
+        }, strokes)
+    })
+    return module;
+},
+
 smooth_data : function() {
     var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
     // 
-    module.setConfiguration({ length: 50, factor: 23 })
+    module.setConfiguration({ length: 60, factor: 10 })
     module.setFunction(function(strokes) {
         
         var stroke, settings, target_tracks, track, eArr
         stroke = strokes.getActiveStroke()
         settings = module.getConfiguration()
-        if (stroke === 0) {
-            return;
-        }
+        if (stroke === 0) { return; }
         
-        target_tracks = ["R","G","B","A","S"]; // ,"X","Y"
+        target_tracks = ["R","G","B","A","S","X","Y"];
         for (var i in target_tracks) {
 
             track = stroke.getTrack( target_tracks[i] );
             eArr = URNDR.Helpers.getLastElements( track , settings.length );
 
-            URNDR.Helpers.smoothArray( eArr , { 
-                factor: settings.factor, 
-                round : true 
-            } );
+            URNDR.Helpers.smoothArray( eArr , { factor: settings.factor, round : true } );
 
             track = URNDR.Helpers.replaceLastElements( track , eArr );
             stroke.setTrack( target_tracks[i] , track );
@@ -261,7 +276,7 @@ fade_strokes : function() {
 
             }
 
-            n = Math.min(n + THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 1 ) , len);
+            n = Math.min(n + THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 2 ) , len);
 
             stroke.setTag("fade_strokes", n )
 

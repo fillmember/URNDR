@@ -35,7 +35,7 @@ canvas {
 }
 
 #HUD {
-  z-index: 20;
+  z-index: 29;
   left: 1em;
 }
 

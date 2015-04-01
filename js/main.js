@@ -247,19 +247,16 @@ window.onload = function() {
     // Models
     //
 
-    U3.createModelFromFile( "models/sphere.js", function( model ){
+    // U3.createModelFromFile( "models/sphere.js" );
 
-        model.mesh.scale.multiplyScalar(0.7)
-        model.mesh.position.y = 0
-
+    U3.createModelFromFile( "models/human_01.js", function( model ) {
+        model.mesh.scale.multiplyScalar( 1.1 )
+        model.mesh.position.y = -2.5
+    }  );
+    U3.createModelFromFile( "models/human_02.js", function( model ) {
+        model.mesh.scale.multiplyScalar( 1.1 )
+        model.mesh.position.y = -2.5
     } );
-
-    // U3.createModelFromFile( "models/human_01.js", function( model ) {
-    //     model.mesh.position.x = 2
-    // }  );
-    // U3.createModelFromFile( "models/human_02.js", function( model ) {
-    //     model.mesh.position.x = -2
-    // } );
 
     //
     // EVENTS

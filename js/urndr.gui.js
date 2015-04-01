@@ -26,9 +26,12 @@ gp.add( MODULES.getModuleByName("Random Point") , "enabled").name("Random").list
 gp.add( MODULES.getModuleByName("Wiggle") , "enabled").name("Wiggle").listen()
 gp.add( MODULES.getModuleByName("Smooth") , "enabled").name("Smooth").listen()
 gp.add( MODULES.getModuleByName("Fade Strokes") , "enabled").name("Fade Strokes").listen();
-    gp = gp.addFolder( "settings" )
-    gp.add( MODULES.getModuleByName("Fade Strokes").getConfiguration() , "all");
-    gp.add( MODULES.getModuleByName("Fade Strokes").getConfiguration() , "speed", 1, 5);
+    gp0 = gp.addFolder( "fade settings" )
+    gp0.add( MODULES.getModuleByName("Fade Strokes").getConfiguration() , "all");
+    gp0.add( MODULES.getModuleByName("Fade Strokes").getConfiguration() , "speed", 1, 5);
+gp.add( MODULES.getModuleByName("Expand") , "enabled").name("Expand").listen()
+    gp0 = gp.addFolder( "expand settings" )
+    gp0.add( MODULES.getModuleByName("Expand").getConfiguration() , "speed", 1, 5);
 
 gp = GUI.addFolder("Render")
 
