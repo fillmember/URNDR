@@ -24,7 +24,15 @@ mod_f.add( MODULES.getModuleByName("Random Point") , "enabled").name("Random").l
 mod_f.add( MODULES.getModuleByName("Wiggle") , "enabled").name("Wiggle").listen()
 mod_f.add( MODULES.getModuleByName("Smooth") , "enabled").name("Smooth").listen()
 
+var render_f = GUI.addFolder("Render")
+
+render_f.add( MODULES.getModuleByName("VANILLA DRAW").configuration , "fillmember" ).name("Comic")
+
+// Active Stroke
+
 watch(STROKES, "active_stroke", function(){
+
+    console.log("mi")
 
     var str = "Selected Stroke",
         closed = true;

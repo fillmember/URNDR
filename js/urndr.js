@@ -366,7 +366,7 @@ URNDR.Strokes.prototype.addToQuadTree = function( obj ) {
                 hit_size, // W
                 hit_size, // H
                 // Reference
-                { strokeID: stk.id, stroke: stk, pointIndex: i, point: pnt }
+                { stroke: stk, pointIndex: i, point: pnt }
             ) );
 
         }, obj );

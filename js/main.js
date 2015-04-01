@@ -243,6 +243,7 @@ PEN.addTool( new URNDR.PenTool({
         if ( nearest !== false) {
             nearest = query[ nearest ].reference
             nearest.stroke.selected = true;
+            this.strokes.active_stroke = nearest.stroke.id;
         }
 
     }

@@ -294,7 +294,7 @@ connection_network : function(){
         clear(1);
         
         all_track = new URNDR.Stroke();
-        strokes_count = strokes.getStrokesCount();
+        strokes_count = strokes.strokeCount;
         for ( var i = 0 ; i < strokes_count ; i ++ ) {
             stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] )
             points_count = stroke_i.length;
@@ -333,54 +333,31 @@ connection_network : function(){
     return module
 },
 
-fillmember_style : function() {
-    var module = new URNDR.Module("COMIC STYLE",URNDR.DRAW_MODULE,50); // 2
-    module.setFunction(function(params){
-        var strokes = params.strokes
-        var ctx = params.context
-        
-        clear( 1 );
-
-        strokes_count = strokes.strokeCount;
-        strokes.eachStroke( function( stk ){
-            stk.eachPoint( function( pnt , stk, i ) {
-                f = getAlphaFactor(pnt, stk, i);
-                if (pnt.A * f > 0.5) {
-                    mi( 'destination-over', pnt.S + 15, '#FFF', stk.getPoint( i - 1 ), pnt);
-                    mi( 'source-over', pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * f+')', stk.getPoint( i - 1 ), pnt)
-                }
-            }, stk )
-        } )
-
-        function mi( gco, lineWidth , strokeStyle, prv, pnt ) {
-            ctx.beginPath();
-            ctx.globalCompositeOperation = gco;
-            ctx.lineWidth = lineWidth;
-            ctx.strokeStyle = strokeStyle;
-            ctx.moveTo( prv.X , prv.Y )
-            ctx.lineTo( pnt.X, pnt.Y )
-            ctx.closePath();
-            ctx.stroke();
-        }
-
-    })
-    return module
-},
-
 default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
+    module.setConfiguration( {fillmember:true} )
     module.setFunction(function(params){
 
+        var settings = this.getConfiguration();
         var strokes = params.strokes, ctx = params.context;
         
         clear(1);
 
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt, stk, i ){
-                stroke_basic(ctx, 
-                    stk.getPoint( i - 1), 
-                    pnt, 
-                    pnt.S, 
+
+                var prv = stk.getPoint( i - 1 );
+                
+                if(settings.fillmember) {
+                    if (pnt.A * getAlphaFactor(pnt,stk,i) > 0.1) {
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'destination-over'
+                        stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF")
+                        ctx.restore();
+                    }
+                }
+
+                stroke_basic(ctx, prv, pnt, pnt.S, 
                     'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
                 )
                 if ( stk.hovered ) {
@@ -392,10 +369,7 @@ default_draw_style : function() {
                     ctx.lineWidth = 2;
                     ctx.strokeStyle = "#FF0"
                     ctx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
-                    stroke_basic(ctx,
-                        stk.getPoint( i - 1 ),
-                        pnt, 1, "#FF0"
-                    )
+                    stroke_basic(ctx, prv, pnt, 1, "#FF0" )
                 }
             } , stk)
             if (stk.closed) {
