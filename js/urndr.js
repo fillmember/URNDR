@@ -150,7 +150,7 @@ URNDR.Rectangle = function(x,y,w,h,ref) {
 // MODULE
 
 URNDR.Module = function(n,t,k,e) {
-    this.id = "MOD"+THREE.Math.generateUUID()
+    this.id = "MOD-"+THREE.Math.generateUUID()
     this.priority = 1
     this.type = t
     this.name = n
@@ -181,9 +181,11 @@ URNDR.ModuleManager = function() {
     this[ URNDR.POINT_MODULE ] = {};
     this[ URNDR.STROKE_MODULE ] = {};
     this[ URNDR.DRAW_MODULE ] = {};
-    this.key_map = {};
-    // functions
+    
     this.KEY_PREFIX = "key";
+    this.key_map = {};
+    
+    // functions
     this.setKeyMap = function( keyCode , id ) {
 
         this.key_map[ this.KEY_PREFIX + keyCode ] = { id: id }
@@ -197,15 +199,18 @@ URNDR.ModuleManager = function() {
     }
     this.loadModule = function ( module ) {
 
-        if (typeof module === "function") {
+        if (module instanceof URNDR.Module === false) {
 
-            // run the function to get the actual module
-            module = module()
+            if (typeof module === "function") {
+                module = module();
+            } else if (typeof module === "object") {
+                return 0;
+            }
 
         }
 
         // put in general modules list
-        this.modules[ module.id ] = module
+        this.modules[ module.id ] = module;
 
         if (this.hasOwnProperty( module.type )) {
             this[ module.type ][ module.id ] = this.modules[ module.id ]
@@ -226,6 +231,15 @@ URNDR.ModuleManager = function() {
 
         return this.modules[id]
 
+    }
+
+    this.getModuleByName = function( query ){
+        for( var m in this.modules ) {
+            if ( query === this.modules[m].name ) {
+                return this.modules[m]
+            }
+        }
+        return false
     }
 
     this.toggleModuleByKey = function (keyCode) {
@@ -302,6 +316,11 @@ URNDR.Strokes = function(){
     var _qth = arguments[0].canvasHeight || window.innerWidth
     this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
 
+}
+URNDR.Strokes.prototype = {
+    get strokeCount() {
+        return this.strokesHistory.length;
+    }
 }
 // functions
 URNDR.Strokes.prototype.reset = function() {
@@ -477,11 +496,6 @@ URNDR.Strokes.prototype.deleteStrokeByID = function ( id ) {
     }
 
 }
-URNDR.Strokes.prototype.getStrokesCount = function () {
-
-    return this.strokesHistory.length;
-
-}
 URNDR.Strokes.prototype.checkConsistency = function (id) {
 
     console.log("PART I : Start to check consistency in the data. ")
@@ -522,7 +536,7 @@ URNDR.Strokes.prototype.checkConsistency = function (id) {
 
 }
 URNDR.Strokes.prototype.eachStroke = function( my_function , parameters ) {
-    var len = this.getStrokesCount();
+    var len = this.strokeCount;
     for( var i = 0; i < len; i++ ){
         my_function( this.getStrokeByID( this.strokesHistory[ i ] ) , parameters , i );
     }
@@ -540,12 +554,12 @@ URNDR.Stroke = function(tags) {
     this.center = undefined; // for future transform function.
     this.start = 0           // for future "drawing" effect.
     this.end = 1
-    this.parent              // for future "following" effect.
+    this.parent = 0          // for future "following" effect.
 }
-URNDR.Stroke.prototype.getLength = function() {
-
-    return this.points.length;
-
+URNDR.Stroke.prototype = {
+    get length() {
+        return this.points.length;
+    }
 }
 URNDR.Stroke.prototype.addPoint = function( point ) {
 
@@ -561,7 +575,7 @@ URNDR.Stroke.prototype.addPoint = function( point ) {
 }
 URNDR.Stroke.prototype.getPoint = function( point_n ) {
 
-    if ( point_n >= 0 && point_n < this.getLength() ) {
+    if ( point_n >= 0 && point_n < this.length ) {
         return this.points[ point_n ]
     } else {
         return 0
@@ -571,7 +585,7 @@ URNDR.Stroke.prototype.getPoint = function( point_n ) {
 URNDR.Stroke.prototype.getTrack = function( track_name ) {
 
     var len, result
-    len = this.getLength();
+    len = this.length;
     result = [];
 
     if (len === 0) {
@@ -592,7 +606,7 @@ URNDR.Stroke.prototype.getTrack = function( track_name ) {
 }
 URNDR.Stroke.prototype.setTrack = function( track_name , arr ) {
 
-    var len = this.getLength()
+    var len = this.length
 
     if (len !== arr.length) {
         return 0
@@ -609,14 +623,14 @@ URNDR.Stroke.prototype.searchPoint = function( rect ) {}
 
 URNDR.Stroke.prototype.removePoint = function( point_n ) {
 
-    if ( point_n >= 0 && point_n < this.getLength() ) {
+    if ( point_n >= 0 && point_n < this.length ) {
         this.points.splice( point_n , 1)
     } else {
-        console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.getLength() )
+        console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.length )
     }
 
 }
-URNDR.Stroke.prototype.simplify = function() {
+URNDR.Stroke.prototype.simplify = function( t ) {
 
     /*
      
@@ -741,19 +755,36 @@ URNDR.Stroke.prototype.simplify = function() {
         return points;
     }
 
-    this.points = simplify( this.points , 0.75 , true );
+    if (t !== undefined && t > 0) {
+        // t = t 
+    } else {
+        t = 0.75
+    }
+
+    this.points = simplify( this.points , t , true );
 
 }
-URNDR.Stroke.prototype.optimize = function() {
+URNDR.Stroke.prototype.simplify_more = function( n ) {
 
-    this.simplify();
+    if (n >= 0 && n !== undefined) {
+        // n = n
+    } else {
+        n = 10;
+    }
+
+    this.optimize( n )
+
+}
+URNDR.Stroke.prototype.optimize = function( a ) {
+
+    this.simplify( a );
     this.center = this.calculateCenterOfPoints();
 
 }
 URNDR.Stroke.prototype.calculateCenterOfPoints = function() {
 
     var result = {x:0,y:0},
-        divider = 1 / this.getLength();
+        divider = 1 / this.length;
 
     this.eachPoint( function( pnt, parameters, i) {
 
@@ -790,14 +821,14 @@ URNDR.Stroke.prototype.getTag = function( tag ) {
 
 }
 URNDR.Stroke.prototype.eachPoint = function( my_function , parameters ) {
-    var len = this.getLength()
+    var len = this.length
     for (var j = 0; j < len; j++ ) {
         my_function( this.getPoint( j ) , parameters , j )
     }
 }
 URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
 
-    if (this.getLength() < 2) { return 0; }
+    if (this.length < 2) { return 0; }
     if (this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
 
     var track = this.getTrack( track_name );
@@ -1021,7 +1052,7 @@ URNDR.PenTool = function(parameters) {
     this.onmousedown = parameters.onmousedown || function(){};
     this.onmouseup = parameters.onmouseup || function(){};
     this.onmousemove = parameters.onmousemove || function(){};
-    this.onmouseout = parameters.onmouseout || function(){};
+    this.onmouseout = parameters.onmouseout || function(){};    
     this.size = parameters.size || 5;
     for (var p in parameters) {
         var flag = true
@@ -1047,8 +1078,6 @@ URNDR.Hud = function(box) {
     this.devToDisplay = true;
     this.msg_count = 0;
     this.MAX_msg_count = 8;
-    // METHODS
-    
 }
 URNDR.Hud.prototype.display = function() {
 
@@ -1288,7 +1317,8 @@ URNDR.StrokeStyle = function() {
     this.join = "round";
     this.composit = "source-over";
     this.brush_size = 50;
-    this.color = {r:0,g:0,b:255,a:1};
+    // this.color = {r:0,g:0,b:255,a:1};
+    this.color = [0,0,255,1];
 }
 URNDR.StrokeStyle.prototype.gradientMaker = function(ctx,p1,p2) {
     var grad = ctx.createLinearGradient( p1.X , p1.Y , p2.X , p2.Y );

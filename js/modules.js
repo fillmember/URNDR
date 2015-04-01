@@ -4,12 +4,6 @@ MODULES.loadModules( {
 // Probably can't possibly conviniently pass parameters in for all kinds of commands.
 // Developers will use global parameters from main.js. 
 
-reload_web_page : function() {
-    var module = new URNDR.Module("Reload Web Page",URNDR.COMMAND_MODULE,13)
-    module.setFunction(function() {window.location.reload(); return ""})
-    return module
-},
-
 draw : function() {
     var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
     module.setFunction(function() {PEN.selectToolByName("Draw"); return ""})
@@ -29,7 +23,7 @@ mover : function() {
 },
 
 selector : function() {
-    var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,83) // s
+    var module = new URNDR.Module("Selector",URNDR.COMMAND_MODULE,83) // s
     module.setFunction(function() {PEN.selectToolByName("Stroke Selector"); return "Select Stroke"})
     return module
 },
@@ -58,9 +52,9 @@ brush_size_down : function() {
 random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
     module.setFunction(function(STYLE) {
-        STYLE.color.r = URNDR.Helpers.randomNumber(255,{round: true});
-        STYLE.color.g = URNDR.Helpers.randomNumber(255,{round: true});
-        STYLE.color.b = URNDR.Helpers.randomNumber(255,{round: true});
+        STYLE.color[0] = URNDR.Helpers.randomNumber(255,{round: true});
+        STYLE.color[1] = URNDR.Helpers.randomNumber(255,{round: true});
+        STYLE.color[2] = URNDR.Helpers.randomNumber(255,{round: true});
     })
     return module
 },
@@ -217,7 +211,6 @@ smooth_data : function() {
         }
 
     })
-    // MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE MUTE
     return module
 },
 
@@ -245,7 +238,7 @@ fade_strokes : function() {
                 n = 0
             }
 
-            len = stroke.getLength();
+            len = stroke.length;
             for ( var i = 0; i < len; i++ ) {
 
                 if ( i <= n ) {
@@ -267,8 +260,8 @@ fade_strokes : function() {
     return module
 },
 
-randomise_strokes : function() {
-    var module = new URNDR.Module("Randomise Strokes",URNDR.STROKE_MODULE,90) // z
+wiggle : function() {
+    var module = new URNDR.Module("Wiggle",URNDR.STROKE_MODULE,90) // z
     module.setConfiguration({ amp : 5, all : true })
     module.setFunction(function(strokes) {
         var settings = module.getConfiguration()
@@ -304,14 +297,14 @@ connection_network : function(){
         strokes_count = strokes.getStrokesCount();
         for ( var i = 0 ; i < strokes_count ; i ++ ) {
             stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] )
-            points_count = stroke_i.getLength();
+            points_count = stroke_i.length;
             for ( var j = 0 ; j < points_count ; j ++ ) {
                 all_track.addPoint( stroke_i.getPoint( j ) )
             }
         }
 
         var pe, pf, all_length;
-        all_length = all_track.getLength();
+        all_length = all_track.length;
         ctx.lineWidth = 1.5;
         for ( var e = 0 ; e < all_length ; e++ ) {
             pe = all_track.getPoint( e )
@@ -425,6 +418,8 @@ default_draw_style : function() {
 }
 
 } );
+
+// HELPERS
 
 function normalDraw( ctx, pnt, stk, i ){
 

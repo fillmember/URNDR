@@ -14,7 +14,7 @@ canvas {
   #canvas_urndr { z-index:  10; }
   #canvas_three { z-index: -10; }
 
-#GUI, #HUD {
+.UIContainer {
 
   position: fixed;
   top: 1em;
@@ -23,7 +23,7 @@ canvas {
   border: 1px solid #999;
 
   font-family: "Menlo", sans-serif;
-  font-size: 9pt;
+  font-size: 10px;
   color: #666;
 
 }
@@ -35,7 +35,7 @@ canvas {
 
 #HUD {
   z-index: 20;
-  left:1em;
+  left: 1em;
 }
 
 /*Minor Objects*/
@@ -58,4 +58,27 @@ canvas {
   -ms-user-select: none;
   -o-user-select: none;
   user-select: none;
+}
+
+/*GUI Elements*/
+
+#GUI {
+  width: 100px;
+}
+
+#GUI ul {
+  margin: 1em 0;
+  padding: 0;
+  list-style: none;
+}
+
+#GUI input, #GUI button {
+  width: 100%;
+  border: 1px solid #666;
+  background: rgba(0,0,0,0);
+  margin-top: -1px;
+}
+
+#GUI input[type=checkbox] {
+  width: 1em;
 }

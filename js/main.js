@@ -70,8 +70,8 @@ PEN.addTool(new URNDR.PenTool({
             X : pen.x,
             Y : pen.y,
             S : STYLE.brush_size,
-            R : STYLE.color.r, G : STYLE.color.g, B : STYLE.color.b,
-            A : STYLE.color.a
+            R : STYLE.color[0], G : STYLE.color[1], B : STYLE.color[2],
+            A : STYLE.color[3]
         });
         var penNDC = new THREE.Vector2( pen.ndc_x , pen.ndc_y )
         
@@ -142,12 +142,14 @@ PEN.addTool( new URNDR.PenTool({
     onmousemove: function(pen, evt){
 
         if (pen.isDown !== 1) { return; }
+        var s = pen.pressure;
+        if (s < 0.1) {s = 0.1};
 
-        var query = this.strokes.getFromQuadTree( pen.x, pen.y, pen.pressure, pen.pressure ),
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, s, s ),
             pnt, 
             dist_sq,
-            size_sq = pen.pressure * this.style.brush_size * pen.pressure * this.style.brush_size * 0.3,
-            power = (1.1 - pen.pressure);
+            size_sq = s * this.style.brush_size * s * this.style.brush_size * 0.3,
+            power = (1.1 - s);
 
         power = power > 0.95 ? 0.95 : power;
 
@@ -234,6 +236,7 @@ PEN.addTool( new URNDR.PenTool({
             if (nearest_id !== 0) {
 
                 this.strokes.active_stroke = nearest_id;
+                var stk = this.strokes.getStrokeByID( nearest_id )
                 HUD.display( "stroke selected: " + nearest_id )
 
             }
