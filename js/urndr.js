@@ -920,14 +920,22 @@ URNDR.Point.prototype = {
         return new THREE.Vector2(a.x,a.y)
     },
 
-    clearBinding: function() {
-        this.OBJECT = null;
-        this.FACE = null;
-        this.BU = 0;
-        this.BV = 0;
-        this.BW = 0;
-        this.PX = 0;
-        this.PY = 0;
+    get binded() {
+        return (this.OBJECT && this.FACE)
+    },
+
+    set binded( input ) {
+        if (input === false) {
+            this.OBJECT = null;
+            this.FACE = null;
+            this.BU = 0;
+            this.BV = 0;
+            this.BW = 0;
+            this.PX = 0;
+            this.PY = 0;
+        } else {
+            // do nothing because that doesn't make sense.
+        }
     }
 
 }
@@ -940,7 +948,7 @@ URNDR.Point.prototype.updatePoint = function( input ) {
     }
 
 }
-URNDR.Point.prototype.updateBarycentricCoordinate = function( threeManager ) {
+URNDR.Point.prototype.refreshBinding = function( threeManager ) {
 
     U3.raycaster.setFromCamera( new THREE.Vector2( this.ndc.x , this.ndc.y ) , threeManager.camera )
 
@@ -956,7 +964,7 @@ URNDR.Point.prototype.updateBarycentricCoordinate = function( threeManager ) {
         this.OBJECT = obj;
         this.FACE = face;
 
-        var ndc_pos, a, b, c, bary
+        var a, b, c, bary
         a = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.a ) ).project( threeManager.camera )
         b = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.b ) ).project( threeManager.camera )
         c = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.c ) ).project( threeManager.camera )
@@ -969,7 +977,7 @@ URNDR.Point.prototype.updateBarycentricCoordinate = function( threeManager ) {
 
     } else {
 
-        this.clearBinding();
+        this.binded = false;
         
     }
 
@@ -1560,8 +1568,6 @@ THREE.Camera.prototype.calculateLookAtVector = function() {
     this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
 }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
-
-    return 1;
 
     if (obj.visible === false) {
         return 0;

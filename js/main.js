@@ -10,7 +10,7 @@ var U3 = new URNDR.ThreeManager( {
     fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
     defaultMaterial: new THREE.MeshBasicMaterial( {
 
-        color: 0x000000,
+        color: 0xFFFFFF,
         vertexColors: THREE.FaceColors, 
         
         fog: true,
@@ -74,7 +74,7 @@ PEN.addTool(new URNDR.PenTool({
             A : STYLE.color[3]
         });
 
-        point.updateBarycentricCoordinate( U3 )
+        point.refreshBinding( U3 )
         
         // Run modules that changes the point.
         this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , point )
@@ -226,7 +226,7 @@ PEN.addTool( new URNDR.PenTool({
         if (this.selectedPoint !== 0) {
             this.selectedPoint.X = pen.x;
             this.selectedPoint.Y = pen.y;
-            this.selectedPoint.updateBarycentricCoordinate( U3 )
+            this.selectedPoint.refreshBinding( U3 )
         }
 
     },
@@ -259,19 +259,19 @@ window.onload = function() {
     // Models
     //
 
-    // U3.createModelFromFile( "models/sphere.js", function( model ){
+    U3.createModelFromFile( "models/sphere.js", function( model ){
 
-    //     model.mesh.scale.multiplyScalar(0.7)
-    //     model.mesh.position.y = 0
+        model.mesh.scale.multiplyScalar(0.7)
+        model.mesh.position.y = 0
 
-    // } );
-
-    U3.createModelFromFile( "models/human_01.js", function( model ) {
-        model.mesh.position.x = 2
-    }  );
-    U3.createModelFromFile( "models/human_02.js", function( model ) {
-        model.mesh.position.x = -2
     } );
+
+    // U3.createModelFromFile( "models/human_01.js", function( model ) {
+    //     model.mesh.position.x = 2
+    // }  );
+    // U3.createModelFromFile( "models/human_02.js", function( model ) {
+    //     model.mesh.position.x = -2
+    // } );
 
     //
     // EVENTS

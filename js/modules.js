@@ -367,37 +367,6 @@ fillmember_style : function() {
     return module
 },
 
-dot_debug_style : function() {
-    var module = new URNDR.Module("DEBUG MODE (FUN MODE)",URNDR.DRAW_MODULE,51);
-    module.setFunction(function(params){
-        var strokes = params.strokes
-        var ctx = params.context
-        
-        clear(.8);
-
-        ctx.lineWidth = 4;
-
-        strokes.eachStroke( function( stk ){
-            if (stk.id === strokes.active_stroke) {
-                ctx.strokeStyle = 'rgba(255,0,0,1)';
-            } else if (stk.hovered) {
-                ctx.strokeStyle = 'rgba(230,50,50,1)'
-            } else {
-                ctx.strokeStyle = 'rgba(100,100,100,1)';
-            }
-            stk.eachPoint( function( pnt , stk ){
-                ctx.beginPath();
-                ctx.moveTo( pnt.X, pnt.Y - 0.001 )
-                ctx.lineTo( pnt.X, pnt.Y + 0.001 )
-                ctx.closePath();
-                ctx.stroke();
-            }, stk )
-        } )
-
-    })
-    return module
-},
-
 default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
     module.setFunction(function(params){
@@ -408,8 +377,6 @@ default_draw_style : function() {
 
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt, stk, i ){
-                if ( stk.selected ) {
-                }
                 stroke_basic(ctx, 
                     stk.getPoint( i - 1), 
                     pnt, 
@@ -417,20 +384,27 @@ default_draw_style : function() {
                     'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
                 )
                 if ( stk.hovered ) {
-                    ctx.fillStyle = "#FFFFFF"
-                    ctx.fillRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = "#FFF"
+                    ctx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
                 }
                 if ( stk.selected ) {
-                    ctx.fillStyle = "#333333"
-                    ctx.fillRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = "#FF0"
+                    ctx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
+                    stroke_basic(ctx,
+                        stk.getPoint( i - 1 ),
+                        pnt, 1, "#FF0"
+                    )
                 }
             } , stk)
             if (stk.closed) {
+                var pnt = stk.points[ stk.length - 1 ];
                 stroke_basic(ctx, 
-                    stk.points[ stk.length - 1 ], 
+                    pnt, 
                     stk.points[ 0 ], 
                     pnt.S, 
-                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
+                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, 0 ) +')'
                 )
             }
         } )
