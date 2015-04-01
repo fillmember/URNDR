@@ -554,7 +554,11 @@ URNDR.Stroke = function(tags) {
     this.center = undefined; // for future transform function.
     this.start = 0           // for future "drawing" effect.
     this.end = 1
-    this.parent = 0          // for future "following" effect.
+    this.parent = ""         // for future "following" effect.
+
+    this.hovered = false;
+    this.selected = false;
+
 }
 URNDR.Stroke.prototype = {
     get length() {
@@ -619,7 +623,6 @@ URNDR.Stroke.prototype.setTrack = function( track_name , arr ) {
     }
 
 }
-URNDR.Stroke.prototype.searchPoint = function( rect ) {}
 
 URNDR.Stroke.prototype.removePoint = function( point_n ) {
 
@@ -758,7 +761,7 @@ URNDR.Stroke.prototype.simplify = function( t ) {
     if (t !== undefined && t > 0) {
         // t = t 
     } else {
-        t = 0.75
+        t = 0.9
     }
 
     this.points = simplify( this.points , t , true );
@@ -769,7 +772,7 @@ URNDR.Stroke.prototype.simplify_more = function( n ) {
     if (n >= 0 && n !== undefined) {
         // n = n
     } else {
-        n = 10;
+        n = 12;
     }
 
     this.optimize( n )
@@ -910,6 +913,24 @@ URNDR.Point = function( input ) {
     this.updatePoint(input);
 
 }
+URNDR.Point.prototype = {
+
+    get ndc() {
+        var a = URNDR.Math.pixelToCoordinate( this.X , this.Y )
+        return new THREE.Vector2(a.x,a.y)
+    },
+
+    clearBinding: function() {
+        this.OBJECT = null;
+        this.FACE = null;
+        this.BU = 0;
+        this.BV = 0;
+        this.BW = 0;
+        this.PX = 0;
+        this.PY = 0;
+    }
+
+}
 URNDR.Point.prototype.updatePoint = function( input ) {
 
     for (var key in input) {
@@ -919,22 +940,39 @@ URNDR.Point.prototype.updatePoint = function( input ) {
     }
 
 }
-URNDR.Point.prototype.updateBarycentricCoordinate = function( camera ) {
-    if (this.OBJECT && this.FACE) {
+URNDR.Point.prototype.updateBarycentricCoordinate = function( threeManager ) {
+
+    U3.raycaster.setFromCamera( new THREE.Vector2( this.ndc.x , this.ndc.y ) , threeManager.camera )
+
+    var intersects = threeManager.raycaster.intersectObjects( threeManager.scene.children )
+    if (intersects.length > 0) {
+
+        var i0, obj, face, vertices, a, b, c;
+            i0 = intersects[0]
+            obj = i0.object
+            face = i0.face
+            vertices = obj.geometry.vertices
+
+        this.OBJECT = obj;
+        this.FACE = face;
 
         var ndc_pos, a, b, c, bary
-        ndc_pos = URNDR.Math.pixelToCoordinate( this.X , this.Y )
-        a = this.OBJECT.localToWorld( this.FACE.a.clone() ).project(camera)
-        b = this.OBJECT.localToWorld( this.FACE.b.clone() ).project(camera)
-        c = this.OBJECT.localToWorld( this.FACE.c.clone() ).project(camera)
+        a = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.a ) ).project( threeManager.camera )
+        b = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.b ) ).project( threeManager.camera )
+        c = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.c ) ).project( threeManager.camera )
 
-        bary = URNDR.Math.getBarycentricCoordinate( ndc_pos , a , b , c )
+        bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c )
 
         this.BU = bary.u
         this.BV = bary.v
         this.BW = bary.w
 
+    } else {
+
+        this.clearBinding();
+        
     }
+
 }
 
 // PEN
@@ -944,8 +982,6 @@ URNDR.Pen = function( canvas , wacom ) {
     // spatial data
     this.x = 0
     this.y = 0
-    this.ndc_x = 0
-    this.ndc_y = 0
     this.pressure = 0
     
     // state data
@@ -972,10 +1008,13 @@ URNDR.Pen = function( canvas , wacom ) {
     };
     this.onmousemove = function( pen, evt ) {
 
-        var d = pen.getMousePos( evt )
-        d.pressure = pen.wacom.pressure
-        pen.updatePen( d )
+        // update data
+        var rect = this.canvas.getBoundingClientRect();
+        this.x = evt.clientX - rect.left;
+        this.y = evt.clientY - rect.top;
+        this.pressure = pen.wacom.pressure;
 
+        // call tool
         if (pen.active_tool instanceof URNDR.PenTool) {
             pen.active_tool.onmousemove( pen, evt );
         }
@@ -1002,21 +1041,15 @@ URNDR.Pen = function( canvas , wacom ) {
     } );
 
 }
-URNDR.Pen.prototype.getMousePos = function (evt) {
-    var rect = this.canvas.getBoundingClientRect();
-    var obj = {};
-        obj.x = evt.clientX - rect.left;
-        obj.y = evt.clientY - rect.top;
-        obj.ndc_x = THREE.Math.mapLinear( obj.x , 0 , this.canvas.width , -1 , 1 )
-        obj.ndc_y = THREE.Math.mapLinear( obj.y , 0 , this.canvas.height , 1 , -1 )
-    return obj;
-}
-URNDR.Pen.prototype.updatePen = function ( data ) {
-    
-    for (var k in data) {
-        if ( PEN.hasOwnProperty(k) ) { PEN[k] = data[k]; }
+URNDR.Pen.prototype = {
+    get ndc_x() { return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 ); },
+    get ndc_y() { return this.ndc_y = THREE.Math.mapLinear( this.y , 0 , this.canvas.height , 1 , -1 ); },
+    get ndc() { return [ this.ndc_x, this.ndc_y ]; },
+    set ndc( input ) {
+        var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
+        this.x = o.x
+        this.y = o.y
     }
-
 }
 URNDR.Pen.prototype.selectToolByID = function ( id ) {
 
@@ -1527,6 +1560,8 @@ THREE.Camera.prototype.calculateLookAtVector = function() {
     this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
 }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
+
+    return 1;
 
     if (obj.visible === false) {
         return 0;

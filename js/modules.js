@@ -341,7 +341,7 @@ fillmember_style : function() {
         
         clear( 1 );
 
-        strokes_count = strokes.getStrokesCount();
+        strokes_count = strokes.strokeCount;
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt , stk, i ) {
                 f = getAlphaFactor(pnt, stk, i);
@@ -368,7 +368,7 @@ fillmember_style : function() {
 },
 
 dot_debug_style : function() {
-    var module = new URNDR.Module("DEBUG MODE (FUN MODE) ",URNDR.DRAW_MODULE,51);
+    var module = new URNDR.Module("DEBUG MODE (FUN MODE)",URNDR.DRAW_MODULE,51);
     module.setFunction(function(params){
         var strokes = params.strokes
         var ctx = params.context
@@ -379,9 +379,11 @@ dot_debug_style : function() {
 
         strokes.eachStroke( function( stk ){
             if (stk.id === strokes.active_stroke) {
-                ctx.strokeStyle = 'rgb(255,0,0)';
+                ctx.strokeStyle = 'rgba(255,0,0,1)';
+            } else if (stk.hovered) {
+                ctx.strokeStyle = 'rgba(230,50,50,1)'
             } else {
-                ctx.strokeStyle = 'rgb(100,100,100)';
+                ctx.strokeStyle = 'rgba(100,100,100,1)';
             }
             stk.eachPoint( function( pnt , stk ){
                 ctx.beginPath();
@@ -400,17 +402,37 @@ default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
     module.setFunction(function(params){
 
-        var strokes = params.strokes, 
-            ctx = params.context, 
-            stroke_i, points_count, point_j, point_prev, grad;
+        var strokes = params.strokes, ctx = params.context;
         
-        // default drawing style
         clear(1);
 
         strokes.eachStroke( function( stk ){
             stk.eachPoint( function( pnt, stk, i ){
-                normalDraw( ctx, pnt, stk, i )
-            }, stk )
+                if ( stk.selected ) {
+                }
+                stroke_basic(ctx, 
+                    stk.getPoint( i - 1), 
+                    pnt, 
+                    pnt.S, 
+                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
+                )
+                if ( stk.hovered ) {
+                    ctx.fillStyle = "#FFFFFF"
+                    ctx.fillRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                }
+                if ( stk.selected ) {
+                    ctx.fillStyle = "#333333"
+                    ctx.fillRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                }
+            } , stk)
+            if (stk.closed) {
+                stroke_basic(ctx, 
+                    stk.points[ stk.length - 1 ], 
+                    stk.points[ 0 ], 
+                    pnt.S, 
+                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
+                )
+            }
         } )
 
     })
@@ -420,27 +442,14 @@ default_draw_style : function() {
 } );
 
 // HELPERS
-
-function normalDraw( ctx, pnt, stk, i ){
-
-    var prv = stk.getPoint( i - 1 )
-
-    if (prv.A + pnt.A <= 0.02) { return 0; }
-    
+function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * getAlphaFactor( pnt, stk, i ) +')'
-    ctx.lineWidth = pnt.S;
-    ctx.moveTo( prv.X, prv.Y )
-    ctx.lineTo( pnt.X, pnt.Y )
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.moveTo( p0.X , p0.Y )
+    ctx.lineTo( p1.X , p1.Y )
     ctx.closePath();
     ctx.stroke();
-
-}
-
-function closePath( ctx, stk ) {
-    if (stk.closed) {
-        ctx.closePath();
-    }
 }
 
 function getAlphaFactor( pnt, stk, i ){

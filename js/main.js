@@ -10,7 +10,7 @@ var U3 = new URNDR.ThreeManager( {
     fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
     defaultMaterial: new THREE.MeshBasicMaterial( {
 
-        color: 0xFFFFFF,
+        color: 0x000000,
         vertexColors: THREE.FaceColors, 
         
         fog: true,
@@ -73,43 +73,15 @@ PEN.addTool(new URNDR.PenTool({
             R : STYLE.color[0], G : STYLE.color[1], B : STYLE.color[2],
             A : STYLE.color[3]
         });
-        var penNDC = new THREE.Vector2( pen.ndc_x , pen.ndc_y )
-        
-        U3.raycaster.setFromCamera( penNDC , this.u3.camera )
 
-        var intersects = U3.raycaster.intersectObjects( this.u3.scene.children );
-        if (intersects.length > 0) {
-            
-            var i0, obj, face, vertices, a, b, c
-                i0 = intersects[0]
-                obj = i0.object
-                face = i0.face
-                vertices = obj.geometry.vertices
-            
-            a = obj.localToWorld( obj.getMorphedVertex( i0.face.a ) ).project( this.u3.camera )
-            b = obj.localToWorld( obj.getMorphedVertex( i0.face.b ) ).project( this.u3.camera )
-            c = obj.localToWorld( obj.getMorphedVertex( i0.face.c ) ).project( this.u3.camera )
-            
-            var bco = URNDR.Math.getBarycentricCoordinate( penNDC , a, b, c );
-
-            // write to point
-
-            point.OBJECT = obj;
-            point.FACE = face;
-            point.BU = bco.u
-            point.BV = bco.v
-            point.BW = bco.w
-
-        }
+        point.updateBarycentricCoordinate( U3 )
         
         // Run modules that changes the point.
         this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , point )
 
         // WRITE POINT INTO STROKE
         var active_stroke = this.strokes.getActiveStroke();
-        if (active_stroke !== 0) {
-            this.strokes.getActiveStroke().addPoint( point )
-        }
+        if (active_stroke !== 0) { this.strokes.getActiveStroke().addPoint( point ) }
 
     }
 
@@ -202,45 +174,75 @@ PEN.addTool( new URNDR.PenTool({
 
     name: "Stroke Selector",
     strokes: STROKES,
+    limit: 360,
+    selectedPoint: 0,
+    sqr_dist: function( p, q ) {
+        var dX = p.x - q.x,
+            dY = p.y - q.y;
+        return dX * dX + dY * dY
+    },
+    pick: function( q , str ) {
+        if ( q.hasOwnProperty("reference") ) {
+            if ( q.reference.hasOwnProperty( str ) ) {
+                return true;
+            }
+        }
+        return false;
+    },
+    nearest: function( p, arr, str ) {
+
+        var len = arr.length,
+            candidate = false,
+            nearest_so_far = this.limit,
+            dist;
+
+        for (var i = 0; i < len; i++) {
+            if ( this.pick( arr[i] , str ) ) {
+                dist = this.sqr_dist( p, arr[i] )
+                if ( dist < this.limit && dist < nearest_so_far ) {
+                    candidate = i;
+                    nearest_so_far = dist;
+                }
+            }
+        }
+
+        return candidate
+    },
+    onmousemove: function(pen,evt){
+
+        this.strokes.eachStroke( function( stk ){ stk.hovered = false; })
+
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 )
+        var nearest = this.nearest( pen, query, "point" );
+        if (nearest !== false) {
+            nearest = query[ nearest ].reference
+            nearest.stroke.hovered = true;
+            if (pen.isDown) {
+                if (this.selectedPoint === 0) {
+                    this.selectedPoint = nearest.point;
+                }
+            }
+        }
+        if (this.selectedPoint !== 0) {
+            this.selectedPoint.X = pen.x;
+            this.selectedPoint.Y = pen.y;
+            this.selectedPoint.updateBarycentricCoordinate( U3 )
+        }
+
+    },
     onmouseup: function(pen,evt){
 
-        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 ),
+        if (this.selectedPoint !== 0) { }
 
-            nearest_id = 0, 
-            nearest_distance = 360,
-            limit = 360,
+        this.selectedPoint = 0;
 
-            bufferX, bufferY, buffer;
+        this.strokes.eachStroke( function( stk ){ stk.selected = false; })
 
-        if (query.length > 0) {
-
-            for (var q in query) {
-                
-                if ( query[q].reference && query[q].reference.strokeID ) {
-                
-                    bufferX = pen.x - query[q].x
-                    bufferY = pen.y - query[q].y
-                    buffer = bufferX * bufferX + bufferY * bufferY
-
-                    if (buffer < limit && buffer < nearest_distance) {
-
-                        nearest_distance = buffer;
-                        nearest_id = query[q].reference.strokeID
-
-                    }
-
-                }
-
-            }
-
-            if (nearest_id !== 0) {
-
-                this.strokes.active_stroke = nearest_id;
-                var stk = this.strokes.getStrokeByID( nearest_id )
-                HUD.display( "stroke selected: " + nearest_id )
-
-            }
-
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 );
+        var nearest = this.nearest( pen, query, "point" );
+        if ( nearest !== false) {
+            nearest = query[ nearest ].reference
+            nearest.stroke.selected = true;
         }
 
     }

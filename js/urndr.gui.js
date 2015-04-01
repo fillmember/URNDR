@@ -25,24 +25,25 @@ mod_f.add( MODULES.getModuleByName("Wiggle") , "enabled").name("Wiggle").listen(
 mod_f.add( MODULES.getModuleByName("Smooth") , "enabled").name("Smooth").listen()
 
 watch(STROKES, "active_stroke", function(){
-	var str = "Selected Stroke",
-		closed = true;
-	
-	if ( GUI.__folders.hasOwnProperty( str ) ){
-		closed = GUI.__folders[str].closed
-    	GUI.removeFolder( str )
+
+    var str = "Selected Stroke",
+        closed = true;
+    
+    if ( GUI.__folders.hasOwnProperty( str ) ){
+        closed = GUI.__folders[str].closed
+        GUI.removeFolder( str )
     }
 
-    var asf = GUI.addFolder( str ),
-    	stk = STROKES.getActiveStroke();
+    var stk = STROKES.getActiveStroke();
+
+    var asf = GUI.addFolder( str )
 
     asf.add( stk, "id" )
     asf.add( stk, "closed" )
-    asf.add( stk, "parent" )
     asf.add( stk, "simplify_more").name("Simplify")
 
     if (closed === false) {
-    	asf.open()
+        asf.open()
     }
 
 });
