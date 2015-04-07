@@ -210,7 +210,7 @@ expand : function() {
                         vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.1, 3) )
                     pnt.X += vector.x;
                     pnt.Y += vector.y;
-                    pnt.refreshBinding( U3 )
+                    // pnt.refreshBinding( U3 )
                 }, stk )
             }
         }, strokes)
@@ -300,9 +300,9 @@ wiggle : function() {
             stroke_k = strokes.getStrokeByID( target_strokes[st] )
             stroke_k.setTrack( "X" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("X") , settings.amp ) )
             stroke_k.setTrack( "Y" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("Y") , settings.amp ) )
-            stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , 0.02 ) )
-            stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , 0.02 ) )
-            stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , 0.02 ) )
+            stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , 0.003 ) )
+            stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , 0.003 ) )
+            stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , 0.003 ) )
         }
     })
     return module

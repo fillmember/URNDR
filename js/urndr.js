@@ -323,6 +323,16 @@ URNDR.Strokes.prototype = {
     }
 }
 // functions
+URNDR.Strokes.prototype.exportJSON = function() {
+    
+    for (var i in this.strokes) {
+
+        this.strokes[i]
+
+    }
+    console.log( obj )
+    // console.log( JSON.stringify(obj) )
+}
 URNDR.Strokes.prototype.reset = function() {
 
     this.strokes = {};
@@ -586,14 +596,15 @@ URNDR.Stroke.prototype = {
     },
     deleteStroke: function(){ this._flag_to_delete = true; }
 }
-URNDR.Stroke.prototype.addPoint = function( point ) {
+URNDR.Stroke.prototype.addPoint = function( arg ) {
 
-    if ( point instanceof URNDR.Point ) {
+    if ( arg instanceof URNDR.Point ) {
         // already a Point object, just push it
-        this.points.push( point );
+        this.points.push( arg );
     } else {
+        arg = arg != undefined ? arg : { parent: this };
         // copy the values to a newly created point.
-        this.points.push( new URNDR.Point( point ) )
+        this.points.push( new URNDR.Point( arg ) )
     }
 
 }
@@ -763,29 +774,33 @@ URNDR.Stroke.prototype.simplify = function( t ) {
         return points;
     }
 
-    if (t !== undefined && t > 0) {
-        // t = t 
-    } else {
-        t = 0.9
-    }
+    t = t === undefined || t < 0 ? 0.9 : t;
 
     this.points = simplify( this.points , t , true );
 
 }
 URNDR.Stroke.prototype.simplify_more = function( n ) {
 
-    if (n >= 0 && n !== undefined) {
-        // n = n
-    } else {
-        n = 12;
-    }
+    n = n < 0 || n === undefined ? 12 : n
 
     this.optimize( n )
 
 }
 URNDR.Stroke.prototype.optimize = function( a ) {
 
-    this.simplify( a );
+    // Check if is a closed path. 
+
+    var pnt = this.points[ this.length - 1 ], 
+        pnt0 = this.points[ 0 ];
+
+    if (pnt.distanceToSquared(pnt0) < 80) { this.closed = true; }
+
+    // Simplify
+
+    this.simplify( a.simplify );
+
+    // Calculate Center
+
     this.center = this.calculateCenterOfPoints();
 
 }
@@ -843,19 +858,19 @@ URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
         before_distance: 0, after_distance: 0, nearest_distance: 0, 
     }
     for (b = n - 1; b >= 0; b--) {
-        if (track[b] !== null && track[b] !== undefined) {
+        if ( track[b] != null ) {
             before_me = b;
             break;
         }
     }
     for (a = n; a < track_leng; a++) {
-        if (track[a] !== null && track[a] !== undefined) {
+        if ( track[a] != null ) {
             after_me = a;
             break;
         }
     }
-    if (after_me === undefined) {
-        if (before_me === undefined) {
+    if (after_me == undefined) {
+        if (before_me == undefined) {
             return 0;
         } else {
             result.before = this.getPoint( before_me )
@@ -864,7 +879,7 @@ URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
             result.nearest_distance = result.before_distance
         }
     } else {
-        if (before_me === undefined) {
+        if (before_me == undefined) {
             result.after = this.getPoint( after_me )
             result.after_distance = after_me - n
             result.nearest = result.after
@@ -890,15 +905,20 @@ URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
 
 URNDR.Point = function( input ) {
 
+    this.parent = undefined;
+
+    // Size
     this.X = -100;
     this.Y = -100;
     this.S = 0;
     
+    // Color
     this.R = 0;
     this.G = 0;
     this.B = 0;
     this.A = 0;
 
+    // 3D Binding Related
     this.OBJECT = null;
     this.FACE = null;
     this.BU = 1;
@@ -935,15 +955,35 @@ URNDR.Point.prototype = {
         } else {
             // do nothing because that doesn't make sense.
         }
-    }
+    },
 
-}
-URNDR.Point.prototype.updatePoint = function( input ) {
+    // For compatibility with THREE... etc
+    get x() { return this.X; },
+    get y() { return this.Y; },
+    set x(v) { this.X = v; },
+    set y(v) { this.Y = v; },
 
-    for (var key in input) {
-        if (input.hasOwnProperty(key) && this.hasOwnProperty(key)) {
-            this[key] = input[key]
+    distanceToSquared: function( pnt ) {
+
+        var dx = this.X - v.X, dy = this.Y - v.Y;
+        return dx * dx + dy * dy;
+
+    },
+
+    distanceTo: function( pnt ) {
+
+        return Math.sqrt( this.distanceToSquared( v ) );
+
+    },
+
+    updatePoint = function( input ) {
+
+        for (var key in input) {
+            if ( this.hasOwnProperty( key ) ) {
+                this[key] = input[key];
+            }
         }
+
     }
 
 }
@@ -954,25 +994,18 @@ URNDR.Point.prototype.refreshBinding = function( threeManager ) {
     var intersects = threeManager.raycaster.intersectObjects( threeManager.scene.children )
     if (intersects.length > 0) {
 
-        var i0, obj, face, vertices, a, b, c;
-            i0 = intersects[0]
-            obj = i0.object
-            face = i0.face
-            vertices = obj.geometry.vertices
+        var obj = intersects[0].object,
+            face = intersects[0].face,
+            a = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.a ) ).project( threeManager.camera ),
+            b = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.b ) ).project( threeManager.camera ),
+            c = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.c ) ).project( threeManager.camera ),
+            bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c );
 
         this.OBJECT = obj;
         this.FACE = face;
-
-        var a, b, c, bary
-        a = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.a ) ).project( threeManager.camera )
-        b = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.b ) ).project( threeManager.camera )
-        c = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.c ) ).project( threeManager.camera )
-
-        bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c )
-
-        this.BU = bary.u
-        this.BV = bary.v
-        this.BW = bary.w
+        this.BU = bary[0]
+        this.BV = bary[1]
+        this.BW = bary[2]
 
     } else {
 
@@ -1274,19 +1307,19 @@ URNDR.Math = {
     // Compute barycentric coordinates (u,v,w) for point p with respect to triangle (a,b,c)
     getBarycentricCoordinate : function( p , a , b , c ) {
         var v0,v1,v2,d00,d01,d11,d20,d21,denom,u,v,w;
-        v0 = new THREE.Vector2(b.x-a.x,b.y-a.y)
-        v1 = new THREE.Vector2(c.x-a.x,c.y-a.y)
-        v2 = new THREE.Vector2(p.x-a.x,p.y-a.y)
-        d00 = v0.dot(v0)
-        d01 = v0.dot(v1)
-        d11 = v1.dot(v1)
-        d20 = v2.dot(v0)
-        d21 = v2.dot(v1)
-        denom = 1 / (d00 * d11 - d01 * d01)
-        v = (d11 * d20 - d01 * d21) * denom
-        w = (d00 * d21 - d01 * d20) * denom
-        u = 1 - v - w
-        return {u:u,v:v,w:w}
+            v0 = new THREE.Vector2(b.x-a.x,b.y-a.y);
+            v1 = new THREE.Vector2(c.x-a.x,c.y-a.y);
+            v2 = new THREE.Vector2(p.x-a.x,p.y-a.y);
+        d00 = v0.dot(v0);
+        d01 = v0.dot(v1);
+        d11 = v1.dot(v1);
+        d20 = v2.dot(v0);
+        d21 = v2.dot(v1);
+        denom = 1 / (d00 * d11 - d01 * d01);
+        v = (d11 * d20 - d01 * d21) * denom;
+        w = (d00 * d21 - d01 * d20) * denom;
+        u = 1 - v - w;
+        return [u,v,w];
     }
 
 }
@@ -1376,6 +1409,7 @@ URNDR.Model = function() {
     // Animation Attributes
     this.active = false;
     this.tags = {};
+    this.speed = 15;
 
     // THREE JSONLoader related attributes
     this.file_path = "";
@@ -1431,12 +1465,11 @@ URNDR.Model.prototype = {
     },
     update: function( animSpeed ) {
 
-        if (this.animationObject !== undefined) {
+        if (this.animationObject != undefined && this.speed > 0) {
 
-            this.animationObject.update( animSpeed );
+            this.animationObject.update( this.speed )
             
         }
-
 
     }
 }
@@ -1460,7 +1493,7 @@ URNDR.ThreeManager = function( arg ) {
     this.raycaster = new THREE.Raycaster();
     this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({color: 0xCCCCCC})
     if (arg.fog) { this.scene.fog = arg.fog; }
-    this.defaultAnimationSpeed = arg.defaultAnimationSpeed || 4
+    this.defaultAnimationSpeed = 15;
 
     // THREE setup
     this.renderer.setSize( window.innerWidth , window.innerHeight )
@@ -1472,10 +1505,10 @@ URNDR.ThreeManager.prototype = {
     createModelFromFile: function( file_path, callback ) {
 
         // CREATE
-        var manager = this,
-            model = new URNDR.Model();
-            model.material = this.defaultMaterial
+        var manager = this, model = new URNDR.Model();
 
+        model.material = manager.defaultMaterial;
+        model.speed = manager.defaultAnimationSpeed;
         model.loadModel( file_path , function(){
 
             // THREE
@@ -1517,7 +1550,7 @@ URNDR.ThreeManager.prototype = {
         }
 
     },
-    update: function( speed ) {
+    update: function() {
 
         var manager = this;
 
@@ -1525,10 +1558,7 @@ URNDR.ThreeManager.prototype = {
 
             if (model.loaded && model.active) {
 
-                if (typeof speed !== "number") {
-                    speed = manager.defaultAnimationSpeed
-                }
-                model.update( speed );
+                model.update();
 
             }
 

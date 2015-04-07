@@ -94,10 +94,10 @@ PEN.addTool( new URNDR.PenTool({
     name: "Eraser",
     style: STYLE,
     strokes: STROKES,
+    delMod: undefined,
+    init: function(){ this.del_func = MODULES.getModuleByName( "delete flagged strokes" ).func },
     onmousedown: function(pen, evt){},
-    onmouseup: function(pen, evt){
-        MODULES.getModuleByName( "delete flagged strokes" ).func( this.strokes );
-    },
+    onmouseup: function(pen, evt){ this.del_func( this.strokes ); },
     onmousemove: function(pen, evt){
 
         if (pen.isDown !== 1) { return; }
@@ -250,10 +250,12 @@ window.onload = function() {
     // U3.createModelFromFile( "models/sphere.js" );
 
     U3.createModelFromFile( "models/human_01.js", function( model ) {
+        model.speed = 0
         model.mesh.scale.multiplyScalar( 1.1 )
         model.mesh.position.y = -2.5
     }  );
     U3.createModelFromFile( "models/human_02.js", function( model ) {
+        model.speed = 0
         model.mesh.scale.multiplyScalar( 1.1 )
         model.mesh.position.y = -2.5
     } );
@@ -302,7 +304,7 @@ window.onload = function() {
     // requestAnimationFrame
     var display = function() {
 
-        U3.update( 0 );
+        U3.update();
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
         MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER} );
