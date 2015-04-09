@@ -790,10 +790,14 @@ URNDR.Stroke.prototype.optimize = function( a ) {
 
     // Check if is a closed path. 
 
-    var pnt = this.points[ this.length - 1 ], 
-        pnt0 = this.points[ 0 ];
+    if (this.length > 3) {
 
-    if (pnt.distanceToSquared(pnt0) < 80) { this.closed = true; }
+        var pnt = this.points[ this.length - 1 ], 
+            pnt0 = this.points[ 0 ];
+
+        if ( pnt.distanceToSquared(pnt0) < 360 ) { this.closed = true; }
+
+    }
 
     // Simplify
 

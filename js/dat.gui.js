@@ -2285,6 +2285,10 @@ dat.GUI = dat.gui.GUI = (function (css, saveDialogueContents, styleSheet, contro
           this.__listening.push(controller);
           if (init) updateDisplays(this.__listening);
 
+        },
+
+        hide: function(){
+          console.log("hide",this)
         }
 
       }
