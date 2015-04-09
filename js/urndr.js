@@ -797,7 +797,7 @@ URNDR.Stroke.prototype.optimize = function( a ) {
 
     // Simplify
 
-    this.simplify( a.simplify );
+    this.simplify();
 
     // Calculate Center
 
@@ -965,7 +965,7 @@ URNDR.Point.prototype = {
 
     distanceToSquared: function( pnt ) {
 
-        var dx = this.X - v.X, dy = this.Y - v.Y;
+        var dx = this.X - pnt.X, dy = this.Y - pnt.Y;
         return dx * dx + dy * dy;
 
     },
@@ -976,7 +976,7 @@ URNDR.Point.prototype = {
 
     },
 
-    updatePoint = function( input ) {
+    updatePoint: function( input ) {
 
         for (var key in input) {
             if ( this.hasOwnProperty( key ) ) {
@@ -996,9 +996,9 @@ URNDR.Point.prototype.refreshBinding = function( threeManager ) {
 
         var obj = intersects[0].object,
             face = intersects[0].face,
-            a = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.a ) ).project( threeManager.camera ),
-            b = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.b ) ).project( threeManager.camera ),
-            c = this.OBJECT.localToWorld( this.OBJECT.getMorphedVertex( this.FACE.c ) ).project( threeManager.camera ),
+            a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
+            b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project( threeManager.camera ),
+            c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project( threeManager.camera ),
             bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c );
 
         this.OBJECT = obj;
