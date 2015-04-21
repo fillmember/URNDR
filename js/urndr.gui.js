@@ -34,6 +34,7 @@ var GUI = new dat.GUI();
                 folderModuleExpand.add( MODULES.getModuleByName("Expand").getConfiguration() , "speed", 1, 5);
 
     var folderRender = GUI.addFolder("Render")
+        // folderRender.add( $("#canvas_three").get(0).style , "opacity" ).name("Model")
         folderRender.add( MODULES.getModuleByName("VANILLA DRAW").configuration , "fillmember" ).name("Comic")
 
     // Active Stroke

@@ -359,7 +359,7 @@ connection_network : function(){
 
 default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
-    module.setConfiguration( {fillmember:true} )
+    module.setConfiguration( {fillmember:false} )
     module.setFunction(function(params){
 
         var settings = this.getConfiguration();

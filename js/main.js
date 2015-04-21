@@ -7,20 +7,20 @@
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
-    // fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
-    // defaultMaterial: new THREE.MeshBasicMaterial( {
+    fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
+    defaultMaterial: new THREE.MeshBasicMaterial( {
 
-    //     color: 0xCCCCCC,
-    //     vertexColors: THREE.FaceColors, 
+        color: 0xCCCCCC,
+        vertexColors: THREE.FaceColors, 
         
-    //     fog: true,
+        fog: true,
         
-    //     wireframe: true, 
-    //     wireframeLinewidth: 0.1,
+        wireframe: true, 
+        wireframeLinewidth: 0.1,
 
-    //     morphTargets: true,
+        morphTargets: true,
 
-    // } )
+    } )
 } )
 
 //
@@ -143,7 +143,7 @@ PEN.addTool( new URNDR.PenTool({
 
                 model.mesh.rotation.y += value;
 
-                model.animationObject.update( 10 )
+                // model.animationObject.update( 10 )
 
             }, pen.ndc_x * 0.1 )
 
@@ -247,18 +247,25 @@ window.onload = function() {
     // Models
     //
 
-    // U3.createModelFromFile( "models/sphere.js" );
+    U3.createModelFromFile( "models/sphere.js", function( model ) {
+        model.speed = 2;
+    } );
 
     // U3.createModelFromFile( "models/human_02.js", function( model ) {
     //     model.speed = 0
     //     model.mesh.scale.multiplyScalar( 1.1 )
     //     model.mesh.position.y = -2.5
     // }  );
-    U3.createModelFromFile( "models/human_01.js", function( model ) {
-        model.speed = 0
-        model.mesh.scale.multiplyScalar( 1.1 )
-        model.mesh.position.y = -2.5
-    } );
+    // for(var i = 0; i < 5; i++) {
+    //     U3.createModelFromFile( "models/human_01.js", function( model , i ) {
+    //         model.speed = 10 + i;
+    //         model.update( i * 10 );
+    //         model.mesh.scale.multiplyScalar( 1 )
+    //         model.mesh.position.x = -4 + i * 2
+    //         model.mesh.position.y = -2
+    //         model.mesh.rotation.y = -2.5 + i * 0.5
+    //     }, i );
+    // }
 
     //
     // EVENTS

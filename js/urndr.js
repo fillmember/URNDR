@@ -1382,7 +1382,7 @@ URNDR.ThreeManager = function( arg ) {
 }
 URNDR.ThreeManager.prototype = {
 
-    createModelFromFile: function( file_path, callback ) {
+    createModelFromFile: function( file_path, callback , args ) {
 
         // CREATE
         var manager = this, model = new URNDR.Model();
@@ -1399,9 +1399,11 @@ URNDR.ThreeManager.prototype = {
             manager.models_sequence.push( model.id )
 
             // CALLBACK
-            callback( model );
+            callback( model , args );
 
         } );
+
+        return model;
 
     },
     getModel: function( input ) {
