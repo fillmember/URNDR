@@ -221,25 +221,23 @@ expand : function() {
 smooth_data : function() {
     var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
     // 
-    module.setConfiguration({ length: 60, factor: 10 })
+    module.setConfiguration({ length: 60, factor: 18 })
     module.setFunction(function(strokes) {
         
-        var stroke, settings, target_tracks, track, eArr
-        stroke = strokes.getActiveStroke()
-        settings = module.getConfiguration()
-        if (stroke === 0) { return; }
-        
-        target_tracks = ["R","G","B","A","S","X","Y"];
-        for (var i in target_tracks) {
+        var settings = module.getConfiguration(),
+            tracks = ["R","G","B","A","S","X","Y"];
 
-            track = stroke.getTrack( target_tracks[i] );
-            eArr = URNDR.Helpers.getLastElements( track , settings.length );
+        strokes.eachStroke( function( stroke ) { _smooth( stroke, tracks, settings ); } )
 
-            URNDR.Helpers.smoothArray( eArr , { factor: settings.factor, round : true } );
-
-            track = URNDR.Helpers.replaceLastElements( track , eArr );
-            stroke.setTrack( target_tracks[i] , track );
-
+        function _smooth( stroke, tracks, settings ) {
+            var i, len = tracks.length
+            tracks.forEach( function( symbol ){
+                var track = stroke.getTrack( symbol ),
+                    eArr = URNDR.Helpers.getLastElements( track , settings.length );
+                URNDR.Helpers.smoothArray( eArr , { factor: settings.factor, round : true } );
+                track = URNDR.Helpers.replaceLastElements( track , eArr );
+                stroke.setTrack( symbol , track );
+            } )
         }
 
     })
@@ -370,6 +368,7 @@ default_draw_style : function() {
         clear(1);
 
         strokes.eachStroke( function( stk ){
+
             stk.eachPoint( function( pnt, stk, i ){
 
                 var factor = getAlphaFactor(pnt,stk,i)
@@ -385,9 +384,7 @@ default_draw_style : function() {
                     }
                 }
 
-                stroke_basic(ctx, prv, pnt, pnt.S, 
-                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')'
-                )
+                stroke_basic(ctx, prv, pnt, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' )
                 if ( stk.hovered ) {
                     hudCtx.lineWidth = 2;
                     hudCtx.strokeStyle = "#FFF"
@@ -400,6 +397,7 @@ default_draw_style : function() {
                     stroke_basic(hudCtx, prv, pnt, 1, "#FF0" )
                 }
             } , stk)
+
             if (stk.closed) {
                 var prv = stk.points[ 0 ],
                     pnt = stk.points[ stk.length - 1 ]
@@ -412,9 +410,7 @@ default_draw_style : function() {
                         ctx.restore();
                     }
                 }
-                stroke_basic(ctx, pnt, prv, pnt.S, 
-                    'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')'
-                )
+                stroke_basic(ctx, pnt, prv, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' )
             }
         } )
 

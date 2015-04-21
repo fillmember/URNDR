@@ -8,7 +8,6 @@ URNDR.DRAW_MODULE = "DRAW_MODULES"
 
 // QuadTree
 // source: http://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374
-
 URNDR.QuadTree = function( pLevel , pBounds) {
     
     // Statics
@@ -20,7 +19,6 @@ URNDR.QuadTree = function( pLevel , pBounds) {
     this.objects = []
     this.bounds = pBounds
     this.nodes = [null,null,null,null]
-
 }
 URNDR.QuadTree.prototype = {
     clear : function() {
@@ -137,7 +135,6 @@ URNDR.QuadTree.prototype = {
 
     }
 }
-
 URNDR.Rectangle = function(x,y,w,h,ref) {
     this.x = x
     this.y = y
@@ -147,8 +144,7 @@ URNDR.Rectangle = function(x,y,w,h,ref) {
     this.reference = ref || undefined
 }
 
-// MODULE
-
+// Module
 URNDR.Module = function(n,t,k,e) {
     this.id = "MOD-"+THREE.Math.generateUUID()
     this.priority = 1
@@ -164,16 +160,17 @@ URNDR.Module = function(n,t,k,e) {
         if (typeof e === "boolean" && t !== URNDR.COMMAND_MODULE) { this.enabled = e }
     }
 }
-URNDR.Module.prototype.setFunction = function ( f ) { this.func = f }
-URNDR.Module.prototype.getFunction = function () { return this.func }
-URNDR.Module.prototype.setConfiguration = function ( s ) {
-    this.configuration = s
-    this.initialConfiguration = Object.create( this.configuration )
+URNDR.Module.prototype = {
+    setFunction: function( f ) { this.func = f },
+    getFunction: function() { return this.func },
+    setConfiguration: function( s ) {
+        this.configuration = s;
+        this.initialConfiguration = Object.create( this.configuration )
+    },
+    getConfiguration: function() { return this.configuration }
 }
-URNDR.Module.prototype.getConfiguration = function () { return this.configuration }
 
-// MODULE MANAGER
-
+// Module Manager
 URNDR.ModuleManager = function() {
     this.modules = {};
     this[ URNDR.COMMAND_MODULE ] = {};
@@ -299,10 +296,9 @@ URNDR.ModuleManager = function() {
 
     }
     this.resetModules = function( list_name ) {}
-};
+}
 
 // Strokes
-
 URNDR.Strokes = function(){
     
     // Data
@@ -315,245 +311,243 @@ URNDR.Strokes = function(){
     var _qtw = arguments[0].canvasWidth || window.innerWidth
     var _qth = arguments[0].canvasHeight || window.innerWidth
     this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
-
 }
 URNDR.Strokes.prototype = {
     get strokeCount() {
         return this.strokesHistory.length;
-    }
-}
-// functions
-URNDR.Strokes.prototype.exportJSON = function() {
-    
-    for (var i in this.strokes) {
+    },
+    exportJSON: function() {
+        
+        for (var i in this.strokes) {
 
-        this.strokes[i]
+            this.strokes[i]
 
-    }
-    console.log( obj )
-    // console.log( JSON.stringify(obj) )
-}
-URNDR.Strokes.prototype.reset = function() {
+        }
+        console.log( obj )
+        // console.log( JSON.stringify(obj) )
+    },
+    reset: function() {
 
-    this.strokes = {};
-    this.strokesHistory = [];
-    this.strokesZDepth = [];
-    
-    this.active_stroke = 0;
+        this.strokes = {};
+        this.strokesHistory = [];
+        this.strokesZDepth = [];
+        
+        this.active_stroke = 0;
 
-    this.quadTree.clear();
+        this.quadTree.clear();
 
-}
-URNDR.Strokes.prototype.rebuildQuadTree = function() {
+    },
+    rebuildQuadTree: function() {
 
-    var qt = this.quadTree;
-    var active_id = this.getActiveStroke().id
+        var qt = this.quadTree;
+        var active_id = this.getActiveStroke().id
 
-    qt.clear();
+        qt.clear();
 
-    this.eachStroke( function(stk,strokes){
+        this.eachStroke( function(stk,strokes){
 
-        strokes.addToQuadTree( stk )
-    
-    }, this)
+            strokes.addToQuadTree( stk )
+        
+        }, this)
 
-}
-URNDR.Strokes.prototype.addToQuadTree = function( obj ) {
+    },
+    addToQuadTree: function( obj ) {
 
-    var hit_size, half_hit,
-        qt = this.quadTree;
+        var hit_size, half_hit,
+            qt = this.quadTree;
 
-    if (obj instanceof URNDR.Stroke) {
+        if (obj instanceof URNDR.Stroke) {
 
-        obj.eachPoint( function(pnt,stk,i){
+            obj.eachPoint( function(pnt,stk,i){
 
-            hit_size = pnt.S,
-            half_hit = - hit_size * 0.5;
-            
-            qt.insert( new URNDR.Rectangle(
-                pnt.X + half_hit, // X
-                pnt.Y + half_hit, // Y
-                hit_size, // W
-                hit_size, // H
-                // Reference
-                { stroke: stk, pointIndex: i, point: pnt }
-            ) );
+                hit_size = pnt.S,
+                half_hit = - hit_size * 0.5;
+                
+                qt.insert( new URNDR.Rectangle(
+                    pnt.X + half_hit, // X
+                    pnt.Y + half_hit, // Y
+                    hit_size, // W
+                    hit_size, // H
+                    // Reference
+                    { stroke: stk, pointIndex: i, point: pnt }
+                ) );
 
-        }, obj );
-
-    }
-
-}
-URNDR.Strokes.prototype.getFromQuadTree = function( x , y , w , h ) {
-
-    if (!x || !y) { return 0; }
-
-    _w = w || 2;
-    _h = h || 2;
-    _x = x - _w * 0.5;
-    _y = y - _h * 0.5;
-
-    var rect = new URNDR.Rectangle( _x , _y , _w , _h );
-
-    // return: array contains Point objects
-    var rects = this.quadTree.retrieve( [], rect )
-    var result = [];
-    for (var r in rects) {
-        result.push( rects[r] )
-    }
-
-    return result;
-
-}
-URNDR.Strokes.prototype.getActiveStroke = function() {
-
-    if (this.active_stroke !== 0) {
-        return this.getStrokeByID( this.active_stroke );
-    } else {
-        return 0;
-    }
-
-}
-// Make one stroke active by storing its ID into active_stroke
-URNDR.Strokes.prototype.selectStrokeByID = function ( id ) {
-
-    if ( this.strokes.hasOwnProperty(id) ) {
-        this.active_stroke = id
-    } else {
-        return false;
-    }
-
-}
-URNDR.Strokes.prototype.getLastStrokeInHistory = function() {
-
-    return this.getStrokeByID( this.strokesHistory[ this.strokesHistory.length - 1 ] );
-
-}
-URNDR.Strokes.prototype.beginNewStroke = function (  ) {
-
-    this.selectStrokeByID( this.addStroke() );
-
-}
-URNDR.Strokes.prototype.addStroke = function (  ) {
-
-    // Check argument first
-    var alen = arguments.length;
-    if (alen === 0) {
-
-        // Create an empty stroke for user.
-        return this.addStroke( new URNDR.Stroke() )
-
-    } else if (alen > 1) {
-
-        // Several Strokes. 
-        for ( var j = 0; j < alen; j++) {
-
-            this.addStroke( arguments[j] )
+            }, obj );
 
         }
 
-    } else if (alen === 1) {
+    },
+    getFromQuadTree: function( x , y , w , h ) {
 
-        var this_stroke = arguments[0]
+        if (!x || !y) { return 0; }
 
-        if (this_stroke instanceof URNDR.Stroke ) {
-            
-            this.strokes[this_stroke.id] = this_stroke;
-            this.strokesHistory.push( this_stroke.id )
-            this.strokesZDepth.push( this_stroke.id )
+        _w = w || 2;
+        _h = h || 2;
+        _x = x - _w * 0.5;
+        _y = y - _h * 0.5;
 
-            return this_stroke.id; // return the id so people can identify it. 
+        var rect = new URNDR.Rectangle( _x , _y , _w , _h );
 
+        // return: array contains Point objects
+        var rects = this.quadTree.retrieve( [], rect )
+        var result = [];
+        for (var r in rects) {
+            result.push( rects[r] )
+        }
+
+        return result;
+
+    },
+    getActiveStroke: function() {
+
+        if (this.active_stroke !== 0) {
+            return this.getStrokeByID( this.active_stroke );
         } else {
-            
-            console.log("addStroke only accept Stroke objects. ")
-
-            return false;
-
+            return 0;
         }
 
-    }
-
-}
-// NOTE: To iterate through strokes when drawing & manipulating... just use strokes map or strokesArray. 
-URNDR.Strokes.prototype.getStrokeByID = function ( id ) {
-
-    if (this.strokes.hasOwnProperty(id)) {
-        return this.strokes[id]
-    } else {
-        return 0;
-    }
-
-}
-URNDR.Strokes.prototype.deleteStrokeByID = function ( id ) {
-    
-    if (this.strokes.hasOwnProperty(id)) {
-
-        var in_history = this.strokesHistory.indexOf(id)
-        var in_z_depth = this.strokesZDepth.indexOf(id)
-
-        // NOTE: if everything works right. They should also be present in these arrays...
-        if (in_history >= 0) { this.strokesHistory.splice( in_history , 1) }
-        if (in_z_depth >= 0) { this.strokesZDepth.splice( in_z_depth , 1) }
-        if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) } // auto check consistency, something might be wrong :(
-
-        delete this.strokes[id]
-
-    } else {
-
-        console.log("Warning : Stroke not found. Did nothing. ")
-
-    }
-
-}
-URNDR.Strokes.prototype.checkConsistency = function (id) {
-
-    console.log("PART I : Start to check consistency in the data. ")
-
-    if (id) {
-
-        console.log("Check stroke by ID...")
+    },
+    // Make one stroke active by storing its ID into active_stroke,
+    selectStrokeByID: function( id ) {
 
         if ( this.strokes.hasOwnProperty(id) ) {
-
-            var in_history = this.strokesHistory.indexOf(id);
-            var in_z_depth = this.strokesZDepth.indexOf(id);
-
-            console.log("Index in History Array: "+in_history,"Index in Z-Depth Array: "+in_z_depth);
-            console.log("Something wrong? ",in_history === in_z_depth ? "NO :)" : "YES :(");
-
+            this.active_stroke = id
         } else {
+            return false;
+        }
 
-            console.log("no such stroke present. ");
+    },
+    getLastStrokeInHistory: function() {
+
+        return this.getStrokeByID( this.strokesHistory[ this.strokesHistory.length - 1 ] );
+
+    },
+    beginNewStroke: function() {
+
+        this.selectStrokeByID( this.addStroke() );
+
+    },
+    addStroke: function() {
+
+        // Check argument first
+        var alen = arguments.length;
+        if (alen === 0) {
+
+            // Create an empty stroke for user.
+            return this.addStroke( new URNDR.Stroke() )
+
+        } else if (alen > 1) {
+
+            // Several Strokes. 
+            for ( var j = 0; j < alen; j++) {
+
+                this.addStroke( arguments[j] )
+
+            }
+
+        } else if (alen === 1) {
+
+            var this_stroke = arguments[0]
+
+            if (this_stroke instanceof URNDR.Stroke ) {
+                
+                this.strokes[this_stroke.id] = this_stroke;
+                this.strokesHistory.push( this_stroke.id )
+                this.strokesZDepth.push( this_stroke.id )
+
+                return this_stroke.id; // return the id so people can identify it. 
+
+            } else {
+                
+                console.log("addStroke only accept Stroke objects. ")
+
+                return false;
+
+            }
 
         }
 
+    },
+    // NOTE: To iterate through strokes when drawing & manipulating... just use strokes map or strokesArray. ,
+    getStrokeByID: function( id ) {
+
+        if (this.strokes.hasOwnProperty(id)) {
+            return this.strokes[id]
+        } else {
+            return 0;
+        }
+
+    },
+    deleteStrokeByID: function( id ) {
+        
+        if (this.strokes.hasOwnProperty(id)) {
+
+            var in_history = this.strokesHistory.indexOf(id)
+            var in_z_depth = this.strokesZDepth.indexOf(id)
+
+            // NOTE: if everything works right. They should also be present in these arrays...
+            if (in_history >= 0) { this.strokesHistory.splice( in_history , 1) }
+            if (in_z_depth >= 0) { this.strokesZDepth.splice( in_z_depth , 1) }
+            if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) } // auto check consistency, something might be wrong :(
+
+            delete this.strokes[id]
+
+        } else {
+
+            console.log("Warning : Stroke not found. Did nothing. ")
+
+        }
+
+    },
+    checkConsistency: function(id) {
+
+        console.log("PART I : Start to check consistency in the data. ")
+
+        if (id) {
+
+            console.log("Check stroke by ID...")
+
+            if ( this.strokes.hasOwnProperty(id) ) {
+
+                var in_history = this.strokesHistory.indexOf(id);
+                var in_z_depth = this.strokesZDepth.indexOf(id);
+
+                console.log("Index in History Array: "+in_history,"Index in Z-Depth Array: "+in_z_depth);
+                console.log("Something wrong? ",in_history === in_z_depth ? "NO :)" : "YES :(");
+
+            } else {
+
+                console.log("no such stroke present. ");
+
+            }
+
+        }
+
+        console.log("PART II : Check Data Length");
+
+        var slen, hlen, zlen;
+        slen = Object.keys(strokes).length;
+        hlen = this.strokesHistory.length;
+        zlen = this.strokesZDepth.length;
+
+        if ( slen === hlen === zlen) {
+            console.log("")
+        } else {
+            console.log("Warning to developer : there's inconsistency between strokes and other two arrays! (slen,hlen,zlen) = (",slen,hlen,zlen,")");
+            console.log("Tips : Don't control strokes without Strokes object's interface. ");
+        }
+
+    },
+    eachStroke: function( my_function , parameters ) {
+        var len = this.strokeCount;
+        var arr = this.strokesHistory.slice(0)
+        for( var i = 0; i < len; i++ ){
+            my_function( this.getStrokeByID( arr[ i ] ) , parameters , i );
+        }
     }
-
-    console.log("PART II : Check Data Length");
-
-    var slen, hlen, zlen;
-    slen = Object.keys(strokes).length;
-    hlen = this.strokesHistory.length;
-    zlen = this.strokesZDepth.length;
-
-    if ( slen === hlen === zlen) {
-        console.log("")
-    } else {
-        console.log("Warning to developer : there's inconsistency between strokes and other two arrays! (slen,hlen,zlen) = (",slen,hlen,zlen,")");
-        console.log("Tips : Don't control strokes without Strokes object's interface. ");
-    }
-
 }
-URNDR.Strokes.prototype.eachStroke = function( my_function , parameters ) {
-    var len = this.strokeCount;
-    var arr = this.strokesHistory.slice(0)
-    for( var i = 0; i < len; i++ ){
-        my_function( this.getStrokeByID( arr[ i ] ) , parameters , i );
-    }
-}
 
-// SUB CLASSES
+// Stroke
 URNDR.Stroke = function(tags) {
 
     this.id = "S-"+THREE.Math.generateUUID();
@@ -571,7 +565,6 @@ URNDR.Stroke = function(tags) {
     this.selected = false;
 
     this._flag_to_delete = false;
-
 }
 URNDR.Stroke.prototype = {
     get length() {
@@ -594,319 +587,319 @@ URNDR.Stroke.prototype = {
         if (flag_invisible) { return true; }
         if (sum_A < 0.05) { return true; } else { return false; }
     },
-    deleteStroke: function(){ this._flag_to_delete = true; }
-}
-URNDR.Stroke.prototype.addPoint = function( arg ) {
+    deleteStroke: function(){ this._flag_to_delete = true; },
+    addPoint: function( arg ) {
 
-    if ( arg instanceof URNDR.Point ) {
-        // already a Point object, just push it
-        this.points.push( arg );
-    } else {
-        arg = arg != undefined ? arg : { parent: this };
-        // copy the values to a newly created point.
-        this.points.push( new URNDR.Point( arg ) )
-    }
-
-}
-URNDR.Stroke.prototype.getPoint = function( point_n ) {
-
-    if ( point_n >= 0 && point_n < this.length ) {
-        return this.points[ point_n ]
-    } else {
-        return 0
-    }
-
-}
-URNDR.Stroke.prototype.getTrack = function( track_name ) {
-
-    var len, result
-    len = this.length;
-    result = [];
-
-    if (len === 0) { return result; }
-    if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
-
-    for ( var i = 0; i < len; i++ ) { result.push( this.getPoint(i)[ track_name ] ) }
-    return result;
-
-}
-URNDR.Stroke.prototype.setTrack = function( track_name , arr ) {
-
-    var len = this.length
-
-    if (len !== arr.length) { return 0 }
-
-    for ( var i = 0; i < len; i++ ) { this.getPoint(i)[ track_name ] = arr[i]; }
-
-}
-
-URNDR.Stroke.prototype.removePoint = function( point_n ) {
-
-    if ( point_n >= 0 && point_n < this.length ) {
-        this.points.splice( point_n , 1)
-    } else {
-        console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.length )
-    }
-
-}
-URNDR.Stroke.prototype.simplify = function( t ) {
-
-    /*
-     
-     (c) 2013, Vladimir Agafonkin
-     Simplify.js, a high-performance JS polyline simplification library
-     mourner.github.io/simplify-js
-    
-    */
-    
-    // square distance between 2 points
-    function getSqDist(p1, p2) {
-
-        var dx = p1.X - p2.X,
-            dy = p1.Y - p2.Y;
-
-        return dx * dx + dy * dy;
-    }
-
-    // square distance from a point to a segment
-    function getSqSegDist(p, p1, p2) {
-
-        var x = p1.X,
-            y = p1.Y,
-            dx = p2.X - x,
-            dy = p2.Y - y;
-
-        if (dx !== 0 || dy !== 0) {
-
-            var t = ((p.X - x) * dx + (p.Y - y) * dy) / (dx * dx + dy * dy);
-
-            if (t > 1) {
-                x = p2.X;
-                y = p2.Y;
-
-            } else if (t > 0) {
-                x += dx * t;
-                y += dy * t;
-            }
+        if ( arg instanceof URNDR.Point ) {
+            // already a Point object, just push it
+            this.points.push( arg );
+        } else {
+            arg = arg != undefined ? arg : { parent: this };
+            // copy the values to a newly created point.
+            this.points.push( new URNDR.Point( arg ) )
         }
 
-        dx = p.X - x;
-        dy = p.Y - y;
+    },
+    getPoint: function( point_n ) {
 
-        return dx * dx + dy * dy;
-    }
-    // rest of the code doesn't care about point format
-
-    // basic distance-based simplification
-    function simplifyRadialDist(points, sqTolerance) {
-
-        var prevPoint = points[0],
-            newPoints = [prevPoint],
-            point;
-
-        for (var i = 1, len = points.length; i < len; i++) {
-            point = points[i];
-
-            if (getSqDist(point, prevPoint) > sqTolerance) {
-                newPoints.push(point);
-                prevPoint = point;
-            }
+        if ( point_n >= 0 && point_n < this.length ) {
+            return this.points[ point_n ]
+        } else {
+            return 0
         }
 
-        if (prevPoint !== point) newPoints.push(point);
+    },
+    getTrack: function( track_name ) {
 
-        return newPoints;
-    }
+        var len, result
+        len = this.length;
+        result = [];
 
-    // simplification using optimized Douglas-Peucker algorithm with recursion elimination
-    function simplifyDouglasPeucker(points, sqTolerance) {
+        if (len === 0) { return result; }
+        if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
 
-        var len = points.length,
-            MarkerArray = typeof Uint8Array !== 'undefined' ? Uint8Array : Array,
-            markers = new MarkerArray(len),
-            first = 0,
-            last = len - 1,
-            stack = [],
-            newPoints = [],
-            i, maxSqDist, sqDist, index;
+        for ( var i = 0; i < len; i++ ) { result.push( this.getPoint(i)[ track_name ] ) }
+        return result;
 
-        markers[first] = markers[last] = 1;
+    },
+    setTrack: function( track_name , arr ) {
 
-        while (last) {
+        var len = this.length
 
-            maxSqDist = 0;
+        if (len !== arr.length) { return 0 }
 
-            for (i = first + 1; i < last; i++) {
-                sqDist = getSqSegDist(points[i], points[first], points[last]);
+        for ( var i = 0; i < len; i++ ) { this.getPoint(i)[ track_name ] = arr[i]; }
 
-                if (sqDist > maxSqDist) {
-                    index = i;
-                    maxSqDist = sqDist;
+    },
+    removePoint: function( point_n ) {
+
+        if ( point_n >= 0 && point_n < this.length ) {
+            this.points.splice( point_n , 1)
+        } else {
+            console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.length )
+        }
+
+    },
+    simplify: function( t ) {
+
+        /*
+         
+         (c) 2013, Vladimir Agafonkin
+         Simplify.js, a high-performance JS polyline simplification library
+         mourner.github.io/simplify-js
+        
+        */
+        
+        // square distance between 2 points
+        function getSqDist(p1, p2) {
+
+            var dx = p1.X - p2.X,
+                dy = p1.Y - p2.Y;
+
+            return dx * dx + dy * dy;
+        }
+
+        // square distance from a point to a segment
+        function getSqSegDist(p, p1, p2) {
+
+            var x = p1.X,
+                y = p1.Y,
+                dx = p2.X - x,
+                dy = p2.Y - y;
+
+            if (dx !== 0 || dy !== 0) {
+
+                var t = ((p.X - x) * dx + (p.Y - y) * dy) / (dx * dx + dy * dy);
+
+                if (t > 1) {
+                    x = p2.X;
+                    y = p2.Y;
+
+                } else if (t > 0) {
+                    x += dx * t;
+                    y += dy * t;
                 }
             }
 
-            if (maxSqDist > sqTolerance) {
-                markers[index] = 1;
-                stack.push(first, index, index, last);
+            dx = p.X - x;
+            dy = p.Y - y;
+
+            return dx * dx + dy * dy;
+        }
+        // rest of the code doesn't care about point format
+
+        // basic distance-based simplification
+        function simplifyRadialDist(points, sqTolerance) {
+
+            var prevPoint = points[0],
+                newPoints = [prevPoint],
+                point;
+
+            for (var i = 1, len = points.length; i < len; i++) {
+                point = points[i];
+
+                if (getSqDist(point, prevPoint) > sqTolerance) {
+                    newPoints.push(point);
+                    prevPoint = point;
+                }
             }
 
-            last = stack.pop();
-            first = stack.pop();
+            if (prevPoint !== point) newPoints.push(point);
+
+            return newPoints;
         }
 
-        for (i = 0; i < len; i++) {
-            if (markers[i]) newPoints.push(points[i]);
+        // simplification using optimized Douglas-Peucker algorithm with recursion elimination
+        function simplifyDouglasPeucker(points, sqTolerance) {
+
+            var len = points.length,
+                MarkerArray = typeof Uint8Array !== 'undefined' ? Uint8Array : Array,
+                markers = new MarkerArray(len),
+                first = 0,
+                last = len - 1,
+                stack = [],
+                newPoints = [],
+                i, maxSqDist, sqDist, index;
+
+            markers[first] = markers[last] = 1;
+
+            while (last) {
+
+                maxSqDist = 0;
+
+                for (i = first + 1; i < last; i++) {
+                    sqDist = getSqSegDist(points[i], points[first], points[last]);
+
+                    if (sqDist > maxSqDist) {
+                        index = i;
+                        maxSqDist = sqDist;
+                    }
+                }
+
+                if (maxSqDist > sqTolerance) {
+                    markers[index] = 1;
+                    stack.push(first, index, index, last);
+                }
+
+                last = stack.pop();
+                first = stack.pop();
+            }
+
+            for (i = 0; i < len; i++) {
+                if (markers[i]) newPoints.push(points[i]);
+            }
+
+            return newPoints;
         }
 
-        return newPoints;
-    }
+        // both algorithms combined for awesome performance
+        function simplify(points, tolerance, highestQuality) {
 
-    // both algorithms combined for awesome performance
-    function simplify(points, tolerance, highestQuality) {
+            if (points.length <= 1) return points;
 
-        if (points.length <= 1) return points;
+            var sqTolerance = tolerance !== undefined ? tolerance * tolerance : 1;
 
-        var sqTolerance = tolerance !== undefined ? tolerance * tolerance : 1;
+            points = highestQuality ? points : simplifyRadialDist(points, sqTolerance);
+            points = simplifyDouglasPeucker(points, sqTolerance);
 
-        points = highestQuality ? points : simplifyRadialDist(points, sqTolerance);
-        points = simplifyDouglasPeucker(points, sqTolerance);
-
-        return points;
-    }
-
-    t = t === undefined || t < 0 ? 0.9 : t;
-
-    this.points = simplify( this.points , t , true );
-
-}
-URNDR.Stroke.prototype.simplify_more = function( n ) {
-
-    n = n < 0 || n === undefined ? 12 : n
-
-    this.optimize( n )
-
-}
-URNDR.Stroke.prototype.optimize = function( a ) {
-
-    // Check if is a closed path. 
-
-    if (this.length > 3) {
-
-        var pnt = this.points[ this.length - 1 ], 
-            pnt0 = this.points[ 0 ];
-
-        if ( pnt.distanceToSquared(pnt0) < 360 ) { this.closed = true; }
-
-    }
-
-    // Simplify
-
-    this.simplify();
-
-    // Calculate Center
-
-    this.center = this.calculateCenterOfPoints();
-
-}
-URNDR.Stroke.prototype.calculateCenterOfPoints = function() {
-
-    var result = {x:0,y:0},
-        divider = 1 / this.length;
-
-    this.eachPoint( function( pnt, parameters, i) {
-
-        result.x += pnt.X;
-        result.y += pnt.Y;
-
-    }, null )
-
-    result.x *= divider;
-    result.y *= divider;
-
-    return result;
-
-}
-URNDR.Stroke.prototype.setTag = function( tag , tag_data ) {
-
-    this.tags[tag] = tag_data;
-
-}
-URNDR.Stroke.prototype.getTag = function( tag ) {
-
-    if (this.tags.hasOwnProperty(tag)) {
-        return this.tags[tag];
-    } else {
-        return undefined;
-    }
-
-}
-URNDR.Stroke.prototype.eachPoint = function( my_function , parameters ) {
-    var len = this.length
-    var arr = this.points.slice(0)
-    for (var j = 0; j < len; j++ ) {
-        my_function( arr[ j ] , parameters , j )
-    }
-}
-URNDR.Stroke.prototype.getNearestPointWith = function( track_name , n ) {
-
-    if (this.length < 2) { return 0; }
-    if (this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
-
-    var track = this.getTrack( track_name );
-    var track_leng = track.length;
-    var before_me, b, after_me, a;
-    before_me = undefined;
-    after_me = undefined;
-    var result = {
-        before: 0, after: 0, nearest: 0, 
-        before_distance: 0, after_distance: 0, nearest_distance: 0, 
-    }
-    for (b = n - 1; b >= 0; b--) {
-        if ( track[b] != null ) {
-            before_me = b;
-            break;
+            return points;
         }
-    }
-    for (a = n; a < track_leng; a++) {
-        if ( track[a] != null ) {
-            after_me = a;
-            break;
+
+        t = t === undefined || t < 0 ? 0.9 : t;
+
+        this.points = simplify( this.points , t , true );
+
+    },
+    simplify_more: function( n ) {
+
+        n = n < 0 || n === undefined ? 12 : n
+
+        this.optimize( n )
+
+    },
+    optimize: function( a ) {
+
+        // Check if is a closed path. 
+
+        if (this.length > 3) {
+
+            var pnt = this.points[ this.length - 1 ], 
+                pnt0 = this.points[ 0 ];
+
+            if ( pnt.distanceToSquared(pnt0) < 360 ) { this.closed = true; }
+
         }
-    }
-    if (after_me == undefined) {
-        if (before_me == undefined) {
-            return 0;
+
+        // Simplify
+
+        this.simplify();
+
+        // Calculate Center
+
+        this.center = this.calculateCenterOfPoints();
+
+    },
+    calculateCenterOfPoints: function() {
+
+        var result = {x:0,y:0},
+            divider = 1 / this.length;
+
+        this.eachPoint( function( pnt, parameters, i) {
+
+            result.x += pnt.X;
+            result.y += pnt.Y;
+
+        }, null )
+
+        result.x *= divider;
+        result.y *= divider;
+
+        return result;
+
+    },
+    setTag: function( tag , tag_data ) {
+
+        this.tags[tag] = tag_data;
+
+    },
+    getTag: function( tag ) {
+
+        if (this.tags.hasOwnProperty(tag)) {
+            return this.tags[tag];
         } else {
-            result.before = this.getPoint( before_me )
-            result.before_distance = n - before_me
-            result.nearest = result.before
-            result.nearest_distance = result.before_distance
+            return undefined;
         }
-    } else {
-        if (before_me == undefined) {
-            result.after = this.getPoint( after_me )
-            result.after_distance = after_me - n
-            result.nearest = result.after
-            result.nearest_distance = result.after_distance
-        } else {
-            result.before = this.getPoint( before_me )
-            result.before_distance = n - before_me
-            result.after = this.getPoint( after_me )
-            result.after_distance = after_me - n
-            if (result.before_distance > result.after_distance) {
-                result.nearest = result.after
-                result.nearest_distance = result.after_distance
+
+    },
+    eachPoint: function( my_function , parameters ) {
+        var len = this.length
+        var arr = this.points.slice(0)
+        for (var j = 0; j < len; j++ ) {
+            my_function( arr[ j ] , parameters , j )
+        }
+    },
+    getNearestPointWith: function( track_name , n ) {
+
+        if (this.length < 2) { return 0; }
+        if (this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
+
+        var track = this.getTrack( track_name );
+        var track_leng = track.length;
+        var before_me, b, after_me, a;
+        before_me = undefined;
+        after_me = undefined;
+        var result = {
+            before: 0, after: 0, nearest: 0, 
+            before_distance: 0, after_distance: 0, nearest_distance: 0, 
+        }
+        for (b = n - 1; b >= 0; b--) {
+            if ( track[b] != null ) {
+                before_me = b;
+                break;
+            }
+        }
+        for (a = n; a < track_leng; a++) {
+            if ( track[a] != null ) {
+                after_me = a;
+                break;
+            }
+        }
+        if (after_me == undefined) {
+            if (before_me == undefined) {
+                return 0;
             } else {
+                result.before = this.getPoint( before_me )
+                result.before_distance = n - before_me
                 result.nearest = result.before
                 result.nearest_distance = result.before_distance
             }
+        } else {
+            if (before_me == undefined) {
+                result.after = this.getPoint( after_me )
+                result.after_distance = after_me - n
+                result.nearest = result.after
+                result.nearest_distance = result.after_distance
+            } else {
+                result.before = this.getPoint( before_me )
+                result.before_distance = n - before_me
+                result.after = this.getPoint( after_me )
+                result.after_distance = after_me - n
+                if (result.before_distance > result.after_distance) {
+                    result.nearest = result.after
+                    result.nearest_distance = result.after_distance
+                } else {
+                    result.nearest = result.before
+                    result.nearest_distance = result.before_distance
+                }
+            }
         }
+
+        return result
+
     }
-
-    return result
-
 }
 
+// Point
 URNDR.Point = function( input ) {
 
     this.parent = undefined;
@@ -934,7 +927,6 @@ URNDR.Point = function( input ) {
     this.PY = 0;
 
     this.updatePoint(input);
-
 }
 URNDR.Point.prototype = {
 
@@ -942,11 +934,9 @@ URNDR.Point.prototype = {
         var a = URNDR.Math.pixelToCoordinate( this.X , this.Y )
         return new THREE.Vector2(a.x,a.y)
     },
-
     get binded() {
         return (this.OBJECT && this.FACE)
     },
-
     set binded( input ) {
         if (input === false) {
             this.OBJECT = null;
@@ -960,26 +950,22 @@ URNDR.Point.prototype = {
             // do nothing because that doesn't make sense.
         }
     },
-
     // For compatibility with THREE... etc
     get x() { return this.X; },
     get y() { return this.Y; },
     set x(v) { this.X = v; },
     set y(v) { this.Y = v; },
-
     distanceToSquared: function( pnt ) {
 
         var dx = this.X - pnt.X, dy = this.Y - pnt.Y;
         return dx * dx + dy * dy;
 
     },
-
     distanceTo: function( pnt ) {
 
         return Math.sqrt( this.distanceToSquared( v ) );
 
     },
-
     updatePoint: function( input ) {
 
         for (var key in input) {
@@ -988,39 +974,37 @@ URNDR.Point.prototype = {
             }
         }
 
+    },
+    refreshBinding: function( threeManager ) {
+
+        U3.raycaster.setFromCamera( new THREE.Vector2( this.ndc.x , this.ndc.y ) , threeManager.camera )
+
+        var intersects = threeManager.raycaster.intersectObjects( threeManager.scene.children )
+        if (intersects.length > 0) {
+
+            var obj = intersects[0].object,
+                face = intersects[0].face,
+                a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
+                b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project( threeManager.camera ),
+                c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project( threeManager.camera ),
+                bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c );
+
+            this.OBJECT = obj;
+            this.FACE = face;
+            this.BU = bary[0]
+            this.BV = bary[1]
+            this.BW = bary[2]
+
+        } else {
+
+            this.binded = false;
+            
+        }
+
     }
-
-}
-URNDR.Point.prototype.refreshBinding = function( threeManager ) {
-
-    U3.raycaster.setFromCamera( new THREE.Vector2( this.ndc.x , this.ndc.y ) , threeManager.camera )
-
-    var intersects = threeManager.raycaster.intersectObjects( threeManager.scene.children )
-    if (intersects.length > 0) {
-
-        var obj = intersects[0].object,
-            face = intersects[0].face,
-            a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
-            b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project( threeManager.camera ),
-            c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project( threeManager.camera ),
-            bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c );
-
-        this.OBJECT = obj;
-        this.FACE = face;
-        this.BU = bary[0]
-        this.BV = bary[1]
-        this.BW = bary[2]
-
-    } else {
-
-        this.binded = false;
-        
-    }
-
 }
 
-// PEN
-
+// Pen
 URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
     
     // spatial data
@@ -1072,19 +1056,10 @@ URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
 
     // event
     var this_pen = this
-    canvas_hud.addEventListener("mousedown", function(evt){
-        this_pen.onmousedown( this_pen, evt)
-    } );
-    canvas_hud.addEventListener("mouseup", function(evt){
-        this_pen.onmouseup( this_pen, evt)
-    } );
-    canvas_hud.addEventListener("mousemove", function(evt){
-        this_pen.onmousemove( this_pen, evt)
-    } );
-    canvas_hud.addEventListener("mouseout", function(evt){
-        this_pen.onmouseout( this_pen, evt)
-    } );
-
+    canvas_hud.addEventListener("mousedown", function(evt){  this_pen.onmousedown( this_pen, evt)  } );
+    canvas_hud.addEventListener("mouseup", function(evt){  this_pen.onmouseup( this_pen, evt)  } );
+    canvas_hud.addEventListener("mousemove", function(evt){  this_pen.onmousemove( this_pen, evt)  } );
+    canvas_hud.addEventListener("mouseout", function(evt){  this_pen.onmouseout( this_pen, evt)  } );
 }
 URNDR.Pen.prototype = {
     get ndc_x() { return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 ); },
@@ -1092,38 +1067,34 @@ URNDR.Pen.prototype = {
     get ndc() { return [ this.ndc_x, this.ndc_y ]; },
     set ndc( input ) {
         var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
-        this.x = o.x
-        this.y = o.y
-    }
-}
-URNDR.Pen.prototype.selectToolByID = function ( id ) {
+        this.x = o.x; this.y = o.y;
+    },
+    selectToolByID: function( id ) {
 
-    if (this.tools.hasOwnProperty(id)) {
-        this.active_tool = this.tools[id]
-    }
+        if (this.tools.hasOwnProperty(id)) { this.active_tool = this.tools[id] }
 
-}
-URNDR.Pen.prototype.selectToolByName = function ( name ) {
+    },
+    selectToolByName: function( name ) {
 
-    for ( var l in this.tools ) {
-        if ( this.tools[l].name === name ) {
-            this.active_tool = this.tools[l]
-            return true;
+        for ( var l in this.tools ) {
+            if ( this.tools[l].name === name ) {
+                this.active_tool = this.tools[l]
+                return true;
+            }
         }
+
+        return false;
+
+    },
+    addTool: function( tool , activate ) {
+
+        this.tools[tool.id] = tool
+        if (activate) { this.selectToolByID( tool.id ) }
+
     }
-
-    return false;
-
-}
-URNDR.Pen.prototype.addTool = function ( tool , activate ) {
-
-    this.tools[tool.id] = tool
-    if (activate) {
-        this.selectToolByID( tool.id )
-    }
-
 }
 
+// PenTool
 URNDR.PenTool = function(parameters) {
     this.id = "T-" + THREE.Math.generateUUID();
     this.name = parameters.name || "Untitled Tool";
@@ -1147,8 +1118,7 @@ URNDR.PenTool = function(parameters) {
     }
 }
 
-// DEBUG HUD
-
+// Hud
 URNDR.Hud = function(box) {
     this.box = box;
     this.messageStyle = { prefix : '<div class="argument">', suffix : '</div>', seperation : '' }
@@ -1157,57 +1127,58 @@ URNDR.Hud = function(box) {
     this.msg_count = 0;
     this.MAX_msg_count = 8;
 }
-URNDR.Hud.prototype.display = function() {
+URNDR.Hud.prototype = {
+    display: function() {
 
-    this.box.innerHTML = this.makeMessage( arguments[0] );
-    this.msg_count = 1;
+        this.box.innerHTML = this.makeMessage( arguments[0] );
+        this.msg_count = 1;
 
-    for (var i=1;i<arguments.length;i++) {
-        this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
-        this.msg_count += 1;
-    }
-
-}
-URNDR.Hud.prototype.appendToDisplay = function() {
-    
-    for (var i=0;i<arguments.length;i++) {
-        this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
-        this.msg_count += 1;
-    }
-
-}
-URNDR.Hud.prototype.makeMessage = function(msg) {
-
-    return this.messageStyle.prefix + msg + this.messageStyle.suffix;
-
-}
-URNDR.Hud.prototype.clearDisplay = function() {
-
-    this.box.innerHTML = null;
-    this.msg_count = 0;
-
-}
-URNDR.Hud.prototype.setPosition = function(left,top) {
-    
-    var style = this.box.style
-    style.left = left || style.left;
-    style.top = top || style.top;
-
-}
-URNDR.Hud.prototype.devChannel = function(msg) {
-
-    if (this.vocal) {
-        if (this.devToDisplay) {
-            this.appendToDisplay(msg)
-        } else {
-            console.log(msg)
+        for (var i=1;i<arguments.length;i++) {
+            this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
+            this.msg_count += 1;
         }
-    }
 
+    },
+    appendToDisplay: function() {
+        
+        for (var i=0;i<arguments.length;i++) {
+            this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
+            this.msg_count += 1;
+        }
+
+    },
+    makeMessage: function(msg) {
+
+        return this.messageStyle.prefix + msg + this.messageStyle.suffix;
+
+    },
+    clearDisplay: function() {
+
+        this.box.innerHTML = null;
+        this.msg_count = 0;
+
+    },
+    setPosition: function(left,top) {
+        
+        var style = this.box.style
+        style.left = left || style.left;
+        style.top = top || style.top;
+
+    },
+    devChannel: function(msg) {
+
+        if (this.vocal) {
+            if (this.devToDisplay) {
+                this.appendToDisplay(msg)
+            } else {
+                console.log(msg)
+            }
+        }
+
+    }
 }
 
-// FRAMES MANAGER
-
+// FramesManager
 URNDR.FramesManager = function() {
     this.data = {};
     this.KEY_PREFIX = "f";
@@ -1294,117 +1265,25 @@ URNDR.FramesManager.prototype = {
         req.send(data)
     }
 }
-// MATH
 
-URNDR.Math = {
-
-    pixelToCoordinate: function( x , y ) {
-        return {x : THREE.Math.mapLinear( x , 0 , window.innerWidth , -1 , 1 ),
-                y : THREE.Math.mapLinear( y , 0 , window.innerHeight , 1 ,-1 )}
-    },
-    
-    coordinateToPixel : function( x , y ) {
-        return { x : ( x / 2 + 0.5) * window.innerWidth,
-                 y : -( y / 2 - 0.5) * window.innerHeight }
-    },
-
-    // Compute barycentric coordinates (u,v,w) for point p with respect to triangle (a,b,c)
-    getBarycentricCoordinate : function( p , a , b , c ) {
-        var v0,v1,v2,d00,d01,d11,d20,d21,denom,u,v,w;
-            v0 = new THREE.Vector2(b.x-a.x,b.y-a.y);
-            v1 = new THREE.Vector2(c.x-a.x,c.y-a.y);
-            v2 = new THREE.Vector2(p.x-a.x,p.y-a.y);
-        d00 = v0.dot(v0);
-        d01 = v0.dot(v1);
-        d11 = v1.dot(v1);
-        d20 = v2.dot(v0);
-        d21 = v2.dot(v1);
-        denom = 1 / (d00 * d11 - d01 * d01);
-        v = (d11 * d20 - d01 * d21) * denom;
-        w = (d00 * d21 - d01 * d20) * denom;
-        u = 1 - v - w;
-        return [u,v,w];
-    }
-
-}
-
-URNDR.Helpers = {
-
-    replaceLastElements : function(arr,rep) {
-        var l = arr.length, 
-            n = rep.length;
-
-        if ( l <= n ) {
-            arr = rep.slice( 0 , l );
-        } else {
-            arr = arr.slice( 0 , l - n ).concat(rep);
-        }
-
-        return arr;
-    },
-
-    getLastElements : function(arr,n) {
-
-        if (n > arr.length) { return Object.create(arr); }
-
-        return arr.slice( - n );
-
-    },
-
-    smoothArray : function(arr,params) {
-        var l = arr.length;
-        if (!params.factor) {params.factor = 8}
-        for ( var i = 1 ; i < l - 1 ; i ++ ) {
-            arr[i] = (arr[i-1] + arr[i] * params.factor + arr[i+1]) / (params.factor + 2);
-            if (params.round) { arr[i] = Math.round(arr[i]); }
-        }
-    },
-
-    randomNumber : function(number,params) {
-
-        if (!number) { number = 1; }
-        
-        var result;
-            result = number * Math.random();
-        
-        if (params) {
-            if (params.round) result = Math.round(result);
-        }
-
-        return result
-    
-    },
-
-    randomiseArray : function(arr , amp) {
-        var l = arr.length;
-        if (!amp) {amp = 10;}
-        for ( i = 0 ; i < l ; i ++ ) {
-            arr[i] += amp/2 - Math.random() * amp
-        }
-        return arr
-    }
-
-}
-
-// STYLE
-
+// StrokeStyle
 URNDR.StrokeStyle = function() {
     this.cap = "round";
     this.join = "round";
     this.composit = "source-over";
     this.brush_size = 50;
-    // this.color = {r:0,g:0,b:255,a:1};
     this.color = [0,0,255,1];
 }
-URNDR.StrokeStyle.prototype.gradientMaker = function(ctx,p1,p2) {
-    var grad = ctx.createLinearGradient( p1.X , p1.Y , p2.X , p2.Y );
-    grad.addColorStop(0,'rgba('+p1.R+','+p1.G+','+p1.B+','+p1.A+')')
-    grad.addColorStop(1,'rgba('+p2.R+','+p2.G+','+p2.B+','+p2.A+')')
-    return grad
+URNDR.StrokeStyle.prototype = {
+    gradientMaker: function(ctx,p1,p2) {
+        var grad = ctx.createLinearGradient( p1.X , p1.Y , p2.X , p2.Y );
+        grad.addColorStop(0,'rgba('+p1.R+','+p1.G+','+p1.B+','+p1.A+')')
+        grad.addColorStop(1,'rgba('+p2.R+','+p2.G+','+p2.B+','+p2.A+')')
+        return grad
+    }
 }
 
-// MODEL -- an extension to displaying three objects.
-
+// Model
 URNDR.Model = function() {
 
     this.id = "MODEL-" + THREE.Math.generateUUID();
@@ -1413,7 +1292,7 @@ URNDR.Model = function() {
     // Animation Attributes
     this.active = false;
     this.tags = {};
-    this.speed = 15;
+    this.speed = 0;
 
     // THREE JSONLoader related attributes
     this.file_path = "";
@@ -1425,7 +1304,6 @@ URNDR.Model = function() {
     this.geometry = undefined;
     this.material = undefined;
     this.animationObject = undefined;
-
 }
 URNDR.Model.prototype = {
     loadModel: function( file_path, callback ){
@@ -1479,7 +1357,6 @@ URNDR.Model.prototype = {
 }
 
 // ThreeManager -- to manage all things regards Three.js
-
 URNDR.ThreeManager = function( arg ) {
 
     // Storage
@@ -1495,14 +1372,13 @@ URNDR.ThreeManager = function( arg ) {
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
     this.scene = new THREE.Scene();
     this.raycaster = new THREE.Raycaster();
-    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({color: 0xCCCCCC})
+    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
     if (arg.fog) { this.scene.fog = arg.fog; }
     this.defaultAnimationSpeed = 15;
 
     // THREE setup
     this.renderer.setSize( window.innerWidth , window.innerHeight )
     this.camera.position.set( 0 , 0 , 0 )
-
 }
 URNDR.ThreeManager.prototype = {
 
@@ -1571,11 +1447,98 @@ URNDR.ThreeManager.prototype = {
         manager.renderer.render( this.scene , this.camera )
 
     }
+}
 
+// Math
+URNDR.Math = {
+
+    pixelToCoordinate: function( x , y ) {
+        return {x : THREE.Math.mapLinear( x , 0 , window.innerWidth , -1 , 1 ),
+                y : THREE.Math.mapLinear( y , 0 , window.innerHeight , 1 ,-1 )}
+    },
+    
+    coordinateToPixel : function( x , y ) {
+        return { x : ( x / 2 + 0.5) * window.innerWidth,
+                 y : -( y / 2 - 0.5) * window.innerHeight }
+    },
+
+    // Compute barycentric coordinates (u,v,w) for point p with respect to triangle (a,b,c)
+    getBarycentricCoordinate : function( p , a , b , c ) {
+        var v0,v1,v2,d00,d01,d11,d20,d21,denom,u,v,w;
+            v0 = new THREE.Vector2(b.x-a.x,b.y-a.y);
+            v1 = new THREE.Vector2(c.x-a.x,c.y-a.y);
+            v2 = new THREE.Vector2(p.x-a.x,p.y-a.y);
+        d00 = v0.dot(v0);
+        d01 = v0.dot(v1);
+        d11 = v1.dot(v1);
+        d20 = v2.dot(v0);
+        d21 = v2.dot(v1);
+        denom = 1 / (d00 * d11 - d01 * d01);
+        v = (d11 * d20 - d01 * d21) * denom;
+        w = (d00 * d21 - d01 * d20) * denom;
+        u = 1 - v - w;
+        return [u,v,w];
+    }
+}
+
+// Helper
+URNDR.Helpers = {
+
+    replaceLastElements : function(arr,rep) {
+        var l = arr.length, 
+            n = rep.length;
+
+        if ( l <= n ) {
+            arr = rep.slice( 0 , l );
+        } else {
+            arr = arr.slice( 0 , l - n ).concat(rep);
+        }
+
+        return arr;
+    },
+
+    getLastElements : function(arr,n) {
+
+        if (n > arr.length) { return Object.create(arr); }
+
+        return arr.slice( - n );
+
+    },
+
+    smoothArray : function(arr,params) {
+        var l = arr.length;
+        for ( var i = 1 ; i < l - 1 ; i ++ ) {
+            arr[i] = (arr[i-1] + arr[i] * params.factor + arr[i+1]) / (params.factor + 2);
+            if (params.round) { arr[i] = Math.round(arr[i]); }
+        }
+    },
+
+    randomNumber : function(number,params) {
+
+        if (!number) { number = 1; }
+        
+        var result;
+            result = number * Math.random();
+        
+        if (params) {
+            if (params.round) result = Math.round(result);
+        }
+
+        return result
+    
+    },
+
+    randomiseArray : function(arr , amp) {
+        var l = arr.length;
+        if (!amp) {amp = 10;}
+        for ( i = 0 ; i < l ; i ++ ) {
+            arr[i] += amp/2 - Math.random() * amp
+        }
+        return arr
+    }
 }
 
 // EXTEND THREE.JS for connecting my custom objects.
-
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 
     var geo = this.geometry,
@@ -1592,17 +1555,12 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
     }
 
     return result
-
 }
 
-THREE.Camera.prototype.calculateLookAtVector = function() {
-    this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
-}
+THREE.Camera.prototype.calculateLookAtVector = function() { this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion ); }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
-    if (obj.visible === false) {
-        return 0;
-    }
+    if (obj.visible === false) { return 0; }
 
     if (!this.lookAtVector) { this.calculateLookAtVector(); }
 
