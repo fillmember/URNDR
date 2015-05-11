@@ -379,50 +379,46 @@ default_draw_style : function() {
         
         clear(1);
 
+        function _fillmember( ctx, prv, pnt, factor ){
+            if(settings.fillmember && pnt.A * factor > 0.1) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF");
+                ctx.restore();
+            }
+        }
+
         strokes.eachStroke( function( stk ){
 
             stk.eachPoint( function( pnt, stk, i ){
 
-                var factor = getAlphaFactor(pnt,stk,i)
-
+                var factor = getAlphaFactor(pnt,stk,i);
                 var prv = stk.getPoint( i - 1 );
-                
-                if(settings.fillmember) {
-                    if (pnt.A * factor > 0.1) {
-                        ctx.save();
-                        ctx.globalCompositeOperation = 'destination-over'
-                        stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF")
-                        ctx.restore();
-                    }
-                }
 
+                _fillmember( ctx, prv, pnt, factor );
                 stroke_basic(ctx, prv, pnt, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' )
-                if ( stk.hovered ) {
-                    hudCtx.lineWidth = 2;
+
+                hudCtx.lineWidth = 1.5;
+                if ( stk.selected ) {
+                    hudCtx.strokeStyle = "#FF0"
+                    hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
+                    stroke_basic(hudCtx, prv, pnt, 1, "#FF0" );
+                } else if ( stk.hovered ) {
                     hudCtx.strokeStyle = "#FFF"
                     hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
                 }
-                if ( stk.selected ) {
-                    hudCtx.lineWidth = 2;
-                    hudCtx.strokeStyle = "#FF0"
-                    hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
-                    stroke_basic(hudCtx, prv, pnt, 1, "#FF0" )
-                }
+
             } , stk)
 
             if (stk.closed) {
+                
                 var prv = stk.points[ 0 ],
-                    pnt = stk.points[ stk.length - 1 ]
+                    pnt = stk.points[ stk.length - 1 ],
                     factor = getAlphaFactor(pnt,stk,0);
-                if(settings.fillmember) {
-                    if (pnt.A * factor > 0.1) {
-                        ctx.save();
-                        ctx.globalCompositeOperation = 'destination-over'
-                        stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF")
-                        ctx.restore();
-                    }
-                }
-                stroke_basic(ctx, pnt, prv, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' )
+
+                _fillmember( ctx, prv, pnt, factor );
+                stroke_basic(ctx, pnt, prv, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' );
+
             }
         } )
 
