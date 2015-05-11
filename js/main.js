@@ -87,9 +87,9 @@ PEN.addTool( new URNDR.PenTool({
     style: STYLE,
     strokes: STROKES,
     delMod: undefined,
-    init: function(){ this.del_func = MODULES.getModuleByName( "delete flagged strokes" ).func },
+    init: function(){},
     onmousedown: function(pen, evt){},
-    onmouseup: function(pen, evt){ this.del_func( this.strokes ); },
+    onmouseup: function(pen, evt){},
     onmousemove: function(pen, evt){
 
         if (pen.isDown !== 1) { return; }
@@ -100,9 +100,9 @@ PEN.addTool( new URNDR.PenTool({
             pnt, 
             dist_sq,
             size_sq = s * this.style.brush_size * s * this.style.brush_size * 0.3,
-            power = (1.1 - s);
+            power = 1 - s;
 
-        power = power > 0.9 ? 0.9 : power;
+        power = power > 0.5 ? 0.5 : power;
 
         for(var q in query) {
             pnt = query[q].reference.point;

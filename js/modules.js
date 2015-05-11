@@ -485,3 +485,7 @@ function getAlphaFactor( pnt, stk, i ){
     return factor
 
 }
+
+function getAlphaFactor2( pnt, stk, i ) {
+    return getAlphaFactor(pnt, stk, i) > 0.5 ? 1 : 0;
+}
