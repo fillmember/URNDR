@@ -238,11 +238,15 @@ window.onload = function() {
     //
 
     U3.createModelFromFile( "models/human_01.js", function( model ) {
-        model.speed = 10
+        model.active = false;
         model.mesh.scale.multiplyScalar( 1.1 )
         model.mesh.position.y = -2.5
         model.mesh.rotation.y = -2
     }  );
+    U3.createModelFromFile( "models/human_02.js", function( model ) {
+        model.mesh.position.y = -2
+        model.mesh.rotation.y = 2
+    })
 
     //
     // EVENTS

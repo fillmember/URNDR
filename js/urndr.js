@@ -1271,7 +1271,6 @@ URNDR.Model = function() {
     this.name = "";
 
     // Animation Attributes
-    this.active = false;
     this.tags = {};
     this.speed = 0;
 
@@ -1287,6 +1286,18 @@ URNDR.Model = function() {
     this.animationObject = undefined;
 }
 URNDR.Model.prototype = {
+    get active () {
+        if (this.mesh) {
+            return this.mesh.visible;
+        } else {
+            return false;
+        }
+    },
+    set active (value) {
+        if (this.mesh) {
+            this.mesh.visible = value;
+        }
+    },
     loadModel: function( file_path, callback ){
 
         if (file_path) { this.file_path = file_path };
@@ -1328,11 +1339,13 @@ URNDR.Model.prototype = {
     },
     update: function( speed ) {
 
-        if (this.animationObject != undefined) {
-            this.animationObject.update( speed )
+        if (this.active) {
+            if (this.animationObject) {
+                this.animationObject.update( speed )
+            }
         }
 
-    }
+    },
 }
 
 // ThreeManager -- to manage all things regards Three.js
@@ -1340,7 +1353,8 @@ URNDR.ThreeManager = function( arg ) {
 
     // Storage
     this.models = {}
-    this.models_sequence = []
+    this.models_array = []
+    this.activeModel = 0;
     
     // THREE
     this.renderer = new THREE.WebGLRenderer({
@@ -1361,6 +1375,9 @@ URNDR.ThreeManager = function( arg ) {
 }
 URNDR.ThreeManager.prototype = {
 
+    get count() {
+        return this.models_array.length;
+    },
     createModelFromFile: function( file_path, callback , args ) {
 
         // CREATE
@@ -1375,7 +1392,7 @@ URNDR.ThreeManager.prototype = {
 
             // STORAGE
             manager.models[ model.id ] = model;
-            manager.models_sequence.push( model.id )
+            manager.models_array.push( model.id )
 
             // CALLBACK
             callback( model , args );
@@ -1396,8 +1413,8 @@ URNDR.ThreeManager.prototype = {
             }
         } else if (typeof input === "number") {
             // search by index
-            if (input >= 0 && input < this.models_sequence.length) {
-                return this.getModel( this.models_sequence[input] )
+            if (input >= 0 && input < this.models_array.length) {
+                return this.getModel( this.models_array[input] )
             } else {
                 return -1
             }
@@ -1410,6 +1427,12 @@ URNDR.ThreeManager.prototype = {
             my_function( this.getModel(i) , parameters, i)
         }
 
+    },
+    solo: function( n ){
+        var manager = this;
+        manager.models_array.forEach( function(o,i){
+            manager.models[o].active = i === n ? true : false
+        } )
     },
     update: function() {
 

@@ -12,12 +12,13 @@ draw : function() {
 },
 
 hideModels : function() {
-    var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,72) // m = 77 // h = 72
+    var module = new URNDR.Module("Toggle UI",URNDR.COMMAND_MODULE,72) // m = 77 // h = 72
     module.setConfiguration({
         $dom: $("#canvas_three")
     })
     module.setFunction(function() {
         $("#canvas_three,#HUD").fadeToggle();
+        return "";
     })
     return module
 },
@@ -41,7 +42,7 @@ mover : function() {
 selector : function() {
     var module = new URNDR.Module("Selector",URNDR.COMMAND_MODULE,83) // s
     module.setFunction(function() {
-        PEN.selectToolByName("Stroke Selector"); return "Select Stroke"
+        PEN.selectToolByName("Stroke Selector"); return "Select Point"
     })
     return module
 },
@@ -83,7 +84,36 @@ speed_up : function() {
 
 speed_down : function() {
     var module = new URNDR.Module("Speed Down",URNDR.COMMAND_MODULE,40)
-    module.setFunction(function(){ U3.speed = U3.speed >= 2.5 ? U3.speed - 2.5 : 0; return U3.speed; })
+    module.setFunction(function(){
+        U3.speed = U3.speed >= 2.5 ? U3.speed - 2.5 : 0;
+        return U3.speed;
+    })
+    return module
+},
+
+prev_model : function() {
+    var module = new URNDR.Module("Previous Model",URNDR.COMMAND_MODULE,37)
+    module.setFunction(function(){
+        U3.activeModel -= 1;
+        if (U3.activeModel < 0) {
+            U3.activeModel = U3.count - 1;
+        }
+        U3.solo( U3.activeModel );
+        return "#"+U3.activeModel;
+    })
+    return module
+},
+
+next_model : function() {
+    var module = new URNDR.Module("Next Model",URNDR.COMMAND_MODULE,39)
+    module.setFunction(function(){
+        U3.activeModel += 1;
+        if (U3.activeModel === U3.count) {
+            U3.activeModel = 0;
+        }
+        U3.solo( U3.activeModel );
+        return "#"+U3.activeModel;
+    })
     return module
 },
 
@@ -303,7 +333,6 @@ fade_strokes : function() {
             if (n > 0 === false) { n = 0; }
 
             var len = stroke.length;
-
             for ( var i = 0; i < len; i++ ) {
 
                 if ( i < n ) {
@@ -326,7 +355,7 @@ fade_strokes : function() {
 
 wiggle : function() {
     var module = new URNDR.Module("Wiggle",URNDR.STROKE_MODULE,90) // z
-    module.setConfiguration({ amp : 15, all : true })
+    module.setConfiguration({ amp : 8, all : true })
     module.setFunction(function(strokes) {
         var settings = module.getConfiguration()
         if (settings.all) {
@@ -335,12 +364,13 @@ wiggle : function() {
             target_strokes = [ strokes.active_stroke ]
         }
         for (var st in target_strokes) {
+            var bamp = settings.amp * 0.001;
             stroke_k = strokes.getStrokeByID( target_strokes[st] )
             stroke_k.setTrack( "X" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("X") , settings.amp ) )
             stroke_k.setTrack( "Y" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("Y") , settings.amp ) )
-            stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , 0.003 ) )
-            stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , 0.003 ) )
-            stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , 0.003 ) )
+            stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , bamp ) )
+            stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , bamp ) )
+            stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , bamp ) )
         }
     })
     return module
