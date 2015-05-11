@@ -13,7 +13,7 @@ var U3 = new URNDR.ThreeManager( {
         // vertexColors: THREE.FaceColors, 
         fog: true,
         wireframe: true, 
-        wireframeLinewidth: 0.1,
+        wireframeLinewidth: 3,
         morphTargets: true
     } )
 } )
