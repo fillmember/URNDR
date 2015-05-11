@@ -1,5 +1,7 @@
 (function(){
 
+    return false;
+
     var GUI = new dat.GUI();
 
     var folderBasic = GUI.addFolder("Basic");

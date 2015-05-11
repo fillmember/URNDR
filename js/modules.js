@@ -66,7 +66,7 @@ brush_size_up : function() {
 },
 
 brush_size_down : function() {
-    var module = new URNDR.Module("Reduce brush size",URNDR.COMMAND_MODULE,219)
+    var module = new URNDR.Module("Reduce Brush Size",URNDR.COMMAND_MODULE,219)
     module.setFunction(function(){
         STYLE.brush_size = STYLE.brush_size > 5 ? STYLE.brush_size - 5 : 5;
         return STYLE.brush_size;
@@ -115,6 +115,76 @@ next_model : function() {
         return "#"+U3.activeModel;
     })
     return module
+},
+
+random_color_scheme : function() {
+    var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,16)
+    module.setFunction(function(){
+
+        function _rgb( input ){ return "rgb("+input+")"; }
+        function hslToRgb(h, s, l){
+            var r, g, b;
+
+            if(s == 0){
+                r = g = b = l; // achromatic
+            }else{
+                var hue2rgb = function hue2rgb(p, q, t){
+                    if(t < 0) t += 1;
+                    if(t > 1) t -= 1;
+                    if(t < 1/6) return p + (q - p) * 6 * t;
+                    if(t < 1/2) return q;
+                    if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                }
+
+                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                var p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        var _hue = Math.random();
+        var _sat = Math.random();
+        if (_sat < 0.2) { _sat = 0; }
+        var primary = hslToRgb( _hue , _sat , 0.5 );
+        var contrast = hslToRgb( 1 - _hue , _sat , 0.5 );
+        var dark = hslToRgb( _hue , _sat * 0.80 , 0.2 );
+        var pale = hslToRgb( _hue , _sat * 0.80 , 0.6 );
+
+        document.body.style.background = _rgb(primary);
+        U3.scene.fog = new THREE.Fog( _rgb(primary), 3, 5 )
+        U3.material.color = new THREE.Color( _rgb(pale) )
+        return "";
+    })
+    return module;
+},
+
+color_b_und_w : function() {
+    var module = new URNDR.Module("B&W",URNDR.COMMAND_MODULE,191)
+    module.setConfiguration({bool:false})
+    module.setFunction(function(){
+
+        var primary,contrast,bool = module.getConfiguration().bool;
+        if (bool) {
+            primary = 0xFFFFFF
+            contrast = 0x666666
+        } else {
+            primary = "black"
+            contrast = 0xFFFFFF
+        }
+        bool = ! bool;
+
+        document.body.style.background = primary;
+        U3.scene.fog = new THREE.Fog( primary, 3, 5 )
+        U3.material.color = new THREE.Color( contrast )
+        module.setConfiguration({bool: bool})
+        return "";
+    })
+    return module;
 },
 
 // STYLE MODULES

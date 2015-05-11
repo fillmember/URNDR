@@ -960,12 +960,18 @@ URNDR.Point.prototype = {
 
         U3.raycaster.setFromCamera( new THREE.Vector2( this.ndc.x , this.ndc.y ) , threeManager.camera )
 
-        var intersects = threeManager.raycaster.intersectObjects( threeManager.scene.children )
+        var intersects_raw = threeManager.raycaster.intersectObjects( threeManager.scene.children )
+        var intersects = [];
+        intersects_raw.forEach(function(o){
+            if (o.object.visible) {
+                intersects.push(o);
+            }
+        })
         if (intersects.length > 0) {
 
-            var obj = intersects[0].object,
-                face = intersects[0].face,
-                a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
+            var obj = intersects[0].object, face = intersects[0].face;
+
+            var a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
                 b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project( threeManager.camera ),
                 c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project( threeManager.camera ),
                 bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c );
