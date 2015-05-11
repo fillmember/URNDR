@@ -7,29 +7,16 @@
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
-    // fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
+    fog: new THREE.Fog( 0xE0E0E0, 3, 5 ),
     defaultMaterial: new THREE.MeshBasicMaterial( {
-
-        // color: 0xF0F0F0,
         color: 0xE0E0E0,
-        // color: "rgba(0,255,255,0.1)",
         vertexColors: THREE.FaceColors, 
-        
         fog: true,
-        
         wireframe: true, 
         wireframeLinewidth: 0.1,
-
-        morphTargets: true,
-
-        side: THREE.FrontSide
-
+        morphTargets: true
     } )
 } )
-
-var light = new THREE.PointLight( 0xFF0000, 100, 100 );
-light.position.set( 5, 5, 0 );
-U3.scene.add( light );
 
 //
 // OBJECTS
@@ -49,10 +36,7 @@ CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
 PAPER.lineCap = STYLE.cap
 PAPER.lineJoin = STYLE.join
 
-var STROKES = new URNDR.Strokes({
-    canvasWidth: CANVAS.width,
-    canvasHeight: CANVAS.height
-})
+var STROKES = new URNDR.Strokes( CANVAS )
 
 //
 // PenTools
@@ -151,8 +135,6 @@ PEN.addTool( new URNDR.PenTool({
 
                 model.mesh.rotation.y += value;
 
-                // model.animationObject.update( 10 )
-
             }, pen.ndc_x * 0.1 )
 
         } , 20)
@@ -169,10 +151,10 @@ PEN.addTool( new URNDR.PenTool({
 
     name: "Stroke Selector",
     strokes: STROKES,
-    limit: 360,
+    limit: 400,
     selectedPoint: 0,
     sqr_dist: function( p, q ) {
-        var dX = p.x - q.x,
+        var dX = p.x - q.x, 
             dY = p.y - q.y;
         return dX * dX + dY * dY
     },
@@ -194,7 +176,7 @@ PEN.addTool( new URNDR.PenTool({
         for (var i = 0; i < len; i++) {
             if ( this.pick( arr[i] , str ) ) {
                 dist = this.sqr_dist( p, arr[i] )
-                if ( dist < this.limit && dist < nearest_so_far ) {
+                if ( dist < nearest_so_far ) {
                     candidate = i;
                     nearest_so_far = dist;
                 }
@@ -207,7 +189,7 @@ PEN.addTool( new URNDR.PenTool({
 
         this.strokes.eachStroke( function( stk ){ stk.hovered = false; })
 
-        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 )
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 0, 0 )
         var nearest = this.nearest( pen, query, "point" );
         if (nearest !== false) {
             nearest = query[ nearest ].reference

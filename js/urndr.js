@@ -299,7 +299,7 @@ URNDR.ModuleManager = function() {
 }
 
 // Strokes
-URNDR.Strokes = function(){
+URNDR.Strokes = function( _canvas ){
     
     // Data
     this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
@@ -307,24 +307,12 @@ URNDR.Strokes = function(){
     this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
     // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
     this.active_stroke = 0;
-    // QuadTree
-    var _qtw = arguments[0].canvasWidth || window.innerWidth
-    var _qth = arguments[0].canvasHeight || window.innerWidth
-    this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
+    this.canvas = _canvas;
+
 }
 URNDR.Strokes.prototype = {
     get strokeCount() {
         return this.strokesHistory.length;
-    },
-    exportJSON: function() {
-        
-        for (var i in this.strokes) {
-
-            this.strokes[i]
-
-        }
-        console.log( obj )
-        // console.log( JSON.stringify(obj) )
     },
     reset: function() {
 
@@ -339,9 +327,10 @@ URNDR.Strokes.prototype = {
     },
     rebuildQuadTree: function() {
 
-        var qt = this.quadTree;
-
-        qt.clear();
+        // Create QuadTree
+        var _qtw = this.canvas.canvasWidth || window.innerWidth, 
+            _qth = this.canvas.canvasHeight || window.innerWidth;
+        this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
 
         this.eachStroke( function(stk,strokes){
 
@@ -358,16 +347,9 @@ URNDR.Strokes.prototype = {
         if (obj instanceof URNDR.Stroke) {
 
             obj.eachPoint( function(pnt,stk,i){
-
-                hit_size = pnt.S,
-                half_hit = - hit_size * 0.5;
                 
                 qt.insert( new URNDR.Rectangle(
-                    pnt.X + half_hit, // X
-                    pnt.Y + half_hit, // Y
-                    hit_size, // W
-                    hit_size, // H
-                    // Reference
+                    pnt.X, pnt.Y, 1, 1, 
                     { stroke: stk, pointIndex: i, point: pnt }
                 ) );
 
@@ -1532,9 +1514,7 @@ URNDR.Helpers = {
     randomiseArray : function(arr , amp) {
         var l = arr.length;
         if (!amp) {amp = 10;}
-        for ( i = 0 ; i < l ; i ++ ) {
-            arr[i] += amp/2 - Math.random() * amp
-        }
+        for ( i = 0 ; i < l ; i ++ ) { arr[i] += amp/2 - Math.random() * amp }
         return arr
     }
 }
@@ -1555,9 +1535,9 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
         result.add( geo.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
     }
 
-    return result
-}
+    return result;
 
+}
 THREE.Camera.prototype.calculateLookAtVector = function() { this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion ); }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
