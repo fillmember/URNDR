@@ -1,6 +1,6 @@
-var GUI = new dat.GUI();
-
 (function(){
+
+    var GUI = new dat.GUI();
 
     var folderBasic = GUI.addFolder("Basic");
         folderBasic.add(STYLE, "brush_size", 5, 80).listen();

@@ -1,8 +1,6 @@
 MODULES.loadModules( {
 
 // COMMANDS
-// Probably can't possibly conviniently pass parameters in for all kinds of commands.
-// Developers will use global parameters from main.js. 
 
 draw : function() {
     var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
@@ -128,7 +126,7 @@ delete_flagged_strokes : function(){
 move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
     module.setConfiguration({
-        delayFactor : 0.5
+        delayFactor : 0.2
     })
     module.setFunction(function(strokes) {
 
@@ -137,7 +135,7 @@ move_drawing_with_3d_model : function() {
         // iterate time
         strokes.eachStroke( es , strokes );
         function es( stroke , strokes , i ) {
-            // if (strokes.getActiveStroke() === stroke) return 0;
+
             stroke.eachPoint( ep , stroke );
             function ep( point , stroke , i) {
 
@@ -211,17 +209,16 @@ move_drawing_with_3d_model : function() {
 
 expand : function() {
     var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,71,false); // g
-    module.setConfiguration({ speed : 1 });
+    module.setConfiguration({ speed : 2 });
     module.setFunction(function(strokes){
         var s = this.getConfiguration();
         strokes.eachStroke( function( stk , strokes, i) {
             if (stk.center) {
                 stk.eachPoint( function( pnt, stk, j) {
                     var vector = new THREE.Vector2( pnt.X - stk.center.x, pnt.Y - stk.center.y ).normalize();
-                        vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.1, 3) )
+                        vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.1, 5) )
                     pnt.X += vector.x;
                     pnt.Y += vector.y;
-                    // pnt.refreshBinding( U3 )
                 }, stk )
             }
         }, strokes)
@@ -237,10 +234,8 @@ smooth_data : function() {
         
         var settings = module.getConfiguration(),
             tracks = ["S","X","Y"];
-            // tracks = ["R","G","B","A","S","X","Y"];
 
         strokes.eachStroke( function( stroke ) { _smooth( stroke, tracks, settings ); } )
-
         function _smooth( stroke, tracks, settings ) {
             var i, len = tracks.length
             tracks.forEach( function( symbol ){
@@ -260,6 +255,7 @@ fade_strokes : function() {
     var module = new URNDR.Module("Fade Strokes",URNDR.STROKE_MODULE,70,false);
     module.setConfiguration({ all : true , speed : 1.5 })
     module.setFunction(function(strokes) {
+
         var settings = this.getConfiguration()
         if (settings.all) {
             strokes.eachStroke( fade , settings );
@@ -298,7 +294,7 @@ fade_strokes : function() {
 
 wiggle : function() {
     var module = new URNDR.Module("Wiggle",URNDR.STROKE_MODULE,90) // z
-    module.setConfiguration({ amp : 5, all : true })
+    module.setConfiguration({ amp : 15, all : true })
     module.setFunction(function(strokes) {
         var settings = module.getConfiguration()
         if (settings.all) {
@@ -392,11 +388,14 @@ default_draw_style : function() {
 
             stk.eachPoint( function( pnt, stk, i ){
 
-                var factor = getAlphaFactor(pnt,stk,i);
                 var prv = stk.getPoint( i - 1 );
-
-                _fillmember( ctx, prv, pnt, factor );
-                stroke_basic(ctx, prv, pnt, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' )
+                if (prv !== 0) {
+                    var factor = getAlphaFactor(pnt,stk,i);
+                    if (factor > 0) {
+                        _fillmember( ctx, prv, pnt, factor );
+                        stroke_basic(ctx, prv, pnt, pnt.S, STYLE.gradientMaker( ctx , prv , pnt , factor ) )
+                    }
+                }
 
                 hudCtx.lineWidth = 1.5;
                 if ( stk.selected ) {
