@@ -8,7 +8,7 @@ var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
     fog: new THREE.Fog( 0xE0E0E0, 3, 5 ),
-    defaultMaterial: new THREE.MeshBasicMaterial( {
+    material: new THREE.MeshBasicMaterial( {
         color: 0xFFFFFF,
         fog: true,
         wireframe: true, 
@@ -21,22 +21,22 @@ document.body.appendChild( U3.renderer.domElement );
 //
 // OBJECTS
 //
-var STYLE = new URNDR.StrokeStyle();
-var PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM );
-var MODULES = new URNDR.ModuleManager();
-var HUD = new URNDR.Hud( document.getElementById('HUD') );
 
 var CANVAS = document.getElementById('canvas_urndr');
 var CANVAS_HUD = document.getElementById('canvas_hud');
-var hudCtx = CANVAS_HUD.getContext("2d");
-CANVAS_HUD.width = CANVAS.width = U3.renderer.domElement.width;
-CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
+    CANVAS_HUD.width = CANVAS.width = U3.renderer.domElement.width;
+    CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
 
+var hudCtx = CANVAS_HUD.getContext("2d");
+
+var HUD = new URNDR.Hud( document.getElementById('HUD') );
+var MODULES = new URNDR.ModuleManager();
+var PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM );
+var STROKES = new URNDR.Strokes( CANVAS );
+var STYLE = new URNDR.StrokeStyle();
 var PAPER = CANVAS.getContext("2d");
     PAPER.lineCap = STYLE.cap;
     PAPER.lineJoin = STYLE.join;
-
-var STROKES = new URNDR.Strokes( CANVAS )
 
 //
 // PenTools

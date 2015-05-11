@@ -1326,12 +1326,10 @@ URNDR.Model.prototype = {
         });
 
     },
-    update: function( animSpeed ) {
+    update: function( speed ) {
 
-        if (this.animationObject != undefined && this.speed > 0) {
-
-            this.animationObject.update( this.speed )
-            
+        if (this.animationObject != undefined) {
+            this.animationObject.update( speed )
         }
 
     }
@@ -1353,9 +1351,9 @@ URNDR.ThreeManager = function( arg ) {
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
     this.scene = new THREE.Scene();
     this.raycaster = new THREE.Raycaster();
-    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
+    this.material = arg.material || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
     if (arg.fog) { this.scene.fog = arg.fog; }
-    this.defaultAnimationSpeed = 15;
+    this.speed = 15;
 
     // THREE setup
     this.renderer.setSize( window.innerWidth , window.innerHeight )
@@ -1368,8 +1366,8 @@ URNDR.ThreeManager.prototype = {
         // CREATE
         var manager = this, model = new URNDR.Model();
 
-        model.material = manager.defaultMaterial;
-        model.speed = manager.defaultAnimationSpeed;
+        model.material = manager.material;
+        model.speed = manager.speed;
         model.loadModel( file_path , function(){
 
             // THREE
@@ -1421,7 +1419,7 @@ URNDR.ThreeManager.prototype = {
 
             if (model.loaded && model.active) {
 
-                model.update();
+                model.update( manager.speed );
 
             }
 

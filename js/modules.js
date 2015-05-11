@@ -4,7 +4,10 @@ MODULES.loadModules( {
 
 draw : function() {
     var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
-    module.setFunction(function() {PEN.selectToolByName("Draw"); return ""})
+    module.setFunction(function() {
+        PEN.selectToolByName("Draw");
+        return "";
+    })
     return module
 },
 
@@ -21,37 +24,66 @@ hideModels : function() {
 
 eraser : function() {
     var module = new URNDR.Module("Eraser",URNDR.COMMAND_MODULE,69) // e
-    module.setFunction(function() {PEN.selectToolByName("Eraser"); return "Make Invisible"})
+    module.setFunction(function() {
+        PEN.selectToolByName("Eraser"); return "Make Invisible"
+    })
     return module
 },
 
 mover : function() {
     var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,81) // q
-    module.setFunction(function() {PEN.selectToolByName("Mover"); return "Transform Objects"})
+    module.setFunction(function() {
+        PEN.selectToolByName("Mover"); return "Transform Objects"
+    })
     return module
 },
 
 selector : function() {
     var module = new URNDR.Module("Selector",URNDR.COMMAND_MODULE,83) // s
-    module.setFunction(function() {PEN.selectToolByName("Stroke Selector"); return "Select Stroke"})
+    module.setFunction(function() {
+        PEN.selectToolByName("Stroke Selector"); return "Select Stroke"
+    })
     return module
 },
 
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function(){ STROKES.reset(); return ""; })
+    module.setFunction(function(){
+        STROKES.reset();
+        return "";
+    })
     return module
 },
 
 brush_size_up : function() {
     var module = new URNDR.Module("Increase Brush Size",URNDR.COMMAND_MODULE,221)
-    module.setFunction(function(){ STYLE.brush_size += 5; return STYLE.brush_size; })
+    module.setFunction(function(){
+        STYLE.brush_size += 5;
+        return STYLE.brush_size;
+    })
     return module
 },
 
 brush_size_down : function() {
     var module = new URNDR.Module("Reduce brush size",URNDR.COMMAND_MODULE,219)
-    module.setFunction(function(){ if (STYLE.brush_size > 5) {STYLE.brush_size -= 5;} return STYLE.brush_size;})
+    module.setFunction(function(){
+        STYLE.brush_size = STYLE.brush_size > 5 ? STYLE.brush_size - 5 : 5;
+        return STYLE.brush_size;
+    })
+    return module
+},
+
+speed_up : function() {
+    var module = new URNDR.Module("Speed Up",URNDR.COMMAND_MODULE,38)
+    module.setFunction(function(){
+        U3.speed = U3.speed <= 57.5 ? U3.speed + 2.5 : 60; return U3.speed;
+    })
+    return module
+},
+
+speed_down : function() {
+    var module = new URNDR.Module("Speed Down",URNDR.COMMAND_MODULE,40)
+    module.setFunction(function(){ U3.speed = U3.speed >= 2.5 ? U3.speed - 2.5 : 0; return U3.speed; })
     return module
 },
 
@@ -344,17 +376,22 @@ connection_network : function(){
             for ( var f = 0 ; f < all_length ; f++ ) {
             
                 pf = all_track.getPoint( f )
-                if (pe.A + pf.A === 0) continue;
-                if (Math.abs(e-f) <= 2) continue;
-                var max = pe.S * 1.5,
-                    min = 10
-                if ( Math.abs(pe.X - pf.X) < max && Math.abs(pe.Y - pf.Y) < max && Math.abs(pe.X - pf.X) > min && Math.abs(pe.Y - pf.Y) > min ) {
-                    ctx.strokeStyle = STYLE.gradientMaker( ctx , pf , pe );
-                    ctx.beginPath();
-                    ctx.moveTo(pe.X,pe.Y)
-                    ctx.lineTo(pf.X,pf.Y)
-                    ctx.stroke();
-                    ctx.closePath();
+                if (pe.A + pf.A > 0 && Math.abs(e-f) > 20) {
+
+                    var max = pe.S * 1.5, min = 10
+
+                    if ( Math.abs(pe.X - pf.X) < max && Math.abs(pe.Y - pf.Y) < max && Math.abs(pe.X - pf.X) > min && Math.abs(pe.Y - pf.Y) > min ) {
+                        var factor = getAlphaFactor( pf, all_track, f );
+                        if (factor > 0) {
+                            ctx.strokeStyle = STYLE.gradientMaker( ctx , pf , pe , factor );
+                            ctx.beginPath();
+                            ctx.moveTo(pe.X,pe.Y)
+                            ctx.lineTo(pf.X,pf.Y)
+                            ctx.stroke();
+                            ctx.closePath();
+                        }
+                    }
+
                 }
             
             }
