@@ -7,10 +7,12 @@
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
-    fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
+    // fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
     defaultMaterial: new THREE.MeshBasicMaterial( {
 
-        color: 0xCCCCCC,
+        // color: 0xF0F0F0,
+        color: 0xE0E0E0,
+        // color: "rgba(0,255,255,0.1)",
         vertexColors: THREE.FaceColors, 
         
         fog: true,
@@ -20,8 +22,14 @@ var U3 = new URNDR.ThreeManager( {
 
         morphTargets: true,
 
+        side: THREE.FrontSide
+
     } )
 } )
+
+var light = new THREE.PointLight( 0xFF0000, 100, 100 );
+light.position.set( 5, 5, 0 );
+U3.scene.add( light );
 
 //
 // OBJECTS
@@ -247,17 +255,23 @@ window.onload = function() {
     // Models
     //
 
-    U3.createModelFromFile( "models/sphere.js", function( model ) {
-        model.speed = 2;
-    } );
+    // U3.createModelFromFile( "models/sphere.js", function( model ) {
+    //     model.speed = 2;
+    // } );
 
     // U3.createModelFromFile( "models/human_02.js", function( model ) {
     //     model.speed = 0
     //     model.mesh.scale.multiplyScalar( 1.1 )
     //     model.mesh.position.y = -2.5
     // }  );
+    U3.createModelFromFile( "models/human_01.js", function( model ) {
+        model.speed = 10
+        model.mesh.scale.multiplyScalar( 1.1 )
+        model.mesh.position.y = -2.5
+        model.mesh.rotation.y = -2
+    }  );
     // for(var i = 0; i < 5; i++) {
-    //     U3.createModelFromFile( "models/human_01.js", function( model , i ) {
+    //     U3.createModelFromFile( "models/human_02.js", function( model , i ) {
     //         model.speed = 10 + i;
     //         model.update( i * 10 );
     //         model.mesh.scale.multiplyScalar( 1 )

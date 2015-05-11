@@ -10,6 +10,17 @@ draw : function() {
     return module
 },
 
+hideModels : function() {
+    var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,72) // m = 77 // h = 72
+    module.setConfiguration({
+        $dom: $("#canvas_three")
+    })
+    module.setFunction(function() {
+        $("#canvas_three,#HUD").fadeToggle();
+    })
+    return module
+},
+
 eraser : function() {
     var module = new URNDR.Module("Eraser",URNDR.COMMAND_MODULE,69) // e
     module.setFunction(function() {PEN.selectToolByName("Eraser"); return "Make Invisible"})
@@ -81,7 +92,7 @@ random_point_position : function() {
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,false);
     module.setConfiguration( {
         min_size : 5,
         max_size : 80
@@ -225,7 +236,8 @@ smooth_data : function() {
     module.setFunction(function(strokes) {
         
         var settings = module.getConfiguration(),
-            tracks = ["R","G","B","A","S","X","Y"];
+            tracks = ["S","X","Y"];
+            // tracks = ["R","G","B","A","S","X","Y"];
 
         strokes.eachStroke( function( stroke ) { _smooth( stroke, tracks, settings ); } )
 

@@ -340,7 +340,6 @@ URNDR.Strokes.prototype = {
     rebuildQuadTree: function() {
 
         var qt = this.quadTree;
-        var active_id = this.getActiveStroke().id
 
         qt.clear();
 
