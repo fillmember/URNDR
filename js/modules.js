@@ -208,7 +208,7 @@ move_drawing_with_3d_model : function() {
 },
 
 expand : function() {
-    var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,71,false); // g
+    var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,999,false); // g
     module.setConfiguration({ speed : 2 });
     module.setFunction(function(strokes){
         var s = this.getConfiguration();
