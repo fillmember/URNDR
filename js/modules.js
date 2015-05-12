@@ -151,13 +151,27 @@ random_color_scheme : function() {
         var _sat = Math.random();
         if (_sat < 0.2) { _sat = 0; }
         var primary = hslToRgb( _hue , _sat , 0.5 );
-        var contrast = hslToRgb( 1 - _hue , _sat , 0.5 );
+        var contrast = hslToRgb( (_hue + 0.5) % 1 , (_sat + 0.5) % 1 , 0.5 );
         var dark = hslToRgb( _hue , _sat * 0.80 , 0.2 );
         var pale = hslToRgb( _hue , _sat * 0.80 , 0.6 );
 
         document.body.style.background = _rgb(primary);
         U3.scene.fog = new THREE.Fog( _rgb(primary), 3, 5 )
         U3.material.color = new THREE.Color( _rgb(pale) )
+        STROKES.eachStroke( function( stk ){
+            stk.eachPoint( function( pnt ){
+                f = 0.8;
+                rf = 1 - f;
+                pnt.R = Math.round(contrast[0] * f + Math.random() * contrast[0] * rf)
+                pnt.G = Math.round(contrast[1] * f + Math.random() * contrast[1] * rf)
+                pnt.B = Math.round(contrast[2] * f + Math.random() * contrast[2] * rf)
+                pnt.A = 1;
+            }, stk)
+            stk.tags = {};
+        } )
+        STYLE.color[0] = contrast[0]
+        STYLE.color[1] = contrast[1]
+        STYLE.color[2] = contrast[2]
         return "";
     })
     return module;
@@ -168,19 +182,31 @@ color_b_und_w : function() {
     module.setConfiguration({bool:false})
     module.setFunction(function(){
 
+        function _rgb( input ){ return "rgb("+input+")"; }
         var primary,contrast,bool = module.getConfiguration().bool;
+
         if (bool) {
-            primary = 0xFFFFFF
-            contrast = 0x666666
+            primary = 255
+            contrast = 0
         } else {
-            primary = "black"
-            contrast = 0xFFFFFF
+            primary = 0
+            contrast = 180
         }
         bool = ! bool;
 
-        document.body.style.background = primary;
-        U3.scene.fog = new THREE.Fog( primary, 3, 5 )
-        U3.material.color = new THREE.Color( contrast )
+        _rgbPrimary = _rgb( [primary,primary,primary] );
+        _rgbContrast = _rgb( [contrast,contrast,contrast] );
+
+        document.body.style.background = _rgbPrimary;
+        U3.scene.fog = new THREE.Fog( _rgbPrimary, 3, 5 )
+        U3.material.color = new THREE.Color( _rgbContrast )
+        STROKES.eachStroke( function( stk ){
+            stk.eachPoint( function( pnt ){
+                pnt.R = pnt.G = pnt.B = contrast;
+            }, stk)
+        } )
+        STYLE.color[0] = STYLE.color[1] = STYLE.color[2] = contrast
+
         module.setConfiguration({bool: bool})
         return "";
     })
