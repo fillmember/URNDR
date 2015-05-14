@@ -26,6 +26,7 @@ var CANVAS_HUD = document.getElementById('canvas_hud');
     CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
 
 var hudCtx = CANVAS_HUD.getContext("2d");
+    hudCtx.lineWidth = 1.5;
 
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 var MODULES = new URNDR.ModuleManager();

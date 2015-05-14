@@ -537,17 +537,24 @@ default_draw_style : function() {
                     }
                 }
 
-                hudCtx.lineWidth = 1.5;
-                if ( stk.selected ) {
-                    hudCtx.strokeStyle = "#FF0"
-                    hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
-                    stroke_basic(hudCtx, prv, pnt, 1, "#FF0" );
-                } else if ( stk.hovered ) {
-                    hudCtx.strokeStyle = "#FFF"
-                    hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
-                }
-
             } , stk)
+
+            if ( stk.selected ) {
+                hudCtx.strokeStyle = "#FF0"
+                hudCtx.beginPath();
+                var pnt = stk.getPoint(0);
+                hudCtx.moveTo( pnt.X , pnt.Y )
+                stk.eachPoint( function(pnt) {
+                    hudCtx.lineTo( pnt.X , pnt.Y )
+                    hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
+                } )
+                hudCtx.stroke();
+            } else if ( stk.hovered ) {
+                hudCtx.strokeStyle = "#FFF"
+                stk.eachPoint( function(pnt) {
+                    hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                } )
+            }
 
             if (stk.closed) {
                 
@@ -572,9 +579,8 @@ function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
     ctx.beginPath();
     ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = lineWidth;
-    ctx.moveTo( p0.X , p0.Y )
-    ctx.lineTo( p1.X , p1.Y )
-    ctx.closePath();
+    ctx.moveTo( p0.X , p0.Y );
+    ctx.lineTo( p1.X , p1.Y );
     ctx.stroke();
 }
 
