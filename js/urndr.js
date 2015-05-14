@@ -188,12 +188,14 @@ URNDR.ModuleManager = function() {
         this.key_map[ this.KEY_PREFIX + keyCode ] = { id: id }
 
     }
+    
     this.getModuleIDbyKey = function( keyCode ) {
 
         var result = this.key_map[ this.KEY_PREFIX + keyCode ];
         return (result? result : false)
 
     }
+
     this.loadModule = function ( module ) {
 
         if (module instanceof URNDR.Module === false) {
@@ -218,6 +220,7 @@ URNDR.ModuleManager = function() {
         }
 
     }
+
     this.loadModules = function ( list ) {
     
         for ( var l in list ) { this.loadModule( list[l] ); }
@@ -274,17 +277,16 @@ URNDR.ModuleManager = function() {
     }
     this.runEnabledModulesInList = function (list_name, params) {
 
-        var list = this[list_name],
-            enabled_count = 0;
+        var list = this[list_name];
+        var m;
 
-        for ( var m in list ) {
+        for ( m in list ) {
             if (list[m].enabled) {
                 list[m].func(params);
-                enabled_count ++;
             }
         }
 
-        return enabled_count;
+        // return enabled_count;
 
     }
     this.getEnabledModulesCount = function( list_name ) {
@@ -295,7 +297,6 @@ URNDR.ModuleManager = function() {
         return enabled_count;
 
     }
-    this.resetModules = function( list_name ) {}
 }
 
 // Strokes
@@ -1628,7 +1629,7 @@ THREE.Camera.prototype.calculateLookAtVector = function() { this.lookAtVector = 
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (obj.visible === false) { return 0; }
-    
+
     this.calculateLookAtVector();
 
     var normalMatrix, N, result;
