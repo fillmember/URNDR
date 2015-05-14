@@ -505,60 +505,6 @@ wiggle : function() {
 
 // DRAW MODULES
 
-connection_network : function(){
-    var module = new URNDR.Module("NETWORK DRAW",URNDR.DRAW_MODULE,49); // 1
-    module.setFunction(function(params){
-        var strokes, ctx, all_track, strokes_count, stroke_i, points_count;
-        strokes = params.strokes
-        ctx = params.context
-        
-        clear(1);
-        
-        all_track = new URNDR.Stroke();
-        strokes_count = strokes.strokeCount;
-        for ( var i = 0 ; i < strokes_count ; i ++ ) {
-            stroke_i = strokes.getStrokeByID( strokes.strokesZDepth[ i ] )
-            points_count = stroke_i.length;
-            for ( var j = 0 ; j < points_count ; j ++ ) {
-                all_track.addPoint( stroke_i.getPoint( j ) )
-            }
-        }
-
-        var pe, pf, all_length;
-        all_length = all_track.length;
-        ctx.lineWidth = 1.5;
-        for ( var e = 0 ; e < all_length ; e++ ) {
-            pe = all_track.getPoint( e )
-
-            for ( var f = 0 ; f < all_length ; f++ ) {
-            
-                pf = all_track.getPoint( f )
-                if (pe.A + pf.A > 0 && Math.abs(e-f) > 20) {
-
-                    var max = pe.S * 1.5, min = 10
-
-                    if ( Math.abs(pe.X - pf.X) < max && Math.abs(pe.Y - pf.Y) < max && Math.abs(pe.X - pf.X) > min && Math.abs(pe.Y - pf.Y) > min ) {
-                        var factor = getAlphaFactor( pf, all_track, f );
-                        if (factor > 0) {
-                            ctx.strokeStyle = STYLE.gradientMaker( ctx , pf , pe , factor );
-                            ctx.beginPath();
-                            ctx.moveTo(pe.X,pe.Y)
-                            ctx.lineTo(pf.X,pf.Y)
-                            ctx.stroke();
-                            ctx.closePath();
-                        }
-                    }
-
-                }
-            
-            }
-
-        }
-
-    })
-    return module
-},
-
 default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
     module.setConfiguration( {fillmember:false} )
