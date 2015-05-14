@@ -580,42 +580,41 @@ function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
 
 function getAlphaFactor( pnt, stk, i ){
 
-    var factor = 1;
-    var cVis = U3.camera.checkVisibility;
-
     if (pnt.OBJECT && pnt.FACE) {
                     
-        factor = cVis( pnt.OBJECT , pnt.FACE );
+        return U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
 
     } else {
 
-        nearests = stk.getNearestPointWith( "FACE", i )
-        if (nearests instanceof Object) {
-            
-            var before_present = nearests.before instanceof URNDR.Point;
-            var after_present = nearests.after instanceof URNDR.Point;
+        var nearests = stk.getNearestPointWith( "FACE", i );
+
+        if (nearests !== 0) {
+
+            var before_present = nearests.before != 0,
+                after_present = nearests.after != 0;
+
+            var vis_before = 1, vis_after = 1;
+
+            if (before_present) {vis_before = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )}
+            if (after_present) {vis_after = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )}
+
             if (before_present && after_present) {
 
-                var vis_before = cVis( nearests.before.OBJECT , nearests.before.FACE ),
-                    vis_after = cVis( nearests.after.OBJECT , nearests.after.FACE );
-
-                // factor  = vis_before * nearests.after_distance
-                // factor += vis_after * nearests.before_distance
-                // factor /= (nearests.after_distance + nearests.before_distance)
-
-                factor = (vis_before * nearests.after_distance + vis_after * nearests.before_distance) / ( nearests.after_distance + nearests.before_distance )
+                return (vis_before * nearests.after_distance + vis_after * nearests.before_distance) / ( nearests.after_distance + nearests.before_distance )
 
             } else if (before_present || after_present) {
 
-                factor = before_present ? vis_before : vis_after;
+                return before_present ? vis_before : vis_after;
 
             }
-            
+
         }
 
     }
 
-    return factor
+    // The rest of the cases: no points around / stroke is totally outside of 3D. 
+
+    return 1
 
 }
 

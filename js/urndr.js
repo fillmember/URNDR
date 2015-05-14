@@ -188,7 +188,7 @@ URNDR.ModuleManager = function() {
         this.key_map[ this.KEY_PREFIX + keyCode ] = { id: id }
 
     }
-    
+
     this.getModuleIDbyKey = function( keyCode ) {
 
         var result = this.key_map[ this.KEY_PREFIX + keyCode ];
@@ -823,16 +823,18 @@ URNDR.Stroke.prototype = {
     getNearestPointWith: function( track_name , n ) {
 
         if (this.length < 2) { return 0; }
-        if (this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
+        if (this.getPoint(n).hasOwnProperty( track_name ) === false ) { return 0; }
 
-        var track = this.getTrack( track_name );
-        var track_leng = track.length;
+        var track = this.getTrack( track_name ),
+            track_leng = track.length;
         var before_me, b, after_me, a;
-        before_me = undefined;
-        after_me = undefined;
+        before_me = false;
+        after_me = false;
         var result = {
-            before: 0, after: 0, nearest: 0, 
-            before_distance: 0, after_distance: 0, nearest_distance: 0, 
+            before: 0, 
+            before_distance: Infinity, 
+            after: 0, 
+            after_distance: Infinity
         }
         for (b = n - 1; b >= 0; b--) {
             if ( track[b] != null ) {
@@ -846,35 +848,54 @@ URNDR.Stroke.prototype = {
                 break;
             }
         }
-        if (after_me == undefined) {
-            if (before_me == undefined) {
-                return 0;
-            } else {
-                result.before = this.getPoint( before_me )
-                result.before_distance = n - before_me
-                result.nearest = result.before
-                result.nearest_distance = result.before_distance
-            }
-        } else {
-            if (before_me == undefined) {
-                result.after = this.getPoint( after_me )
-                result.after_distance = after_me - n
-                result.nearest = result.after
-                result.nearest_distance = result.after_distance
-            } else {
-                result.before = this.getPoint( before_me )
-                result.before_distance = n - before_me
-                result.after = this.getPoint( after_me )
-                result.after_distance = after_me - n
-                if (result.before_distance > result.after_distance) {
-                    result.nearest = result.after
-                    result.nearest_distance = result.after_distance
-                } else {
-                    result.nearest = result.before
-                    result.nearest_distance = result.before_distance
-                }
-            }
+        if (before_me != false) {
+            result.before = this.getPoint( before_me )
+            result.before_distance = n - before_me
         }
+        if (after_me != false) {
+            result.after = this.getPoint( after_me );
+            result.after_distance = after_me - n;
+        }
+        if (result.before_distance < result.after_distance) {
+            result.nearest = result.before
+            result.nearest_distance = result.before_distance
+        } else {
+            result.nearest = result.after
+            result.nearest_distance = result.after_distance
+        }
+        // if (after_me == undefined) {
+        //     if (before_me == undefined) {
+        //         // case : nothing at all. 
+        //         return 0;
+        //     } else {
+        //         // case : before YES, after NO
+        //         result.before = this.getPoint( before_me )
+        //         result.before_distance = n - before_me
+        //         result.nearest = result.before
+        //         result.nearest_distance = result.before_distance
+        //     }
+        // } else {
+        //     if (before_me == undefined) {
+        //         // case : before NO, after YES
+        //         result.after = this.getPoint( after_me )
+        //         result.after_distance = after_me - n
+        //         result.nearest = result.after
+        //         result.nearest_distance = result.after_distance
+        //     } else {
+        //         // case : before YES, after YES
+        //         result.before = this.getPoint( before_me )
+        //         result.before_distance = n - before_me
+        //         result.after = this.getPoint( after_me )
+        //         result.after_distance = after_me - n
+        //         if (result.before_distance > result.after_distance) {
+        //             result.nearest = result.after
+        //             result.nearest_distance = result.after_distance
+        //         } else {
+        //             result.nearest = result.before
+        //             result.nearest_distance = result.before_distance
+        //         }
+        //     }
+        // }
 
         return result
 
