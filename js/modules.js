@@ -31,6 +31,21 @@ eraser : function() {
     return module
 },
 
+amcd : function() {
+    var module = new URNDR.Module("auto move : change direction",URNDR.COMMAND_MODULE,188) // ,
+    module.setFunction(function() {
+        var m = MODULES.getModuleByName("auto move")
+        if (m) {
+            mm = m.getConfiguration()
+            mm.rotate_speed *= -1;
+            return mm.rotate_speed > 0 ? "right" : "left"
+        } else {
+            return "(module not found)"
+        }
+    })
+    return module
+},
+
 mover : function() {
     var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,81) // q
     module.setFunction(function() {
@@ -263,6 +278,22 @@ pressure_sensitivity : function() {
 },
 
 // STROKE DATA MODULES
+
+constant_moving_right : function(){
+    var module = new URNDR.Module("auto move",URNDR.STROKE_MODULE,190,false);
+    module.setConfiguration({
+        rotate_speed: 0.005,
+        counter: 0,
+        radius_speed: 0.02
+    })
+    module.setFunction(function(strokes){
+        var m = module.getConfiguration();
+        U3.rig.target_theta += m.rotate_speed;
+        U3.rig.target_radius = 6 + 1 * Math.cos(m.counter)
+        m.counter += m.radius_speed;
+    })
+    return module;
+},
 
 delete_flagged_strokes : function(){
     var module = new URNDR.Module("delete flagged strokes",URNDR.STROKE_MODULE,99,true);

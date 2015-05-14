@@ -1,6 +1,6 @@
 (function(){
 
-    return false;
+    // return false;
 
     var GUI = new dat.GUI();
 

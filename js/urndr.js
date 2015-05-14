@@ -1058,15 +1058,31 @@ URNDR.Pen.prototype = {
     },
     selectToolByID: function( id ) {
 
-        if (this.tools.hasOwnProperty(id)) { this.active_tool = this.tools[id] }
+        if (this.tools.hasOwnProperty(id)) {
+            
+            if (this.active_tool instanceof URNDR.PenTool) {
+                this.active_tool.disengage();
+            }
+            
+            this.active_tool = this.tools[id]
+            this.active_tool.engage();
+
+        }
 
     },
     selectToolByName: function( name ) {
 
         for ( var l in this.tools ) {
             if ( this.tools[l].name === name ) {
+
+                if (this.active_tool instanceof URNDR.PenTool) {
+                    this.active_tool.disengage();
+                }
+                
                 this.active_tool = this.tools[l]
+                this.active_tool.engage();
                 return true;
+            
             }
         }
 
@@ -1088,7 +1104,9 @@ URNDR.PenTool = function(parameters) {
     this.onmousedown = parameters.onmousedown || function(){};
     this.onmouseup = parameters.onmouseup || function(){};
     this.onmousemove = parameters.onmousemove || function(){};
-    this.onmouseout = parameters.onmouseout || function(){};    
+    this.onmouseout = parameters.onmouseout || function(){};
+    this.engage = parameters.engage || function(){};
+    this.disengage = parameters.disengage || function(){};
     this.size = parameters.size || 5;
     for (var p in parameters) {
         var flag = true
@@ -1289,7 +1307,13 @@ URNDR.Model = function() {
     this.mesh = undefined;
     this.geometry = undefined;
     this.material = undefined;
-    this.animationObject = undefined;
+    this.animation = undefined;
+
+    // Behaviours
+    this.init = function(){};
+    this.onfocus = function(){};
+    this.onblur = function(){};
+    this.onframe = function(){};
 }
 URNDR.Model.prototype = {
     get active () {
@@ -1300,8 +1324,17 @@ URNDR.Model.prototype = {
         }
     },
     set active (value) {
+        var original = 0;
         if (this.mesh) {
+            original = this.mesh.visible;
             this.mesh.visible = value;
+        }
+        if (original !== value) {
+            if (value) {
+                this.onfocus();
+            } else {
+                this.onblur();
+            }
         }
     },
     loadModel: function( file_path, callback ){
@@ -1317,25 +1350,12 @@ URNDR.Model.prototype = {
 
             model.mesh = new THREE.Mesh( model.geometry, model.material )
 
-            // SET MODEL POSITION
-            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y);
-            model.mesh.scale.multiplyScalar( 5 / y_len )
-            model.mesh.rotation.set( 0, 0, 0 )
-            model.mesh.position.set( 0, 0 , -5 )
-
-            // ANMATION
-            if (model.geometry.morphTargets.length > 0) {
-
-                model.animationObject = new THREE.MorphAnimation( model.mesh )
-                model.animationObject.play();
-                // initialize the morphTarget array...
-                model.animationObject.update( model.animationObject.duration / model.animationObject.frames )
-
-            }
-
             // UNLOCK
             model.loaded = true;
             model.active = true;
+
+            // Init Function
+            model.init( model );
 
             // CALLBACK
             callback( model );
@@ -1346,8 +1366,8 @@ URNDR.Model.prototype = {
     update: function( speed ) {
 
         if (this.active) {
-            if (this.animationObject) {
-                this.animationObject.update( speed )
+            if (this.animation) {
+                this.animation.update( speed )
             }
         }
 
@@ -1370,27 +1390,48 @@ URNDR.ThreeManager = function( arg ) {
     })
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
     this.scene = new THREE.Scene();
-    this.raycaster = new THREE.Raycaster();
-    this.material = arg.material || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
     if (arg.fog) { this.scene.fog = arg.fog; }
+    this.raycaster = new THREE.Raycaster();
+    
+    this.material = arg.material || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
+    this.material.index0AttributeName = "position";
+    
+    // controls
+    this.rig = {
+        radius: 5,
+        target_radius: 5,
+        theta : 0,
+        target_theta : 0,
+        pitch : 0,
+        target_pitch : 0,
+        speed : 0.1,
+        focus : new THREE.Vector3(0,0,0)
+    }
     this.speed = 15;
 
-    // THREE setup
     this.renderer.setSize( window.innerWidth , window.innerHeight )
-    this.camera.position.set( 0 , 0 , 0 )
+    this.camera.position.set( 0 , 0 , 5 )
+
 }
 URNDR.ThreeManager.prototype = {
 
     get count() {
         return this.models_array.length;
     },
-    createModelFromFile: function( file_path, callback , args ) {
+    createModelFromFile: function( file_path, args ) {
 
         // CREATE
         var manager = this, model = new URNDR.Model();
 
         model.material = manager.material;
         model.speed = manager.speed;
+        model.parent = manager;
+
+        if (args.init) { model.init = args.init; }
+        if (args.onfocus) { model.onfocus = args.onfocus; }
+        if (args.onblur) { model.onblur = args.onblur; }
+        if (args.onframe) { model.onframe = args.onframe; }
+
         model.loadModel( file_path , function(){
 
             // THREE
@@ -1399,9 +1440,6 @@ URNDR.ThreeManager.prototype = {
             // STORAGE
             manager.models[ model.id ] = model;
             manager.models_array.push( model.id )
-
-            // CALLBACK
-            callback( model , args );
 
         } );
 
@@ -1437,12 +1475,14 @@ URNDR.ThreeManager.prototype = {
     solo: function( n ){
         var manager = this;
         manager.models_array.forEach( function(o,i){
-            manager.models[o].active = i === n ? true : false
+            manager.models[o].active = (i === n) ? true : false
         } )
     },
     update: function() {
 
         var manager = this;
+
+        // Model
 
         manager.eachModel( function( model , manager ){
 
@@ -1453,6 +1493,19 @@ URNDR.ThreeManager.prototype = {
             }
 
         }, manager )
+
+        // Camera
+
+        var rig = this.rig;
+        rig.theta += ( rig.target_theta - rig.theta ) * rig.speed;
+        rig.pitch += ( rig.target_pitch - rig.pitch ) * rig.speed;
+        rig.radius += ( rig.target_radius - rig.radius ) * rig.speed;
+        U3.camera.position.z = Math.sin( rig.theta ) * rig.radius;
+        U3.camera.position.x = Math.cos( rig.theta ) * rig.radius;
+        U3.camera.position.y = THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )
+        U3.camera.lookAt(rig.focus)
+
+        // Renderer
         
         manager.renderer.render( this.scene , this.camera )
 
@@ -1549,9 +1602,15 @@ URNDR.Helpers = {
 // EXTEND THREE.JS for connecting my custom objects.
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 
-    var geo = this.geometry,
-        target_count = geo.morphTargets.length,
+    var geo = this.geometry;
+
+    if ( ! this.morphTargetInfluences || ! geo.morphTargets ) {
+        return geo.vertices[ vertex_index ].clone();
+    }
+
+    var target_count = geo.morphTargets.length,
         influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
+
     if ( target_count === 0 || influence_sum === 0 ) {
         return geo.vertices[ vertex_index ].clone();
     }
@@ -1569,8 +1628,8 @@ THREE.Camera.prototype.calculateLookAtVector = function() { this.lookAtVector = 
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (obj.visible === false) { return 0; }
-
-    if (!this.lookAtVector) { this.calculateLookAtVector(); }
+    
+    this.calculateLookAtVector();
 
     var normalMatrix, N, result;
 

@@ -7,12 +7,10 @@
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
-    fog: new THREE.Fog( 0xE0E0E0, 3, 5 ),
     material: new THREE.MeshBasicMaterial( {
         color: 0xFFFFFF,
-        fog: true,
         wireframe: true, 
-        wireframeLinewidth: 3,
+        wireframeLinewidth: 5,
         morphTargets: true
     } )
 } )
@@ -131,11 +129,8 @@ PEN.addTool( new URNDR.PenTool({
 
         this.timer = setInterval( function(){
 
-            tool.threeManager.eachModel( function(model,value) {
-
-                model.mesh.rotation.y += value;
-
-            }, pen.ndc_x * 0.1 )
+            U3.rig.target_theta += pen.ndc_x * 0.1;
+            U3.rig.target_pitch = THREE.Math.mapLinear( pen.ndc_y, 1, -1, -2, 2 )
 
         } , 20)
 
@@ -236,17 +231,56 @@ window.onload = function() {
     //
     // Models
     //
-
-    U3.createModelFromFile( "models/human_01.js", function( model ) {
-        model.active = false;
-        model.mesh.scale.multiplyScalar( 1.1 )
-        model.mesh.position.y = -2.5
-        model.mesh.rotation.y = -2
-    }  );
-    U3.createModelFromFile( "models/human_02.js", function( model ) {
-        model.mesh.position.y = -2
-        model.mesh.rotation.y = 2
-    })
+    function _static( model ) {
+        model.animation = null;
+    }
+    function _style_architecture( model ) {
+        model.mesh.scale.multiplyScalar( 0.8 )
+    }
+    U3.createModelFromFile( "models/cube.js", {
+        init: function() {
+            _static(this);
+            _style_architecture(this);
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.2;
+            U3.rig.target_theta = -0.785;
+        }
+    } );
+    U3.createModelFromFile( "models/house.js", {
+        init: function() {
+            _static(this);
+            _style_architecture(this);
+            this.mesh.position.y -= 0.125;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.4;
+            U3.rig.target_theta = 0.785;
+        }
+    } );
+    U3.createModelFromFile( "models/apartment.js",  {
+        init: function() {
+            _static(this);
+            _style_architecture(this);
+            this.mesh.position.y -= 0.25;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.7;
+            U3.rig.target_theta = 0.785 + 0.3;
+        }
+    } );
+    U3.createModelFromFile( "models/railhouse.js", {
+        init: function() {
+            _static(this);
+            _style_architecture(this);
+            this.mesh.position.y -= 0.5;
+            this.mesh.position.x -= 1;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 2;
+            U3.rig.target_theta = -0.785;
+        }
+    } );
 
     //
     // EVENTS
