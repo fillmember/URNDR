@@ -581,10 +581,11 @@ function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
 function getAlphaFactor( pnt, stk, i ){
 
     var factor = 1;
+    var cVis = U3.camera.checkVisibility;
 
     if (pnt.OBJECT && pnt.FACE) {
                     
-        factor = U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
+        factor = cVis( pnt.OBJECT , pnt.FACE );
 
     } else {
 
@@ -595,21 +596,18 @@ function getAlphaFactor( pnt, stk, i ){
             var after_present = nearests.after instanceof URNDR.Point;
             if (before_present && after_present) {
 
-                factor  = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE ) * nearests.after_distance
-                factor += U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )   * nearests.before_distance
-                factor *= 1 / ( nearests.after_distance + nearests.before_distance )
+                var vis_before = cVis( nearests.before.OBJECT , nearests.before.FACE ),
+                    vis_after = cVis( nearests.after.OBJECT , nearests.after.FACE );
+
+                // factor  = vis_before * nearests.after_distance
+                // factor += vis_after * nearests.before_distance
+                // factor /= (nearests.after_distance + nearests.before_distance)
+
+                factor = (vis_before * nearests.after_distance + vis_after * nearests.before_distance) / ( nearests.after_distance + nearests.before_distance )
 
             } else if (before_present || after_present) {
 
-                if ( before_present ){
-
-                    factor = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )
-
-                } else {
-
-                    factor = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )
-
-                }
+                factor = before_present ? vis_before : vis_after;
 
             }
             
