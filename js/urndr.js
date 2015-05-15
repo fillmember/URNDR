@@ -1532,14 +1532,14 @@ URNDR.ThreeManager.prototype = {
         if (args.onblur) { model.onblur = args.onblur; }
         if (args.onframe) { model.onframe = args.onframe; }
 
+        // STORAGE
+        manager.models[ model.id ] = model;
+        manager.models_array.push( model.id )
+
         model.loadModel( file_path , function(){
 
             // THREE
             manager.scene.add( model.mesh );
-
-            // STORAGE
-            manager.models[ model.id ] = model;
-            manager.models_array.push( model.id )
 
         } );
 
@@ -1597,9 +1597,20 @@ URNDR.ThreeManager.prototype = {
         // Camera
 
         var rig = this.rig;
+        
+        var circle = 6.283185247;
+        if (rig.theta >= circle) {
+             rig.theta -= circle;
+             rig.target_theta -= circle;
+        } else if (rig.theta < -circle) {
+             rig.theta += circle;
+             rig.target_theta += circle;
+        }
+        
         rig.theta += ( rig.target_theta - rig.theta ) * rig.speed;
         rig.pitch += ( rig.target_pitch - rig.pitch ) * rig.speed;
         rig.radius += ( rig.target_radius - rig.radius ) * rig.speed;
+        
         U3.camera.position.z = Math.sin( rig.theta ) * rig.radius;
         U3.camera.position.x = Math.cos( rig.theta ) * rig.radius;
         U3.camera.position.y = THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )

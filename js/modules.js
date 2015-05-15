@@ -298,7 +298,7 @@ constant_moving_right : function(){
             m.counter += m.radius_speed;
         }
         //
-        m.rotate_speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.002 , 0.02 )
+        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.002 , 0.02 )
         m.radius_speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.005 , 0.05 )
     })
     module.listener = function( evt ) {
@@ -318,6 +318,7 @@ constant_moving_right : function(){
         if (shift) {
             module.enabled = true;
             module.settings.rotate_speed *= -1;
+            U3.rig.target_theta += module.settings.rotate_speed * 2;
             _msg += module.settings.rotate_speed > 0 ? "[->]" : "[<-]";
         }
         return _msg;
@@ -482,7 +483,7 @@ smooth_data : function() {
                     cosa = (vprv[0] * vnxt[0] + vprv[1] * vnxt[1]) / (dprv * dnxt); // 180 > -1 & 0 > 1
 
                 // Smooth: agle less than 120 deg = PI * 0.75
-                var factor_1 = clamp( mapLinear( cosa , -0.5 , 1 , 0 , 0.1 ) , 0 , 0.1 ),
+                var factor_1 = clamp( mapLinear( cosa , -0.5 , 1 , 0 , 0.1 ) , 0.02 , 0.1 ),
                     factor_2 = factor_1 * 0.3;
 
                 cur.X += ( vprv[0] + vnxt[0] ) * factor_1;
