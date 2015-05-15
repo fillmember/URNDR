@@ -1399,7 +1399,7 @@ URNDR.Model = function() {
 
     // Animation Attributes
     this.tags = {};
-    this.speed = 0;
+    this.speedFactor = 1;
 
     // THREE JSONLoader related attributes
     this.file_path = "";
@@ -1469,9 +1469,7 @@ URNDR.Model.prototype = {
     update: function( speed ) {
 
         if (this.active) {
-            if (this.animation) {
-                this.animation.update( speed )
-            }
+            if (this.animation) { this.animation.update( speed * this.speedFactor ) }
         }
 
     },
@@ -1527,7 +1525,6 @@ URNDR.ThreeManager.prototype = {
         var manager = this, model = new URNDR.Model();
 
         model.material = manager.material;
-        model.speed = manager.speed;
         model.parent = manager;
 
         if (args.init) { model.init = args.init; }

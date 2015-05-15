@@ -99,7 +99,7 @@ prev_model : function() {
             U3.activeModel = U3.count - 1;
         }
         U3.solo( U3.activeModel );
-        return "#"+U3.activeModel;
+        return "#"+(U3.activeModel+1);
     })
     return module
 },
@@ -112,7 +112,7 @@ next_model : function() {
             U3.activeModel = 0;
         }
         U3.solo( U3.activeModel );
-        return "#"+U3.activeModel;
+        return "#"+(U3.activeModel+1);
     })
     return module
 },
@@ -265,7 +265,7 @@ random_point_position : function() {
 
 pressure_sensitivity : function() {
     var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
-    module.interval = 10;
+    module.interval = 1;
     module.setConfiguration( {
         min_size : 5,
         max_size : 80
@@ -297,6 +297,9 @@ constant_moving_right : function(){
             U3.rig.target_radius = 6 + 1 * Math.cos(m.counter)
             m.counter += m.radius_speed;
         }
+        //
+        m.rotate_speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.002 , 0.02 )
+        m.radius_speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.005 , 0.05 )
     })
     module.listener = function( evt ) {
         var meta = evt.metaKey,
@@ -430,13 +433,23 @@ expand : function() {
     module.setConfiguration({ speed : 2 });
     module.setFunction(function(strokes){
         var s = this.getConfiguration();
+        //
+        s.speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 1 , 5 )
+        //
         strokes.eachStroke( function( stk , strokes, i) {
             if (stk.center) {
                 stk.eachPoint( function( pnt, stk, j) {
                     var vector = new THREE.Vector2( pnt.X - stk.center.x, pnt.Y - stk.center.y ).normalize();
                         vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.15, 7) )
-                    pnt.X += vector.x;
-                    pnt.Y += vector.y;
+                    var binded = pnt.binded;
+                    if (binded) {
+                        pnt.X += vector.x * 0.5;
+                        pnt.Y += vector.y * 0.5;
+                        pnt.refreshBinding( U3 )
+                    } else {
+                        pnt.X += vector.x;
+                        pnt.Y += vector.y;
+                    }
                 }, stk )
             }
         }, strokes)
@@ -474,37 +487,11 @@ smooth_data : function() {
 
                 cur.X += ( vprv[0] + vnxt[0] ) * factor_1;
                 cur.Y += ( vprv[1] + vnxt[1] ) * factor_1;
-
                 prv.X += - vprv[0] * factor_2;
                 prv.Y += - vprv[1] * factor_2;
-
                 nxt.X += - vnxt[0] * factor_2;
                 nxt.Y += - vnxt[1] * factor_2;
 
-            }, stroke )
-        }
-        function _smooth_by_distance( stroke ) {
-            stroke.eachPoint( function(cur,stk,i) {
-                if (cur.binded) { return 0; }
-                var prv = stk.getPoint(i - 1),
-                    nxt = stk.getPoint(i + 1);
-                if (prv == 0 || nxt == 0) { return 0; }
-                var vprv = [prv.X - cur.X,prv.Y - cur.Y],
-                    vnxt = [nxt.X - cur.X,nxt.Y - cur.Y];
-                var dprv = Math.abs( vprv[0] ) + Math.abs( vprv[1] ),
-                    dnxt = Math.abs( vnxt[0] ) + Math.abs( vnxt[1] );
-                var tp = dprv < 40 && dprv > 15,
-                    tn = dnxt < 40 && dnxt > 15;
-                if (tp || tn) {
-                    var flag = dprv > dnxt
-                    var fprv = flag ? 0.05 : 0.15
-                        fnxt = flag ? 0.15 : 0.05;
-                    cur.X += vprv[0] * fprv;
-                    cur.Y += vprv[1] * fprv;
-
-                    cur.X += vnxt[0] * fprv;
-                    cur.Y += vnxt[1] * fprv;
-                }
             }, stroke )
         }
 
@@ -515,7 +502,11 @@ smooth_data : function() {
 fade_strokes : function() {
     var module = new URNDR.Module("Fade Strokes",URNDR.STROKE_MODULE,70,false);
     module.interval = 40;
-    module.setConfiguration({ all : true , speed : 1.5 })
+    module.setConfiguration({
+        all : true,
+        speed : 2,
+        toggle : 0
+    })
     module.setFunction(function(strokes) {
 
         var settings = this.getConfiguration()
@@ -536,7 +527,7 @@ fade_strokes : function() {
             for ( var i = 0; i < len; i++ ) {
 
                 if ( i < n ) {
-                    stroke.points[ i ].A = stroke.points[ i ].A < 0.05 ? 0 : stroke.points[ i ].A * THREE.Math.mapLinear( settings.speed , 1 , 5 , 1 , 0.5)
+                    stroke.points[ i ].A = stroke.points[ i ].A < 0.05 ? 0 : stroke.points[ i ].A * THREE.Math.mapLinear( settings.speed , 1 , 5 , 1 , 0.6)
                 } else {
                     break;
                 }
@@ -550,25 +541,41 @@ fade_strokes : function() {
         }
 
     })
+    module.listener = function( evt ) {
+        var m = this.settings;
+        m.toggle = (m.toggle + 1) % 5
+        m.speed = m.toggle + 1;
+        if (m.speed == 1) {
+            this.enabled = false;
+        } else {
+            this.enabled = true;
+        }
+        return "S" + m.toggle;
+    }
     return module
 },
 
 wiggle : function() {
     var module = new URNDR.Module("Wiggle",URNDR.STROKE_MODULE,90) // z
     module.interval = 65;
-    module.setConfiguration({ amp : 8, all : true })
+    module.setConfiguration({ amp : 0, all : true })
     module.setFunction(function(strokes) {
-        var settings = module.getConfiguration()
+        var settings = module.settings;
+        //
         if (settings.all) {
             target_strokes = strokes.strokesZDepth
         } else {
             target_strokes = [ strokes.active_stroke ]
         }
+        //
+        settings.amp = THREE.Math.mapLinear( U3.speed , 0 , 60 , 2 , 12 )
+        module.interval = THREE.Math.mapLinear( U3.speed , 0 , 60 , 100 , 40 )
+        //
         for (var st in target_strokes) {
-            var bamp = settings.amp * 0.001;
             stroke_k = strokes.getStrokeByID( target_strokes[st] )
             stroke_k.setTrack( "X" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("X") , settings.amp ) )
             stroke_k.setTrack( "Y" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("Y") , settings.amp ) )
+            var bamp = settings.amp * 0.001;
             stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , bamp ) )
             stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , bamp ) )
             stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , bamp ) )
