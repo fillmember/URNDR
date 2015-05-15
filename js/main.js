@@ -21,21 +21,14 @@ document.body.appendChild( U3.renderer.domElement );
 //
 
 var CANVAS = document.getElementById('canvas_urndr');
+var PAPER = CANVAS.getContext("2d");
 var CANVAS_HUD = document.getElementById('canvas_hud');
-    CANVAS_HUD.width = CANVAS.width = U3.renderer.domElement.width;
-    CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
-
 var hudCtx = CANVAS_HUD.getContext("2d");
-    hudCtx.lineWidth = 1.5;
-
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 var MODULES = new URNDR.ModuleManager();
 var PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM );
 var STROKES = new URNDR.Strokes( CANVAS );
 var STYLE = new URNDR.StrokeStyle();
-var PAPER = CANVAS.getContext("2d");
-    PAPER.lineCap = STYLE.cap;
-    PAPER.lineJoin = STYLE.join;
 
 //
 // PenTools
@@ -223,6 +216,25 @@ PEN.addTool( new URNDR.PenTool({
 
 }))
 
+window.onresize = size_and_style;
+function size_and_style() {
+    var camera = U3.camera,
+        renderer = U3.renderer;
+    // notify the renderer of the size change
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    // update the camera
+    camera.aspect   = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    // update other two canvases
+    CANVAS_HUD.width = CANVAS.width = renderer.domElement.width;
+    CANVAS_HUD.height = CANVAS.height = renderer.domElement.height;
+    // update lineCap & lineJoin
+    PAPER.lineCap = STYLE.cap;
+    PAPER.lineJoin = STYLE.join;
+    hudCtx.lineWidth = 1.5;
+}
+size_and_style();
+
 //
 // INIT
 //
@@ -300,26 +312,14 @@ window.onload = function() {
             }
             for ( var scenario in ignores ) { if (ignores[scenario]()) { return false; } }
 
-            var result = MODULES.toggleModuleByKey( key );
-        
-            if (result.type === URNDR.COMMAND_MODULE) {
+            event.preventDefault();
 
-                event.preventDefault();
+            var response = MODULES.trigger( event );
 
-                var msg = result.func()
-
-                HUD.display(result.name , msg )
-
-            } else if (result !== 0) {
-
-                event.preventDefault();
-
-                HUD.display(result.name,( result.enabled ? "ON" : "OFF" ));
-
-            } else {
-
+            if (response === 0) {
                 HUD.display("key_pressed: "+key);
-
+            } else {
+                HUD.display(response.module.name, response.message);
             }
 
     });
@@ -330,7 +330,7 @@ window.onload = function() {
         U3.update();
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER} );
+        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER, hud_context: hudCtx} );
 
         STROKES.rebuildQuadTree();
         

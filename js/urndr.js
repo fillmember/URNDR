@@ -146,28 +146,76 @@ URNDR.Rectangle = function(x,y,w,h,ref) {
 
 // Module
 URNDR.Module = function(n,t,k,e) {
+
+    // Parameter Control
+    var _name, _type, _keycode, _enabled;
+    if (e == undefined) {
+        _enabled = false
+        if (typeof k == "number") {
+            _keycode = k
+        } else {
+            // don't assign keycode
+            _enabled = k
+            _keycode = false;
+        }
+    } else {
+        _enabled = e
+        _keycode = k
+    }
+    _type = t
+    _name = n
+
+    // Properties that will always be
     this.id = "MOD-"+THREE.Math.generateUUID()
     this.priority = 1
-    this.type = t
-    this.name = n
-    this.enabled = false
-    //
-    if ( typeof k === "boolean" && e === undefined ) {
-        // no keycode data is sent
-        this.enabled = k
-    } else {
-        if (typeof k === "number") { this.keyCode = k }
-        if (typeof e === "boolean" && t !== URNDR.COMMAND_MODULE) { this.enabled = e }
+    this.enabled = _enabled;
+    this.type = _type
+    this.name = _name
+    this.timeControlObject = {
+        then: Date.now(),
+        interval: 40
     }
+    this.func = function(){};
+
+    // Properties that could be
+    if (_type != URNDR.COMMAND_MODULE) {
+        this.listener = function(){};
+    }
+    if (_keycode) {
+        this.keyCode = _keycode;
+    }
+
 }
 URNDR.Module.prototype = {
+    get timeControl () {
+        var obj = this.timeControlObject,
+            now = Date.now(), 
+            delta = now - obj.then;
+        if (delta < obj.interval) {
+            return false;
+        } else {
+            obj.then = now - (delta % obj.interval);
+            return true;
+        }
+    },
+    set interval (v) {
+        this.timeControlObject.interval = v;
+    },
+    set settings ( s ) {
+        this.configuration = s;
+        this.initialConfiguration = Object.create(s);
+    },
+    get settings () {
+        return this.configuration;
+    },
     setFunction: function( f ) { this.func = f },
     getFunction: function() { return this.func },
     setConfiguration: function( s ) {
         this.configuration = s;
         this.initialConfiguration = Object.create( this.configuration )
     },
-    getConfiguration: function() { return this.configuration }
+    getConfiguration: function() { return this.configuration },
+    receive: function( event ) { return this.listener( event ) }
 }
 
 // Module Manager
@@ -181,11 +229,13 @@ URNDR.ModuleManager = function() {
     
     this.KEY_PREFIX = "key";
     this.key_map = {};
+
+    this.counter = 0;
     
     // functions
     this.setKeyMap = function( keyCode , id ) {
 
-        this.key_map[ this.KEY_PREFIX + keyCode ] = { id: id }
+        this.key_map[ this.KEY_PREFIX + keyCode ] = id;
 
     }
 
@@ -241,33 +291,46 @@ URNDR.ModuleManager = function() {
         }
         return false
     }
+    this.trigger = function (evt) {
+        var keyCode = evt.keyCode || evt.charCode,
+            module = this.getModuleIDbyKey(keyCode);
 
-    this.toggleModuleByKey = function (keyCode) {
-
-        var mod_ref = this.getModuleIDbyKey(keyCode);
-        
-        if ( ! mod_ref ) { return 0; }
-        
-        var module = this.getModule(mod_ref.id);
-
-        switch( module.type ) {
-
-            case URNDR.COMMAND_MODULE:
-                return { type: URNDR.COMMAND_MODULE , name: module.name , func: module.getFunction() }
-                break;
+        if ( module ) {
             
-            case URNDR.DRAW_MODULE:
-                this.soloModule( module );
-                return { name: module.name , enabled : module.enabled }
-                break;
+            module = this.getModule( module );
             
-            default:
-                module.enabled = ! module.enabled;
-                return { name: module.name , enabled : module.enabled }
-                break;
+            var response = {module: module};
+            
+            switch( module.type ) {
+            
+                case URNDR.COMMAND_MODULE:
+                    response.message = module.func( evt );
+                    break;
+            
+                case URNDR.DRAW_MODULE:
+                    this.soloModule( module )
+                    response.message = "Activated";
+                    break;
+
+                // every other kind of modules (realtime modules & such...)
+                default:
+                    module.enabled = ! module.enabled;
+                    _msg = module.receive( evt );
+                    response.message = module.enabled ? "ON" : "OFF";
+                    if (_msg) {
+                        response.message += " : " + _msg;
+                    }
+                    break;
+            
+            }
+
+            return response
+            
+        } else {
+
+            return 0;
 
         }
-
     }
     this.soloModule = function( mod ) {
 
@@ -278,15 +341,16 @@ URNDR.ModuleManager = function() {
     this.runEnabledModulesInList = function (list_name, params) {
 
         var list = this[list_name];
-        var m;
+        var m,mod;
 
         for ( m in list ) {
-            if (list[m].enabled) {
-                list[m].func(params);
+            mod = list[m];
+            if (mod.enabled) {
+                if (mod.timeControl) {
+                    mod.func(params);
+                }
             }
         }
-
-        // return enabled_count;
 
     }
     this.getEnabledModulesCount = function( list_name ) {
@@ -1595,6 +1659,7 @@ URNDR.Helpers = {
         for ( i = 0 ; i < l ; i ++ ) { arr[i] += amp/2 - Math.random() * amp }
         return arr
     }
+
 }
 
 // EXTEND THREE.JS for connecting my custom objects.

@@ -61,7 +61,6 @@ def GetFaces():
     result = []
     faces = op.GetAllPolygons()
     for f in faces:
-        
         if f.d:
             result.append( 1 )
             result.append( f.a )

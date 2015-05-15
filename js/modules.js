@@ -31,21 +31,6 @@ eraser : function() {
     return module
 },
 
-amcd : function() {
-    var module = new URNDR.Module("auto move : change direction",URNDR.COMMAND_MODULE,188) // ,
-    module.setFunction(function() {
-        var m = MODULES.getModuleByName("auto move")
-        if (m) {
-            mm = m.getConfiguration()
-            mm.rotate_speed *= -1;
-            return mm.rotate_speed > 0 ? "right" : "left"
-        } else {
-            return "(module not found)"
-        }
-    })
-    return module
-},
-
 mover : function() {
     var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,81) // q
     module.setFunction(function() {
@@ -133,8 +118,10 @@ next_model : function() {
 },
 
 random_color_scheme : function() {
-    var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,16)
-    module.setFunction(function(){
+    var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,222)
+    module.setFunction(function( evt ){
+
+        var _msg = "";
 
         function _rgb( input ){ return "rgb("+input+")"; }
         function hslToRgb(h, s, l){
@@ -160,6 +147,7 @@ random_color_scheme : function() {
             }
 
             return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+
         }
 
         var _hue = Math.random();
@@ -173,29 +161,36 @@ random_color_scheme : function() {
         document.body.style.background = _rgb(primary);
         U3.scene.fog = new THREE.Fog( _rgb(primary), 3, 5 )
         U3.material.color = new THREE.Color( _rgb(pale) )
-        STROKES.eachStroke( function( stk ){
-            stk.eachPoint( function( pnt ){
-                f = 0.8;
-                rf = 1 - f;
-                pnt.R = Math.round(contrast[0] * f + Math.random() * contrast[0] * rf)
-                pnt.G = Math.round(contrast[1] * f + Math.random() * contrast[1] * rf)
-                pnt.B = Math.round(contrast[2] * f + Math.random() * contrast[2] * rf)
-                pnt.A = 1;
-            }, stk)
-            stk.tags = {};
-        } )
-        STYLE.color[0] = contrast[0]
-        STYLE.color[1] = contrast[1]
-        STYLE.color[2] = contrast[2]
-        return "";
+        // change color of strokes
+        if ( evt.shiftKey ) {
+            STROKES.eachStroke( function( stk ){
+                stk.eachPoint( function( pnt ){
+                    f = 0.8;
+                    rf = 1 - f;
+                    pnt.R = Math.round(contrast[0] * f + Math.random() * contrast[0] * rf)
+                    pnt.G = Math.round(contrast[1] * f + Math.random() * contrast[1] * rf)
+                    pnt.B = Math.round(contrast[2] * f + Math.random() * contrast[2] * rf)
+                    pnt.A = 1;
+                }, stk)
+                stk.tags = {};
+            } )
+            STYLE.color[0] = contrast[0]
+            STYLE.color[1] = contrast[1]
+            STYLE.color[2] = contrast[2]
+
+            _msg += "> stroke color"
+        }
+        return _msg;
     })
     return module;
 },
 
 color_b_und_w : function() {
-    var module = new URNDR.Module("B&W",URNDR.COMMAND_MODULE,191)
+    var module = new URNDR.Module("B&W",URNDR.COMMAND_MODULE,186)
     module.setConfiguration({bool:false})
-    module.setFunction(function(){
+    module.setFunction(function( evt ){
+
+        var _msg = ""
 
         function _rgb( input ){ return "rgb("+input+")"; }
         var primary,contrast,bool = module.getConfiguration().bool;
@@ -215,15 +210,19 @@ color_b_und_w : function() {
         document.body.style.background = _rgbPrimary;
         U3.scene.fog = new THREE.Fog( _rgbPrimary, 3, 5 )
         U3.material.color = new THREE.Color( _rgbContrast )
-        STROKES.eachStroke( function( stk ){
-            stk.eachPoint( function( pnt ){
-                pnt.R = pnt.G = pnt.B = contrast;
-            }, stk)
-        } )
-        STYLE.color[0] = STYLE.color[1] = STYLE.color[2] = contrast
+        // change color of strokes
+        if ( evt.shiftKey ) {
+            STROKES.eachStroke( function( stk ){
+                stk.eachPoint( function( pnt ){
+                    pnt.R = pnt.G = pnt.B = contrast;
+                }, stk)
+            } )
+            STYLE.color[0] = STYLE.color[1] = STYLE.color[2] = contrast
+            _msg += "> stroke color"
+        }
 
         module.setConfiguration({bool: bool})
-        return "";
+        return _msg;
     })
     return module;
 },
@@ -284,14 +283,38 @@ constant_moving_right : function(){
     module.setConfiguration({
         rotate_speed: 0.005,
         counter: 0,
+        change_radius: false,
         radius_speed: 0.02
     })
     module.setFunction(function(strokes){
-        var m = module.getConfiguration();
+        var m = module.settings;
         U3.rig.target_theta += m.rotate_speed;
-        U3.rig.target_radius = 6 + 1 * Math.cos(m.counter)
-        m.counter += m.radius_speed;
+        if (m.change_radius) {
+            U3.rig.target_radius = 6 + 1 * Math.cos(m.counter)
+            m.counter += m.radius_speed;
+        }
     })
+    module.listener = function( evt ) {
+        var meta = evt.metaKey,
+            _msg = "";
+        if (meta) {
+            module.enabled = true;
+            module.settings.change_radius = ! module.settings.change_radius;
+            if ( ! module.settings.change_radius ) {
+                U3.rig.target_radius = 5;
+                _msg += "[R X]"
+            } else {
+                _msg += "[R O]"
+            }
+        }
+        var shift = evt.shiftKey;
+        if (shift) {
+            module.enabled = true;
+            module.settings.rotate_speed *= -1;
+            _msg += module.settings.rotate_speed > 0 ? "[->]" : "[<-]";
+        }
+        return _msg;
+    }
     return module;
 },
 
@@ -511,7 +534,7 @@ default_draw_style : function() {
     module.setFunction(function(params){
 
         var settings = this.getConfiguration();
-        var strokes = params.strokes, ctx = params.context;
+        var strokes = params.strokes, ctx = params.context, hudCtx = params.hud_context;
         
         clear(1);
 
@@ -540,20 +563,27 @@ default_draw_style : function() {
             } , stk)
 
             if ( stk.selected ) {
+
+                var pnt = stk.getPoint(0);
+
                 hudCtx.strokeStyle = "#FF0"
                 hudCtx.beginPath();
-                var pnt = stk.getPoint(0);
                 hudCtx.moveTo( pnt.X , pnt.Y )
                 stk.eachPoint( function(pnt) {
+                
                     hudCtx.lineTo( pnt.X , pnt.Y )
                     hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
+                
                 } )
                 hudCtx.stroke();
+
             } else if ( stk.hovered ) {
+                
                 hudCtx.strokeStyle = "#FFF"
                 stk.eachPoint( function(pnt) {
                     hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
                 } )
+            
             }
 
             if (stk.closed) {
