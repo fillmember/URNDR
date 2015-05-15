@@ -355,10 +355,10 @@ move_drawing_with_3d_model : function() {
                 } else {
 
                     var near = stroke.getNearestPointWith( "FACE" , i );
-                    if (near instanceof Object) {
+                    if (near !== 0) {
 
-                        var before_present = near.before instanceof URNDR.Point;
-                        var after_present = near.after instanceof URNDR.Point;
+                        var before_present = near.before !== 0,
+                            after_present = near.after !== 0;
 
                         if ( before_present && after_present ) {
 

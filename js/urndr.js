@@ -553,10 +553,13 @@ URNDR.Stroke.prototype = {
         return this.points.length;
     },
     get flag_to_delete() {
+
         if (this.length < 1) { return false; }
         if (this._flag_to_delete === true) { return true; }
+        
         var sum_A = 0;
         var flag_invisible = true;
+        
         this.eachPoint(function(pnt){
             sum_A+=pnt.A
             if (flag_invisible) {
@@ -566,6 +569,7 @@ URNDR.Stroke.prototype = {
                 }
             }
         })
+        
         if (flag_invisible) { return true; }
         if (sum_A < 0.05) { return true; } else { return false; }
     },
@@ -860,7 +864,7 @@ URNDR.Stroke.prototype = {
             result.after = this.getPoint( after_me );
             result.after_distance = after_me - n;
         }
-        
+
         if (result.before_distance < result.after_distance) {
             result.nearest = result.before
             result.nearest_distance = result.before_distance
