@@ -225,13 +225,11 @@ PEN.addTool( new URNDR.PenTool({
 
 window.onresize = size_and_style;
 function size_and_style() {
-    var camera = U3.camera,
-        renderer = U3.renderer;
     // notify the renderer of the size change
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    U3.renderer.setSize( window.innerWidth, window.innerHeight );
     // update the camera
-    camera.aspect   = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    U3.camera.aspect   = window.innerWidth / window.innerHeight;
+    U3.camera.updateProjectionMatrix();
     // CavMan
     cavMan.resize(window.innerWidth,window.innerHeight)
 }

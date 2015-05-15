@@ -434,7 +434,7 @@ expand : function() {
             if (stk.center) {
                 stk.eachPoint( function( pnt, stk, j) {
                     var vector = new THREE.Vector2( pnt.X - stk.center.x, pnt.Y - stk.center.y ).normalize();
-                        vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.1, 5) )
+                        vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.15, 7) )
                     pnt.X += vector.x;
                     pnt.Y += vector.y;
                 }, stk )
@@ -446,24 +446,66 @@ expand : function() {
 
 smooth_data : function() {
     var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
-    module.interval = 80;
+    module.interval = 85;
     // 
-    module.setConfiguration({ length: 60, factor: 18 })
+    module.setConfiguration({ length: 60, factor: 13 })
     module.setFunction(function(strokes) {
-        
-        var settings = module.getConfiguration(),
-            tracks = ["S","X","Y"];
 
-        strokes.eachStroke( function( stroke ) { _smooth( stroke, tracks, settings ); } )
-        function _smooth( stroke, tracks, settings ) {
-            var i, len = tracks.length
-            tracks.forEach( function( symbol ){
-                var track = stroke.getTrack( symbol ),
-                    eArr = URNDR.Helpers.getLastElements( track , settings.length );
-                URNDR.Helpers.smoothArray( eArr , { factor: settings.factor, round : true } );
-                track = URNDR.Helpers.replaceLastElements( track , eArr );
-                stroke.setTrack( symbol , track );
-            } )
+        var mapLinear = THREE.Math.mapLinear,
+            clamp = THREE.Math.clamp;
+
+        strokes.eachStroke( function( stroke ) { _smooth( stroke ); } )
+        function _smooth( stroke ) {
+            stroke.eachPoint( function(cur,stk,i){ 
+
+                var prv = stk.getPoint(i - 1),
+                    nxt = stk.getPoint(i + 1);
+                if (prv == 0 || nxt == 0) { return 0; }
+                
+                var vprv = [prv.X - cur.X,prv.Y - cur.Y],
+                    vnxt = [nxt.X - cur.X,nxt.Y - cur.Y],
+                    dprv = prv.distanceTo( cur ),
+                    dnxt = nxt.distanceTo( cur ),
+                    cosa = (vprv[0] * vnxt[0] + vprv[1] * vnxt[1]) / (dprv * dnxt); // 180 > -1 & 0 > 1
+
+                // Smooth: agle less than 120 deg = PI * 0.75
+                var factor_1 = clamp( mapLinear( cosa , -0.5 , 1 , 0 , 0.1 ) , 0 , 0.1 ),
+                    factor_2 = factor_1 * 0.3;
+
+                cur.X += ( vprv[0] + vnxt[0] ) * factor_1;
+                cur.Y += ( vprv[1] + vnxt[1] ) * factor_1;
+
+                prv.X += - vprv[0] * factor_2;
+                prv.Y += - vprv[1] * factor_2;
+
+                nxt.X += - vnxt[0] * factor_2;
+                nxt.Y += - vnxt[1] * factor_2;
+
+            }, stroke )
+        }
+        function _smooth_by_distance( stroke ) {
+            stroke.eachPoint( function(cur,stk,i) {
+                if (cur.binded) { return 0; }
+                var prv = stk.getPoint(i - 1),
+                    nxt = stk.getPoint(i + 1);
+                if (prv == 0 || nxt == 0) { return 0; }
+                var vprv = [prv.X - cur.X,prv.Y - cur.Y],
+                    vnxt = [nxt.X - cur.X,nxt.Y - cur.Y];
+                var dprv = Math.abs( vprv[0] ) + Math.abs( vprv[1] ),
+                    dnxt = Math.abs( vnxt[0] ) + Math.abs( vnxt[1] );
+                var tp = dprv < 40 && dprv > 15,
+                    tn = dnxt < 40 && dnxt > 15;
+                if (tp || tn) {
+                    var flag = dprv > dnxt
+                    var fprv = flag ? 0.05 : 0.15
+                        fnxt = flag ? 0.15 : 0.05;
+                    cur.X += vprv[0] * fprv;
+                    cur.Y += vprv[1] * fprv;
+
+                    cur.X += vnxt[0] * fprv;
+                    cur.Y += vnxt[1] * fprv;
+                }
+            }, stroke )
         }
 
     })
@@ -501,7 +543,7 @@ fade_strokes : function() {
 
             }
 
-            n = Math.min(n + THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 2 ) , len);
+            n = Math.min(n + THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 3 ) , len);
 
             stroke.setTag("fade_strokes", n )
 

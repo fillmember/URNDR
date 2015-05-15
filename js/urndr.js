@@ -1047,7 +1047,7 @@ URNDR.Point.prototype = {
     },
     distanceTo: function( pnt ) {
 
-        return Math.sqrt( this.distanceToSquared( v ) );
+        return Math.sqrt( this.distanceToSquared( pnt ) );
 
     },
     updatePoint: function( input ) {
