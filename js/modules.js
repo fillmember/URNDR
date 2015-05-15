@@ -470,8 +470,9 @@ smooth_data : function() {
 
         strokes.eachStroke( function( stroke ) { _smooth( stroke ); } )
         function _smooth( stroke ) {
-            stroke.eachPoint( function(cur,stk,i){ 
+            stroke.eachPoint( function(cur,stk,i){
 
+                if (cur.binded) { return 0; }
                 var prv = stk.getPoint(i - 1),
                     nxt = stk.getPoint(i + 1);
                 if (prv == 0 || nxt == 0) { return 0; }
@@ -483,15 +484,19 @@ smooth_data : function() {
                     cosa = (vprv[0] * vnxt[0] + vprv[1] * vnxt[1]) / (dprv * dnxt); // 180 > -1 & 0 > 1
 
                 // Smooth: agle less than 120 deg = PI * 0.75
-                var factor_1 = clamp( mapLinear( cosa , -0.5 , 1 , 0 , 0.1 ) , 0.02 , 0.1 ),
+                var factor_1 = clamp( mapLinear( cosa , -0.5 , 1 , 0 , 0.1 ) , 0.01 , 0.1 ),
                     factor_2 = factor_1 * 0.3;
 
                 cur.X += ( vprv[0] + vnxt[0] ) * factor_1;
                 cur.Y += ( vprv[1] + vnxt[1] ) * factor_1;
-                prv.X += - vprv[0] * factor_2;
-                prv.Y += - vprv[1] * factor_2;
-                nxt.X += - vnxt[0] * factor_2;
-                nxt.Y += - vnxt[1] * factor_2;
+                if (!prv.binded) {
+                    prv.X += - vprv[0] * factor_2;
+                    prv.Y += - vprv[1] * factor_2;
+                }
+                if (!nxt.binded) {
+                    nxt.X += - vnxt[0] * factor_2;
+                    nxt.Y += - vnxt[1] * factor_2;
+                }
 
             }, stroke )
         }
@@ -524,18 +529,21 @@ fade_strokes : function() {
             var n = stroke.getTag("fade_strokes");
             if (n > 0 === false) { n = 0; }
 
-            var len = stroke.length;
+            var len = stroke.length,
+                step = THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 3 ),
+                stepc = 2 * step / len;
             for ( var i = 0; i < len; i++ ) {
 
                 if ( i < n ) {
-                    stroke.points[ i ].A = stroke.points[ i ].A < 0.05 ? 0 : stroke.points[ i ].A * THREE.Math.mapLinear( settings.speed , 1 , 5 , 1 , 0.6)
+                    var pnt = stroke.points[ i ];
+                    pnt.A = pnt.A < 0.05 ? 0 : pnt.A * THREE.Math.mapLinear( settings.speed , 1 , 5 , 1 , 0.6)
                 } else {
                     break;
                 }
 
             }
 
-            n = Math.min(n + THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 3 ) , len);
+            n = Math.min( n + step , len);
 
             stroke.setTag("fade_strokes", n )
 
@@ -544,12 +552,15 @@ fade_strokes : function() {
     })
     module.listener = function( evt ) {
         var m = this.settings;
-        m.toggle = (m.toggle + 1) % 5
-        m.speed = m.toggle + 1;
-        if (m.speed == 1) {
-            this.enabled = false;
+        if (evt.shiftKey) {
+            m.toggle = (m.toggle + 1) % 5
         } else {
-            this.enabled = true;
+            m.toggle = m.toggle >= 1 ? 0 : 1;
+        }
+        m.speed = m.toggle + 1;
+        this.enabled = true;
+        if (m.speed === 1) {
+            this.enabled = false;
         }
         return "S" + m.toggle;
     }
@@ -712,8 +723,4 @@ function getAlphaFactor( pnt, stk, i ){
 
     return 1
 
-}
-
-function getAlphaFactor2( pnt, stk, i ) {
-    return getAlphaFactor(pnt, stk, i) > 0.5 ? 1 : 0;
 }

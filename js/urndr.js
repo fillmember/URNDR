@@ -1610,7 +1610,7 @@ URNDR.ThreeManager.prototype = {
         rig.theta += ( rig.target_theta - rig.theta ) * rig.speed;
         rig.pitch += ( rig.target_pitch - rig.pitch ) * rig.speed;
         rig.radius += ( rig.target_radius - rig.radius ) * rig.speed;
-        
+
         U3.camera.position.z = Math.sin( rig.theta ) * rig.radius;
         U3.camera.position.x = Math.cos( rig.theta ) * rig.radius;
         U3.camera.position.y = THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )
@@ -1747,7 +1747,8 @@ THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
     N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
-    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.57, 1, 0 )
+    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 )
+    // result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.57, 1, 0 )
     result = THREE.Math.clamp( result, 0, 1 )
 
     return result;
