@@ -6,6 +6,47 @@ URNDR.POINT_MODULE = "POINT_MODULES"
 URNDR.STROKE_MODULE = "STROKE_MODULES"
 URNDR.DRAW_MODULE = "DRAW_MODULES"
 
+// CanvasManager
+
+URNDR.CanvasManager = function(){
+    this.list = {};
+}
+URNDR.CanvasManager.prototype = {
+    add: function( domElement , name , context ) {
+        this.list[name] = {};
+        this.list[name].element = domElement
+        this.list[name].context = domElement.getContext( context );
+    },
+    get: function( str ) {
+        return this.list[str];
+    },
+    each: function( func ) {
+        for ( var n in this.list ) {
+            func( this.list[n] )
+        }
+    },
+    resize: function( w , h ) {
+        this.each( function(item) {
+            var _cap = item.context.lineCap,
+                _join = item.context.lineJoin;
+            item.element.width = w;
+            item.element.height = h;
+            item.context.lineCap = _cap;
+            item.context.lineJoin = _join;
+        } )
+    },
+    set lineCap (v) {
+        this.each( function( item ) {
+            item.context.lineCap = v;
+        } )
+    },
+    set lineJoin (v) {
+        this.each( function( item ) {
+            item.context.lineJoin = v;
+        } )
+    }
+}
+
 // QuadTree
 // source: http://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374
 URNDR.QuadTree = function( pLevel , pBounds) {
@@ -173,7 +214,7 @@ URNDR.Module = function(n,t,k,e) {
     this.name = _name
     this.timeControlObject = {
         then: Date.now(),
-        interval: 40
+        interval: 25
     }
     this.func = function(){};
 

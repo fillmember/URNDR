@@ -232,6 +232,7 @@ color_b_und_w : function() {
 
 random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
+    module.interval = 70;
     module.setFunction(function(STYLE) {
         STYLE.color[0] = URNDR.Helpers.randomNumber(255,{round: true});
         STYLE.color[1] = URNDR.Helpers.randomNumber(255,{round: true});
@@ -245,6 +246,7 @@ random_stroke_color : function() {
 random_point_position : function() {
     var module = new URNDR.Module("Random Point",URNDR.POINT_MODULE,68);
     // 
+    module.interval = 10;
     module.setConfiguration({amp : 60})
     module.setFunction(function( point ) {
         var amp = this.getConfiguration().amp;
@@ -262,7 +264,8 @@ random_point_position : function() {
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,false);
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
+    module.interval = 10;
     module.setConfiguration( {
         min_size : 5,
         max_size : 80
@@ -280,6 +283,7 @@ pressure_sensitivity : function() {
 
 constant_moving_right : function(){
     var module = new URNDR.Module("auto move",URNDR.STROKE_MODULE,190,false);
+    module.interval = 16;
     module.setConfiguration({
         rotate_speed: 0.005,
         counter: 0,
@@ -320,6 +324,7 @@ constant_moving_right : function(){
 
 delete_flagged_strokes : function(){
     var module = new URNDR.Module("delete flagged strokes",URNDR.STROKE_MODULE,99,true);
+    module.interval = 1000;
     module.setFunction( function(strokes){
         var strokes_to_delete = [];
         strokes.eachStroke(function(stk){
@@ -337,6 +342,7 @@ delete_flagged_strokes : function(){
 
 move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
+    module.interval = 35;
     module.setConfiguration({
         delayFactor : 0.2
     })
@@ -420,7 +426,7 @@ move_drawing_with_3d_model : function() {
 },
 
 expand : function() {
-    var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,999,false); // g
+    var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,71,false); // g
     module.setConfiguration({ speed : 2 });
     module.setFunction(function(strokes){
         var s = this.getConfiguration();
@@ -440,6 +446,7 @@ expand : function() {
 
 smooth_data : function() {
     var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
+    module.interval = 80;
     // 
     module.setConfiguration({ length: 60, factor: 18 })
     module.setFunction(function(strokes) {
@@ -465,6 +472,7 @@ smooth_data : function() {
 
 fade_strokes : function() {
     var module = new URNDR.Module("Fade Strokes",URNDR.STROKE_MODULE,70,false);
+    module.interval = 40;
     module.setConfiguration({ all : true , speed : 1.5 })
     module.setFunction(function(strokes) {
 
@@ -505,6 +513,7 @@ fade_strokes : function() {
 
 wiggle : function() {
     var module = new URNDR.Module("Wiggle",URNDR.STROKE_MODULE,90) // z
+    module.interval = 65;
     module.setConfiguration({ amp : 8, all : true })
     module.setFunction(function(strokes) {
         var settings = module.getConfiguration()
@@ -530,6 +539,7 @@ wiggle : function() {
 
 default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
+    module.interval = 20;
     module.setConfiguration( {fillmember:false} )
     module.setFunction(function(params){
 

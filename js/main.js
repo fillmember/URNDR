@@ -24,11 +24,18 @@ var CANVAS = document.getElementById('canvas_urndr');
 var PAPER = CANVAS.getContext("2d");
 var CANVAS_HUD = document.getElementById('canvas_hud');
 var hudCtx = CANVAS_HUD.getContext("2d");
+
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 var MODULES = new URNDR.ModuleManager();
 var PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM );
 var STROKES = new URNDR.Strokes( CANVAS );
 var STYLE = new URNDR.StrokeStyle();
+
+var cavMan = new URNDR.CanvasManager();
+cavMan.add( document.getElementById('canvas_urndr') , "draw" , "2d" )
+cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
+cavMan.lineCap = STYLE.cap;
+cavMan.lineJoin = STYLE.join;
 
 //
 // PenTools
@@ -225,13 +232,8 @@ function size_and_style() {
     // update the camera
     camera.aspect   = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    // update other two canvases
-    CANVAS_HUD.width = CANVAS.width = renderer.domElement.width;
-    CANVAS_HUD.height = CANVAS.height = renderer.domElement.height;
-    // update lineCap & lineJoin
-    PAPER.lineCap = STYLE.cap;
-    PAPER.lineJoin = STYLE.join;
-    hudCtx.lineWidth = 1.5;
+    // CavMan
+    cavMan.resize(window.innerWidth,window.innerHeight)
 }
 size_and_style();
 
