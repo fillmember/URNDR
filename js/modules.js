@@ -234,9 +234,9 @@ random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
     module.interval = 70;
     module.setFunction(function(STYLE) {
-        STYLE.color[0] = URNDR.Helpers.randomNumber(255,{round: true});
-        STYLE.color[1] = URNDR.Helpers.randomNumber(255,{round: true});
-        STYLE.color[2] = URNDR.Helpers.randomNumber(255,{round: true});
+        STYLE.color[0] = URNDR.Math.random(255,{round: true});
+        STYLE.color[1] = URNDR.Math.random(255,{round: true});
+        STYLE.color[2] = URNDR.Math.random(255,{round: true});
     })
     return module
 },
@@ -251,13 +251,13 @@ random_point_position : function() {
     module.setFunction(function( point ) {
         var amp = this.getConfiguration().amp;
         var half = amp/2
-        point.X += half - URNDR.Helpers.randomNumber(amp);
-        point.Y += half - URNDR.Helpers.randomNumber(amp);
+        point.X += half - URNDR.Math.random(amp);
+        point.Y += half - URNDR.Math.random(amp);
         // also mess with barycentric coordinate.
         if (point.BU || point.BV || point.BW) {
-            point.BU += 0.2 - 0.4 * URNDR.Helpers.randomNumber(1)
-            point.BV += 0.2 - 0.4 * URNDR.Helpers.randomNumber(1)
-            point.BW += 0.2 - 0.4 * URNDR.Helpers.randomNumber(1)
+            point.BU += 0.2 - 0.4 * URNDR.Math.random(1)
+            point.BV += 0.2 - 0.4 * URNDR.Math.random(1)
+            point.BW += 0.2 - 0.4 * URNDR.Math.random(1)
         }
     })
     return module
@@ -339,7 +339,9 @@ delete_flagged_strokes : function(){
                 }
             }
         })
-        for (var i in strokes_to_delete) { strokes.deleteStrokeByID( strokes_to_delete[i] ) }
+        for ( var i = 0, max = strokes_to_delete.length; i < max; i++) {
+            strokes.deleteStrokeByID( strokes_to_delete[i] );
+        }
     })
     return module;
 },
@@ -530,8 +532,7 @@ fade_strokes : function() {
             if (n > 0 === false) { n = 0; }
 
             var len = stroke.length,
-                step = THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 3 ),
-                stepc = 2 * step / len;
+                step = THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 3 );
             for ( var i = 0; i < len; i++ ) {
 
                 if ( i < n ) {
@@ -583,14 +584,14 @@ wiggle : function() {
         settings.amp = THREE.Math.mapLinear( U3.speed , 0 , 60 , 2 , 12 )
         module.interval = THREE.Math.mapLinear( U3.speed , 0 , 60 , 100 , 40 )
         //
-        for (var st in target_strokes) {
+        for (var st = 0, max = target_strokes.length; st < max; st ++ ) {
             stroke_k = strokes.getStrokeByID( target_strokes[st] )
-            stroke_k.setTrack( "X" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("X") , settings.amp ) )
-            stroke_k.setTrack( "Y" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("Y") , settings.amp ) )
+            stroke_k.setTrack( "X" , URNDR.Helpers.randomizeArray( stroke_k.getTrack("X") , settings.amp ) )
+            stroke_k.setTrack( "Y" , URNDR.Helpers.randomizeArray( stroke_k.getTrack("Y") , settings.amp ) )
             var bamp = settings.amp * 0.001;
-            stroke_k.setTrack( "BU" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BU") , bamp ) )
-            stroke_k.setTrack( "BV" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BV") , bamp ) )
-            stroke_k.setTrack( "BW" , URNDR.Helpers.randomiseArray( stroke_k.getTrack("BW") , bamp ) )
+            stroke_k.setTrack( "BU" , URNDR.Helpers.randomizeArray( stroke_k.getTrack("BU") , bamp ) )
+            stroke_k.setTrack( "BV" , URNDR.Helpers.randomizeArray( stroke_k.getTrack("BV") , bamp ) )
+            stroke_k.setTrack( "BW" , URNDR.Helpers.randomizeArray( stroke_k.getTrack("BW") , bamp ) )
         }
     })
     return module

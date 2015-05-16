@@ -65,7 +65,7 @@ URNDR.QuadTree.prototype = {
     clear : function() {
         
         this.objects = []
-        for (var i = 0; i < this.nodes.length; i++) {
+        for (var i = 0, max = this.nodes.length; i < max; i++) {
             if (this.nodes[i] !== null) {
                 this.nodes[i].clear()
                 this.nodes[i] = null
@@ -478,7 +478,7 @@ URNDR.Strokes.prototype = {
         // return: array contains Point objects
         var rects = this.quadTree.retrieve( [], rect )
         var result = [];
-        for (var r in rects) {
+        for (var r = 0, max = rects.length; r < max; r ++) {
             result.push( rects[r] )
         }
 
@@ -923,9 +923,8 @@ URNDR.Stroke.prototype = {
 
     },
     eachPoint: function( my_function , parameters ) {
-        var len = this.length
         var arr = this.points.slice(0)
-        for (var j = 0; j < len; j++ ) {
+        for (var j = 0, len = this.length; j < len; j++ ) {
             my_function( arr[ j ] , parameters , j )
         }
     },
@@ -1286,94 +1285,6 @@ URNDR.Hud.prototype = {
     }
 }
 
-// FramesManager
-URNDR.FramesManager = function() {
-    this.data = {};
-    this.KEY_PREFIX = "f";
-    this.DEFAULT_FRAME_NAME = "Frame";
-    this.DEFAULT_FRAME_TYPE = "keyframe";
-    this.DEFAULT_FRAME_DURATION = 1;
-    this.activeFrame = 0;
-}
-URNDR.FramesManager.prototype = {
-    getFrame : function ( frame_n ) {
-        var f = this.KEY_PREFIX+frame_n;
-        if ( this.data.hasOwnProperty(f) ) {
-            return this.data[f];
-        } else {
-            return false;
-        }
-    },
-    getFramesCount : function() {
-        return Object.keys(this.data).length;
-    },
-    setFrame : function ( frame_n , data ) {
-        var this_frame = this.getFrame(frame_n);
-        if (this_frame) {
-            if (data === undefined) return HUD.display("Error","Set exisiting frame "+frame_n+" but without data. ")
-            for( var p in this_frame ){ if( data.hasOwnProperty(p) ) { this_frame[p] = data[p]; } }
-        } else {
-            this.createNewFrame(frame_n, data);
-        }
-    },
-    deleteFrame : function ( frame_n ) {
-        try {
-            delete this.data[this.KEY_PREFIX + frame_n]
-            return true;
-        } catch (error) {
-            console.log(error)
-            return false;
-        }
-    },
-    clearFrame : function ( frame_n ) {
-        var f = getFrame(frame_n)
-        if (f) {
-            f.strokes_data = null;
-        } else {
-            return false;
-        }
-    },
-    createNewFrame : function ( frame_n , data ) {
-        this.data[this.KEY_PREFIX + frame_n] = this.createFrameInstance( data );
-    },
-    createFrameInstance : function ( data ) {
-        var obj = {
-            frame_name : this.DEFAULT_FRAME_NAME,
-            frame_type : this.DEFAULT_FRAME_TYPE,
-            frame_duration : this.DEFAULT_FRAME_DURATION,
-            strokes_data : {}
-        };
-        if(data) { for ( var p in obj ){ if( data.hasOwnProperty(p) ){ obj[p] = data[p] } } }
-        return obj;
-    },
-    getNearestFrameNumber : function ( frame_n , direction , frame_type ) {
-        var keys,leng,pos;
-            keys = Object.keys(this.data).sort();
-            leng = keys.length;
-        if (leng === 0) return false;
-            pos = keys.indexOf( this.KEY_PREFIX + frame_n );
-        if (pos === keys.length - 1 ) return false;
-        if (pos === 0) return false;
-        return pos + direction;
-    },
-    requestCanvasExport : function() {
-        var req = new XMLHttpRequest();
-        var i = new Date().getTime();
-        var data = PAPER.toDataURL();
-            data = 'data=' + encodeURIComponent(data) + '&i=' + i;
-        req.open('post','php/saveframe.php')
-        req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        req.setRequestHeader("Content-length", data.length);
-        req.setRequestHeader("Connection", "close");
-        req.onreadystatechange = function() {
-            if (req.readyState === 4 && req.status === 200) {
-                console.log("Request done for frame " + i)
-            }
-        }
-        req.send(data)
-    }
-}
-
 // StrokeStyle
 URNDR.StrokeStyle = function() {
     this.cap = "round";
@@ -1652,47 +1563,13 @@ URNDR.Math = {
         w = (d00 * d21 - d01 * d20) * denom;
         u = 1 - v - w;
         return [u,v,w];
-    }
-}
-
-// Helper
-URNDR.Helpers = {
-
-    replaceLastElements : function(arr,rep) {
-        var l = arr.length, 
-            n = rep.length;
-
-        if ( l <= n ) {
-            arr = rep.slice( 0 , l );
-        } else {
-            arr = arr.slice( 0 , l - n ).concat(rep);
-        }
-
-        return arr;
     },
 
-    getLastElements : function(arr,n) {
-
-        if (n > arr.length) { return Object.create(arr); }
-
-        return arr.slice( - n );
-
-    },
-
-    smoothArray : function(arr,params) {
-        var l = arr.length;
-        for ( var i = 1 ; i < l - 1 ; i ++ ) {
-            arr[i] = (arr[i-1] + arr[i] * params.factor + arr[i+1]) / (params.factor + 2);
-            if (params.round) { arr[i] = Math.round(arr[i]); }
-        }
-    },
-
-    randomNumber : function(number,params) {
+    random : function(number,params) {
 
         if (!number) { number = 1; }
         
-        var result;
-            result = number * Math.random();
+        var result = number * Math.random();
         
         if (params) {
             if (params.round) result = Math.round(result);
@@ -1700,12 +1577,19 @@ URNDR.Helpers = {
 
         return result
     
-    },
+    }
 
-    randomiseArray : function(arr , amp) {
-        var l = arr.length;
+}
+
+// Helper
+URNDR.Helpers = {
+
+    randomizeArray : function(arr , amp) {
         if (!amp) {amp = 10;}
-        for ( i = 0 ; i < l ; i ++ ) { arr[i] += amp/2 - Math.random() * amp }
+        var half = amp * 0.5;
+        for ( var i = 0, l = arr.length; i < l; i ++ ) {
+            arr[i] += half - Math.random() * amp
+        }
         return arr
     }
 
@@ -1714,41 +1598,49 @@ URNDR.Helpers = {
 // EXTEND THREE.JS for connecting my custom objects.
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 
-    var geo = this.geometry;
+    var geo = this.geometry,
+        flu = this.morphTargetInfluences;
 
-    if ( ! this.morphTargetInfluences || ! geo.morphTargets ) {
-        return geo.vertices[ vertex_index ].clone();
+    if ( flu && geo.morphTargets ) {
+        
+        if (geo.morphTargets.length > 0) {
+            
+            var result = new THREE.Vector3(),
+                sum = 0;
+            
+            for ( var i = 0, max = geo.morphTargets.length; i < max; i ++ ) {
+                var vert = geo.morphTargets[ i ].vertices[ vertex_index ];
+                result.x += vert.x * flu[ i ]
+                result.y += vert.y * flu[ i ]
+                result.z += vert.z * flu[ i ]
+                sum += flu[ i ]
+            }
+            
+            if ( sum != 0 ) {
+                return result
+            }
+
+        }
+
     }
 
-    var target_count = geo.morphTargets.length,
-        influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
-
-    if ( target_count === 0 || influence_sum === 0 ) {
-        return geo.vertices[ vertex_index ].clone();
-    }
-
-    // compute the vertex by morphTargets. 
-    var result = new THREE.Vector3();
-    for ( var i = 0; i < target_count; i++ ) {
-        result.add( geo.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
-    }
-
-    return result;
+    return geo.vertices[ vertex_index ].clone();
 
 }
-THREE.Camera.prototype.calculateLookAtVector = function() { this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion ); }
+THREE.Camera.prototype.updateLookAtVector = function() {
+    this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
+}
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (obj.visible === false) { return 0; }
 
-    this.calculateLookAtVector();
+    this.updateLookAtVector();
 
     var normalMatrix, N, result;
 
     normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
     N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
     result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 )
-    // result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.57, 1, 0 )
     result = THREE.Math.clamp( result, 0, 1 )
 
     return result;
