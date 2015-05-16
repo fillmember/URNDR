@@ -20,15 +20,8 @@ document.body.appendChild( U3.renderer.domElement );
 // OBJECTS
 //
 
-var CANVAS = document.getElementById('canvas_urndr');
-var PAPER = CANVAS.getContext("2d");
-var CANVAS_HUD = document.getElementById('canvas_hud');
-var hudCtx = CANVAS_HUD.getContext("2d");
-
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 var MODULES = new URNDR.ModuleManager();
-var PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM );
-var STROKES = new URNDR.Strokes( CANVAS );
 var STYLE = new URNDR.StrokeStyle();
 
 var cavMan = new URNDR.CanvasManager();
@@ -36,6 +29,9 @@ cavMan.add( document.getElementById('canvas_urndr') , "draw" , "2d" )
 cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
 cavMan.lineCap = STYLE.cap;
 cavMan.lineJoin = STYLE.join;
+
+var PEN = new URNDR.Pen( cavMan.get("draw").element , cavMan.get("hud").element , WACOM );
+var STROKES = new URNDR.Strokes( cavMan.get("draw").element );
 
 //
 // PenTools
@@ -96,24 +92,21 @@ PEN.addTool( new URNDR.PenTool({
         if (s < 0.1) {s = 0.1};
 
         var query = this.strokes.getFromQuadTree( pen.x, pen.y, s, s ),
-            pnt, 
-            dist_sq,
-            size_sq = s * this.style.brush_size * s * this.style.brush_size * 0.3,
+            pnt, dx, dy, dist_sq,
+            size_sq = s * this.style.brush_size * this.style.brush_size,
             power = 1 - s;
 
-        power = power > 0.5 ? 0.5 : power;
+        power = power > 0.75 ? 0.75 : power;
 
         for(var q in query) {
             pnt = query[q].reference.point;
-            dist_sq = ( pen.x - pnt.X )*( pen.x - pnt.X ) + ( pen.y - pnt.Y )*( pen.y - pnt.Y );
+            dx = pen.x - pnt.X; dy = pen.y - pnt.Y;
+            dist_sq = dx * dx + dy * dy;
             if ( dist_sq < size_sq ) {
-                if (pnt.A > 0.2) {
-                    pnt.A *= power;
-                } else {
-                    pnt.A = 0
-                }
+                pnt.A = pnt.A > 0.2 ? pnt.A * power : 0;
             }
         }
+
     }
 
 }));
@@ -130,7 +123,7 @@ PEN.addTool( new URNDR.PenTool({
 
         this.timer = setInterval( function(){
 
-            U3.rig.target_theta += pen.ndc_x * 0.1;
+            U3.rig.target_theta += pen.ndc_x * THREE.Math.clamp( THREE.Math.mapLinear( U3.speed , 30 , 60 , 0.1 , 0.2 ) , 0.1 , 0.2 );
             U3.rig.target_pitch = THREE.Math.mapLinear( pen.ndc_y, 1, -1, -2, 2 )
 
         } , 20)
@@ -330,7 +323,7 @@ window.onload = function() {
         U3.update();
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER, hud_context: hudCtx} );
+        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, canvasManager: cavMan } );
 
         STROKES.rebuildQuadTree();
         
@@ -339,23 +332,4 @@ window.onload = function() {
     }
     display();
 
-}
-
-//
-// HELPER FUNCTIONS
-//
-
-function clear(a) {
-    function func( ctx ){
-        if (a === 1) { ctx.clearRect(0,0,CANVAS.width,CANVAS.height)
-        } else {
-            ctx.save();
-            ctx.globalAlpha = a;
-            ctx.globalCompositeOperation = "destination-out";
-            ctx.fillRect(0,0,CANVAS.width,CANVAS.height);
-            ctx.restore();
-        }
-    }
-    func( PAPER )
-    func( hudCtx )
 }

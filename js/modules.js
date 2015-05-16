@@ -49,7 +49,7 @@ selector : function() {
 
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function(){
+    module.setFunction(function( evt ){
         STROKES.reset();
         return "";
     })
@@ -76,16 +76,25 @@ brush_size_down : function() {
 
 speed_up : function() {
     var module = new URNDR.Module("Speed Up",URNDR.COMMAND_MODULE,38)
-    module.setFunction(function(){
-        U3.speed = U3.speed <= 57.5 ? U3.speed + 2.5 : 60; return U3.speed;
+    module.setFunction(function( evt ){
+        var step = 2.5;
+        if (evt.shiftKey) {
+            step = 5;
+        }
+        U3.speed = U3.speed <= 57.5 ? U3.speed + step : 60;
+        return U3.speed;
     })
     return module
 },
 
 speed_down : function() {
     var module = new URNDR.Module("Speed Down",URNDR.COMMAND_MODULE,40)
-    module.setFunction(function(){
-        U3.speed = U3.speed >= 2.5 ? U3.speed - 2.5 : 0;
+    module.setFunction(function( evt ){
+        var step = 2.5;
+        if (evt.shiftKey) {
+            step = 5;
+        }
+        U3.speed = U3.speed >= step ? U3.speed - step : 0;
         return U3.speed;
     })
     return module
@@ -281,7 +290,7 @@ pressure_sensitivity : function() {
 
 // STROKE DATA MODULES
 
-constant_moving_right : function(){
+auto_rotation : function(){
     var module = new URNDR.Module("auto move",URNDR.STROKE_MODULE,190,false);
     module.interval = 16;
     module.setConfiguration({
@@ -298,7 +307,7 @@ constant_moving_right : function(){
             m.counter += m.radius_speed;
         }
         //
-        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.002 , 0.02 )
+        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.0001 , 0.08 )
         m.radius_speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.005 , 0.05 )
     })
     module.listener = function( evt ) {
@@ -606,9 +615,12 @@ default_draw_style : function() {
     module.setFunction(function(params){
 
         var settings = this.getConfiguration();
-        var strokes = params.strokes, ctx = params.context, hudCtx = params.hud_context;
+        var strokes = params.strokes, 
+            canvases = params.canvasManager,
+            ctx = canvases.get("draw").context, 
+            hudCtx = canvases.get("hud").context;
         
-        clear(1);
+        canvases.clear(1);
 
         function _fillmember( ctx, prv, pnt, factor ){
             if(settings.fillmember && pnt.A * factor > 0.1) {
