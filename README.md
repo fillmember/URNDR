@@ -1,4 +1,6 @@
-# URNDR
-Experimental Animation Tool
+# URNDR 之 畢業表演 VJ TOOL
+# URNDR - Graduation VJ TOOL
 
-How to look at 3D animation in a different way. 
+This branch is a subversion of URNDR, prepared to be used as VJ tool. 
+
+- - - - Experimental interaction - - - -
