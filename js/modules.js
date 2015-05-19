@@ -359,7 +359,7 @@ move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
     module.interval = 35;
     module.setConfiguration({
-        delayFactor : 0.2
+        delayFactor : 0.8
     })
     module.setFunction(function(strokes) {
 
@@ -455,9 +455,9 @@ expand : function() {
                         vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.15, 7) )
                     var binded = pnt.binded;
                     if (binded) {
-                        pnt.X += vector.x * 0.5;
-                        pnt.Y += vector.y * 0.5;
-                        pnt.refreshBinding( U3 )
+                        // pnt.X += vector.x * 0.5;
+                        // pnt.Y += vector.y * 0.5;
+                        // pnt.refreshBinding( U3 )
                     } else {
                         pnt.X += vector.x;
                         pnt.Y += vector.y;

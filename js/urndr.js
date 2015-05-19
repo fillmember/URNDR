@@ -1432,7 +1432,7 @@ URNDR.ThreeManager = function( arg ) {
     if (arg.fog) { this.scene.fog = arg.fog; }
     this.raycaster = new THREE.Raycaster();
     
-    this.material = arg.material || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
+    this.material = arg.material || new THREE.MeshBasicMaterial({morphTargets: true,color: 0x0000CC})
     this.material.index0AttributeName = "position";
     
     // controls

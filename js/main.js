@@ -8,7 +8,7 @@ var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
     material: new THREE.MeshBasicMaterial( {
-        color: 0xFFFFFF,
+        color: 0xCCCCCC,
         wireframe: true, 
         wireframeLinewidth: 5,
         morphTargets: true
@@ -25,10 +25,10 @@ var MODULES = new URNDR.ModuleManager();
 var STYLE = new URNDR.StrokeStyle();
 
 var cavMan = new URNDR.CanvasManager();
-cavMan.add( document.getElementById('canvas_urndr') , "draw" , "2d" )
-cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
-cavMan.lineCap = STYLE.cap;
-cavMan.lineJoin = STYLE.join;
+    cavMan.add( document.getElementById('canvas_urndr') , "draw" , "2d" )
+    cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
+    cavMan.lineCap = STYLE.cap;
+    cavMan.lineJoin = STYLE.join;
 
 var PEN = new URNDR.Pen( cavMan.get("draw").element , cavMan.get("hud").element , WACOM );
 var STROKES = new URNDR.Strokes( cavMan.get("draw").element );
