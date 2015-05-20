@@ -12,10 +12,7 @@ draw : function() {
 },
 
 hideModels : function() {
-    var module = new URNDR.Module("Toggle UI",URNDR.COMMAND_MODULE,72) // m = 77 // h = 72
-    module.setConfiguration({
-        $dom: $("#canvas_three")
-    })
+    var module = new URNDR.Module("Toggle UI",URNDR.COMMAND_MODULE,72) // h = 72
     module.setFunction(function() {
         $("#canvas_three,#HUD").fadeToggle();
         return "";
@@ -130,6 +127,8 @@ random_color_scheme : function() {
     var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,222)
     module.setFunction(function( evt ){
 
+        var round = Math.round, random = Math.random;
+
         var _msg = "";
 
         function _rgb( input ){ return "rgb("+input+")"; }
@@ -155,12 +154,12 @@ random_color_scheme : function() {
                 b = hue2rgb(p, q, h - 1/3);
             }
 
-            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+            return [round(r * 255), round(g * 255), round(b * 255)];
 
         }
 
-        var _hue = Math.random();
-        var _sat = Math.random();
+        var _hue = random();
+        var _sat = random();
         if (_sat < 0.2) { _sat = 0; }
         var primary = hslToRgb( _hue , _sat , 0.5 );
         var contrast = hslToRgb( (_hue + 0.5) % 1 , (_sat + 0.5) % 1 , 0.5 );
@@ -176,9 +175,9 @@ random_color_scheme : function() {
                 stk.eachPoint( function( pnt ){
                     f = 0.8;
                     rf = 1 - f;
-                    pnt.R = Math.round(contrast[0] * f + Math.random() * contrast[0] * rf)
-                    pnt.G = Math.round(contrast[1] * f + Math.random() * contrast[1] * rf)
-                    pnt.B = Math.round(contrast[2] * f + Math.random() * contrast[2] * rf)
+                    pnt.R = round(contrast[0] * f + random() * contrast[0] * rf)
+                    pnt.G = round(contrast[1] * f + random() * contrast[1] * rf)
+                    pnt.B = round(contrast[2] * f + random() * contrast[2] * rf)
                     pnt.A = 1;
                 }, stk)
                 stk.tags = {};
@@ -300,6 +299,9 @@ auto_rotation : function(){
         radius_speed: 0.02
     })
     module.setFunction(function(strokes){
+
+        var map = THREE.Math.mapLinear;
+
         var m = module.settings;
         U3.rig.target_theta += m.rotate_speed;
         if (m.change_radius) {
@@ -307,8 +309,8 @@ auto_rotation : function(){
             m.counter += m.radius_speed;
         }
         //
-        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.0001 , 0.08 )
-        m.radius_speed = THREE.Math.mapLinear( U3.speed , 0 , 60 , 0.005 , 0.05 )
+        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * map( U3.speed , 0 , 60 , 0.0001 , 0.08 )
+        m.radius_speed = map( U3.speed , 0 , 60 , 0.005 , 0.05 )
     })
     module.listener = function( evt ) {
         var meta = evt.metaKey,
@@ -336,7 +338,7 @@ auto_rotation : function(){
 },
 
 delete_flagged_strokes : function(){
-    var module = new URNDR.Module("delete flagged strokes",URNDR.STROKE_MODULE,99,true);
+    var module = new URNDR.Module("Garbage Collection",URNDR.STROKE_MODULE,99,true);
     module.interval = 1000;
     module.setFunction( function(strokes){
         var strokes_to_delete = [];
@@ -356,16 +358,13 @@ delete_flagged_strokes : function(){
 },
 
 move_drawing_with_3d_model : function() {
-    var module = new URNDR.Module("MAGIC 001: 3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
+    var module = new URNDR.Module("3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
     module.interval = 35;
     module.setConfiguration({
         delayFactor : 0.8
     })
     module.setFunction(function(strokes) {
 
-        var settings = this.getConfiguration()
-
-        // iterate time
         strokes.eachStroke( es , strokes );
         function es( stroke , strokes , i ) {
 
@@ -455,6 +454,7 @@ expand : function() {
                         vector.multiplyScalar( THREE.Math.mapLinear(s.speed, 1, 5, 0.15, 7) )
                     var binded = pnt.binded;
                     if (binded) {
+                        // Do nothing for now...
                         // pnt.X += vector.x * 0.5;
                         // pnt.Y += vector.y * 0.5;
                         // pnt.refreshBinding( U3 )
@@ -614,6 +614,55 @@ default_draw_style : function() {
     module.setConfiguration( {fillmember:false} )
     module.setFunction(function(params){
 
+        function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
+            ctx.beginPath();
+            ctx.strokeStyle = strokeStyle;
+            ctx.lineWidth = lineWidth;
+            ctx.moveTo( p0.X , p0.Y );
+            ctx.lineTo( p1.X , p1.Y );
+            ctx.stroke();
+        }
+
+        function getAlphaFactor( pnt, stk, i ){
+
+            if (pnt.OBJECT && pnt.FACE) {
+                            
+                return U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
+
+            } else {
+
+                var nearests = stk.getNearestPointWith( "FACE", i );
+
+                if (nearests !== 0) {
+
+                    var before_present = nearests.before != 0,
+                        after_present = nearests.after != 0;
+
+                    var vis_before = 1, vis_after = 1;
+
+                    if (before_present) {vis_before = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )}
+                    if (after_present) {vis_after = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )}
+
+                    if (before_present && after_present) {
+
+                        return (vis_before * nearests.after_distance + vis_after * nearests.before_distance) / ( nearests.after_distance + nearests.before_distance )
+
+                    } else if (before_present || after_present) {
+
+                        return before_present ? vis_before : vis_after;
+
+                    }
+
+                }
+
+            }
+
+            // The rest of the cases: stroke is totally without any binding. 
+
+            return 1
+
+        }
+
         var settings = this.getConfiguration();
         var strokes = params.strokes, 
             canvases = params.canvasManager,
@@ -654,11 +703,10 @@ default_draw_style : function() {
                 hudCtx.beginPath();
                 hudCtx.moveTo( pnt.X , pnt.Y )
                 stk.eachPoint( function(pnt) {
-                
                     hudCtx.lineTo( pnt.X , pnt.Y )
                     hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
-                
                 } )
+
                 hudCtx.stroke();
 
             } else if ( stk.hovered ) {
@@ -687,53 +735,3 @@ default_draw_style : function() {
 }
 
 } );
-
-// HELPERS
-function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
-    ctx.beginPath();
-    ctx.strokeStyle = strokeStyle;
-    ctx.lineWidth = lineWidth;
-    ctx.moveTo( p0.X , p0.Y );
-    ctx.lineTo( p1.X , p1.Y );
-    ctx.stroke();
-}
-
-function getAlphaFactor( pnt, stk, i ){
-
-    if (pnt.OBJECT && pnt.FACE) {
-                    
-        return U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
-
-    } else {
-
-        var nearests = stk.getNearestPointWith( "FACE", i );
-
-        if (nearests !== 0) {
-
-            var before_present = nearests.before != 0,
-                after_present = nearests.after != 0;
-
-            var vis_before = 1, vis_after = 1;
-
-            if (before_present) {vis_before = U3.camera.checkVisibility( nearests.before.OBJECT , nearests.before.FACE )}
-            if (after_present) {vis_after = U3.camera.checkVisibility( nearests.after.OBJECT , nearests.after.FACE )}
-
-            if (before_present && after_present) {
-
-                return (vis_before * nearests.after_distance + vis_after * nearests.before_distance) / ( nearests.after_distance + nearests.before_distance )
-
-            } else if (before_present || after_present) {
-
-                return before_present ? vis_before : vis_after;
-
-            }
-
-        }
-
-    }
-
-    // The rest of the cases: no points around / stroke is totally outside of 3D. 
-
-    return 1
-
-}

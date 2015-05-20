@@ -102,26 +102,33 @@ URNDR.QuadTree.prototype = {
     },
     split : function() {
 
-        var subWidth,subHeight,x,y
-            subWidth = this.bounds.width / 2
-            subHeight = this.bounds.height / 2
-            x = this.bounds.x
-            y = this.bounds.y
+        var w,h,x,y,lvl;
+        
+        lvl = this.level + 1;
+        w = this.bounds.width / 2;
+        h = this.bounds.height / 2;
+        x = this.bounds.x;
+        y = this.bounds.y;
 
-        this.nodes[0] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x + subWidth, y, subWidth, subHeight) )
-        this.nodes[1] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x, y, subWidth, subHeight) )
-        this.nodes[2] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x, y + subHeight, subWidth, subHeight) )
-        this.nodes[3] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x + subWidth, y + subHeight, subWidth, subHeight) )
+        var qt = URNDR.QuadTree, rect = URNDR.Rectangle;
+
+        this.nodes[0] = new qt( lvl, new rect(x + w, y    , w, h) )
+        this.nodes[1] = new qt( lvl, new rect(x    , y    , w, h) )
+        this.nodes[2] = new qt( lvl, new rect(x    , y + h, w, h) )
+        this.nodes[3] = new qt( lvl, new rect(x + w, y + h, w, h) )
 
     },
     getIndex : function(rect){
 
-        var index,verticalMidPoint,horizontalMidPoint,topQuadrant,bottomQuadrant
-            index = -1
-            verticalMidPoint = this.bounds.x + this.bounds.width / 2
-            horizontalMidPoint = this.bounds.y + this.bounds.height / 2
+        var index,verticalMidPoint,horizontalMidPoint,topQuadrant,bottomQuadrant;
+
+            index = -1;
+            verticalMidPoint = this.bounds.x + this.bounds.width * 0.5;
+            horizontalMidPoint = this.bounds.y + this.bounds.height * 0.5;
+
             // object can completely fit within the top quadrants
             topQuadrant = rect.y < horizontalMidPoint && rect.y + rect.height < horizontalMidPoint
+            
             // object can completely fit within the bottom quadrants
             bottomQuadrant = rect.y > horizontalMidPoint
 
@@ -403,7 +410,12 @@ URNDR.ModuleManager = function() {
     this.soloModule = function( mod ) {
 
         var list = this[mod.type];
-        for( var m in list ) { list[m].enabled = (list[m].id === mod.id) ? true : false }
+
+        for( var m in list ) {
+
+            list[m].enabled = (list[m].id === mod.id) ? true : false
+
+        }
 
     }
     this.runEnabledModulesInList = function (list_name, params) {
@@ -438,6 +450,7 @@ URNDR.Strokes = function( _canvas ){
     this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
     this.strokesHistory = []; // Store stroke ID. Record order of creation.
     this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
+
     // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
     this.active_stroke = 0;
     this.canvas = _canvas;
@@ -463,6 +476,7 @@ URNDR.Strokes.prototype = {
         // Create QuadTree
         var _qtw = this.canvas.canvasWidth || window.innerWidth, 
             _qth = this.canvas.canvasHeight || window.innerWidth;
+
         this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
 
         this.eachStroke( function(stk,strokes){
@@ -531,7 +545,7 @@ URNDR.Strokes.prototype = {
         }
 
     },
-    getLastStrokeInHistory: function() {
+    getLatestStroke: function() {
 
         return this.getStrokeByID( this.strokesHistory[ this.strokesHistory.length - 1 ] );
 
@@ -606,10 +620,6 @@ URNDR.Strokes.prototype = {
 
             delete this.strokes[id]
 
-        } else {
-
-            console.log("Warning : Stroke not found. Did nothing. ")
-
         }
 
     },
@@ -648,7 +658,6 @@ URNDR.Strokes.prototype = {
             console.log("")
         } else {
             console.log("Warning to developer : there's inconsistency between strokes and other two arrays! (slen,hlen,zlen) = (",slen,hlen,zlen,")");
-            console.log("Tips : Don't control strokes without Strokes object's interface. ");
         }
 
     },
@@ -710,6 +719,7 @@ URNDR.Stroke.prototype = {
 
         if ( arg instanceof URNDR.Point ) {
             // already a Point object, just push it
+            arg.parent = this;
             this.points.push( arg );
         } else {
             arg = arg != undefined ? arg : { parent: this };
@@ -752,9 +762,9 @@ URNDR.Stroke.prototype = {
     removePoint: function( point_n ) {
 
         if ( point_n >= 0 && point_n < this.length ) {
+
             this.points.splice( point_n , 1)
-        } else {
-            console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.length )
+
         }
 
     },
@@ -1172,15 +1182,29 @@ URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
 
     // event
     var this_pen = this
-    canvas_hud.addEventListener("mousedown", function(evt){  this_pen.onmousedown( this_pen, evt)  } );
-    canvas_hud.addEventListener("mouseup", function(evt){  this_pen.onmouseup( this_pen, evt)  } );
-    canvas_hud.addEventListener("mousemove", function(evt){  this_pen.onmousemove( this_pen, evt)  } );
-    canvas_hud.addEventListener("mouseout", function(evt){  this_pen.onmouseout( this_pen, evt)  } );
+    canvas_hud.addEventListener("mousedown", function(evt){
+        this_pen.onmousedown( this_pen, evt);
+    } );
+    canvas_hud.addEventListener("mouseup", function(evt){
+        this_pen.onmouseup( this_pen, evt);
+    } );
+    canvas_hud.addEventListener("mousemove", function(evt){
+        this_pen.onmousemove( this_pen, evt);
+    } );
+    canvas_hud.addEventListener("mouseout", function(evt){
+        this_pen.onmouseout( this_pen, evt);
+    } );
 }
 URNDR.Pen.prototype = {
-    get ndc_x() { return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 ); },
-    get ndc_y() { return this.ndc_y = THREE.Math.mapLinear( this.y , 0 , this.canvas.height , 1 , -1 ); },
-    get ndc() { return [ this.ndc_x, this.ndc_y ]; },
+    get ndc_x() {
+        return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 );
+    },
+    get ndc_y() {
+        return THREE.Math.mapLinear( this.y , 0 , this.canvas.height , 1 , -1 );
+    },
+    get ndc() {
+        return [ this.ndc_x, this.ndc_y ];
+    },
     set ndc( input ) {
         var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
         this.x = o.x; this.y = o.y;
@@ -1237,6 +1261,8 @@ URNDR.PenTool = function(parameters) {
     this.engage = parameters.engage || function(){};
     this.disengage = parameters.disengage || function(){};
     this.size = parameters.size || 5;
+
+    // this is a very weird hack to put parameters in...
     for (var p in parameters) {
         var flag = true
         // exclude these
@@ -1255,59 +1281,44 @@ URNDR.PenTool = function(parameters) {
 // Hud
 URNDR.Hud = function(box) {
     this.box = box;
-    this.messageStyle = { prefix : '<div class="argument">', suffix : '</div>', seperation : '' }
-    this.vocal = true;
-    this.devToDisplay = true;
-    this.msg_count = 0;
-    this.MAX_msg_count = 8;
+    this.style = {
+        prefix : '<div class="argument">',
+        suffix : '</div>',
+        space : ''
+    }
 }
 URNDR.Hud.prototype = {
     display: function() {
 
-        this.box.innerHTML = this.makeMessage( arguments[0] );
-        this.msg_count = 1;
+        this.box.innerHTML = this.wrap( arguments[0] );
 
         for (var i=1;i<arguments.length;i++) {
-            this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
-            this.msg_count += 1;
+            this.box.innerHTML += this.style.space + this.wrap( arguments[i] );
         }
 
     },
     appendToDisplay: function() {
         
         for (var i=0;i<arguments.length;i++) {
-            this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
-            this.msg_count += 1;
+            this.box.innerHTML += this.style.space + this.wrap( arguments[i] );
         }
 
     },
-    makeMessage: function(msg) {
+    wrap: function(msg) {
 
-        return this.messageStyle.prefix + msg + this.messageStyle.suffix;
+        return this.style.prefix + msg + this.style.suffix;
 
     },
-    clearDisplay: function() {
+    clear: function() {
 
         this.box.innerHTML = null;
-        this.msg_count = 0;
 
     },
-    setPosition: function(left,top) {
+    position: function(left,top) {
         
         var style = this.box.style
         style.left = left || style.left;
         style.top = top || style.top;
-
-    },
-    devChannel: function(msg) {
-
-        if (this.vocal) {
-            if (this.devToDisplay) {
-                this.appendToDisplay(msg)
-            } else {
-                console.log(msg)
-            }
-        }
 
     }
 }
@@ -1407,7 +1418,9 @@ URNDR.Model.prototype = {
     update: function( speed ) {
 
         if (this.active) {
-            if (this.animation) { this.animation.update( speed * this.speedFactor ) }
+            if (this.animation) {
+                this.animation.update( speed * this.speedFactor )
+            }
         }
 
     },
@@ -1432,7 +1445,9 @@ URNDR.ThreeManager = function( arg ) {
     if (arg.fog) { this.scene.fog = arg.fog; }
     this.raycaster = new THREE.Raycaster();
     
-    this.material = arg.material || new THREE.MeshBasicMaterial({morphTargets: true,color: 0x0000CC})
+    this.material = arg.material || new THREE.MeshBasicMaterial({
+        morphTargets: true,color: 0x0000CC
+    })
     this.material.index0AttributeName = "position";
     
     // controls
@@ -1654,22 +1669,16 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
     return geo.vertices[ vertex_index ].clone();
 
 }
-THREE.Camera.prototype.updateLookAtVector = function() {
-    this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion );
-}
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (obj.visible === false) { return 0; }
 
-    this.updateLookAtVector();
+    var map = THREE.Math.mapLinear, clamp = THREE.Math.clamp;
 
-    var normalMatrix, N, result;
+    var normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld ),
+        N = face.normal.clone().applyMatrix3( normalMatrix ).negate(), 
+        lookAtVector = new THREE.Vector3(0,0,-1).applyQuaternion(this.quaternion);
 
-    normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
-    N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
-    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 )
-    result = THREE.Math.clamp( result, 0, 1 )
-
-    return result;
+    return clamp( map( lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 ), 0, 1 );
 
 }

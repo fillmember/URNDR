@@ -30,7 +30,7 @@ var cavMan = new URNDR.CanvasManager();
     cavMan.lineCap = STYLE.cap;
     cavMan.lineJoin = STYLE.join;
 
-var PEN = new URNDR.Pen( cavMan.get("draw").element , cavMan.get("hud").element , WACOM );
+var PEN = new URNDR.Pen( cavMan.get("draw").element, cavMan.get("hud").element, WACOM );
 var STROKES = new URNDR.Strokes( cavMan.get("draw").element );
 
 //
@@ -298,12 +298,24 @@ window.onload = function() {
             key = event.keyCode || event.charCode
 
             ignores = {
-                CmdR : function() { return (key === 82) && event.metaKey },
-                mac_console : function() { return (key === 73) && event.metaKey && event.altKey; },
-                chrome_presentation_mode : function() { return (key === 70) && event.metaKey && event.shiftKey; },
-                full_screen : function() { return (key === 70) && event.ctrlKey && event.metaKey; }
+                refresh: function() {
+                    return (key === 82) && event.metaKey;
+                },
+                console: function() {
+                    return (key === 73) && event.metaKey && event.altKey;
+                },
+                fullscreen: function() {
+                    return (key === 70) && event.ctrlKey && event.metaKey;
+                },
+                fullscreen2: function() {
+                    return (key === 70) && event.metaKey && event.shiftKey;
+                },
             }
-            for ( var scenario in ignores ) { if (ignores[scenario]()) { return false; } }
+            for ( var scenario in ignores ) {
+                if ( ignores[scenario]() ) {
+                    return false;
+                }
+            }
 
             event.preventDefault();
 
@@ -323,7 +335,10 @@ window.onload = function() {
         U3.update();
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, canvasManager: cavMan } );
+        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {
+            strokes:STROKES, 
+            canvasManager: cavMan
+        } );
 
         STROKES.rebuildQuadTree();
         
