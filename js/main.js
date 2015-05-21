@@ -10,7 +10,7 @@ var U3 = new URNDR.ThreeManager( {
     material: new THREE.MeshBasicMaterial( {
         color: 0xCCCCCC,
         wireframe: true, 
-        wireframeLinewidth: 5,
+        wireframeLinewidth: 2,
         morphTargets: true
     } )
 } )
@@ -237,48 +237,133 @@ window.onload = function() {
     //
     // Models
     //
-    function _static( model ) {
-        model.animation = null;
+
+    var preset = {
+        rig: {
+            pitch: function(x) {
+                // X : 1/10
+                // THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )
+                U3.rig.target_pitch = x * 0.1;
+            },
+            theta: function(x) {
+                // X : 1 per 10 degree.
+                // 10 degress = 1/36 * 2 * Math.PI() in radian = 0.1744444
+                U3.rig.target_theta = x * 0.17444444;
+            },
+            add: function(property, x) {
+                U3.rig["target_" + property] += preset.rig[property]( x );
+            }
+        },
+        man: {
+            init: function( model ) {
+                model.mesh.scale.multiplyScalar( 0.03 );
+                model.mesh.position.y = -3;
+            },
+            focus: function( model ) {}
+        },
+        dog: {
+            init: function( model ) {
+                model.mesh.scale.multiplyScalar( 0.04 );
+                model.mesh.position.y = -1;
+            },
+            focus: function( model ) {}
+        },
+        building: {
+            init: function( model ) {
+                model.mesh.scale.multiplyScalar( 0.8 );
+            },
+            onfocus: function( model ) {}
+        }
     }
-    function _style_architecture( model ) {
-        model.mesh.scale.multiplyScalar( 0.8 )
-    }
+
+    U3.createModelFromFile( "models/dog_idle.js", {
+        init: function() {
+            preset.dog.init(this)
+            this.mesh.morphTargetInfluences[ 0 ] = 1
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            preset.rig.pitch(1)
+            preset.rig.theta(-2)
+        }
+    });
+    U3.createModelFromFile( "models/dog_idle.js", {
+        init: function() {
+            preset.dog.init(this)
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.loop = false;
+            this.speedFactor = 0.8;
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.stop();
+        }
+    });
+    U3.createModelFromFile( "models/dog_walk.js", {
+        init: function() {
+            preset.dog.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.mesh.position.y -= 0.75;
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/dog_run.js", {
+        init: function() {
+            preset.dog.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.mesh.position.y -= 0.75;
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+
+    // Architecture
     U3.createModelFromFile( "models/cube.js", {
         init: function() {
-            _static(this);
-            _style_architecture(this);
+            preset.building.init(this);
         },
         onfocus: function(){
             U3.rig.target_pitch = 1.2;
             U3.rig.target_theta = -0.785;
         }
-    } );
+    });
     U3.createModelFromFile( "models/house.js", {
         init: function() {
-            _static(this);
-            _style_architecture(this);
+            preset.building.init(this);
             this.mesh.position.y -= 0.125;
         },
         onfocus: function(){
             U3.rig.target_pitch = 1.4;
             U3.rig.target_theta = 0.785;
         }
-    } );
+    });
     U3.createModelFromFile( "models/apartment.js",  {
         init: function() {
-            _static(this);
-            _style_architecture(this);
+            preset.building.init(this);
             this.mesh.position.y -= 0.25;
         },
         onfocus: function(){
             U3.rig.target_pitch = 1.7;
             U3.rig.target_theta = 0.785 + 0.3;
         }
-    } );
+    });
     U3.createModelFromFile( "models/railhouse.js", {
         init: function() {
-            _static(this);
-            _style_architecture(this);
+            preset.building.init(this);
             this.mesh.position.y -= 0.5;
             this.mesh.position.x -= 1;
         },
@@ -286,7 +371,88 @@ window.onload = function() {
             U3.rig.target_pitch = 2;
             U3.rig.target_theta = -0.785;
         }
-    } );
+    });
+
+    // Man
+    U3.createModelFromFile( "models/man_idle.js", {
+        init: function() {
+            preset.man.init(this)
+            this.mesh.morphTargetInfluences[ 0 ] = 1
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.mesh.position.y += 0.5;
+            preset.rig.pitch(1)
+            preset.rig.theta(1)
+        }
+    });
+    U3.createModelFromFile( "models/man_idle.js", {
+        init: function() {
+            preset.man.init(this)
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.loop = false;
+            this.speedFactor = 0.8;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.stop();
+        }
+    });
+    U3.createModelFromFile( "models/man_walk.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/man_run.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.speedFactor = 1.5;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    // U3.createModelFromFile( "models/man_crazy.js", {
+    //     init: function() {
+    //         preset.man.init(this);
+    //         this.animation = new THREE.MorphAnimation( this.mesh );
+    //         this.speedFactor = 1.5;
+    //     },
+    //     onfocus: function(){
+    //         preset.man.focus()
+    //         this.animation.play();
+    //     },
+    //     onblur: function(){
+    //         this.animation.pause();
+    //     }
+    // });
+
+    var old_arr = Object.create( U3.models_array );
+    var new_order = [  0,  4,  8 ,
+                       1,  5,  9 ,
+                       2,  6, 10 ,
+                       3,  7, 11 ]
+    U3.models_array = [];
+    new_order.forEach(function(value){
+        U3.models_array.push( old_arr[ value ] )
+    })
+
 
     //
     // EVENTS

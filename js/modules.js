@@ -309,8 +309,9 @@ auto_rotation : function(){
             m.counter += m.radius_speed;
         }
         //
-        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * map( U3.speed , 0 , 60 , 0.0001 , 0.08 )
-        m.radius_speed = map( U3.speed , 0 , 60 , 0.005 , 0.05 )
+        m.rotate_speed = ( m.rotate_speed < 0 ? -1 : 1 ) * map( U3.speed , 0 , 60 , 0.00005 , 0.05 )
+        m.radius_speed = map( U3.speed , 0 , 60 , 0.005 , 0.03 )
+
     })
     module.listener = function( evt ) {
         var meta = evt.metaKey,
@@ -364,6 +365,8 @@ move_drawing_with_3d_model : function() {
         delayFactor : 0.8
     })
     module.setFunction(function(strokes) {
+
+        var settings = module.settings;
 
         strokes.eachStroke( es , strokes );
         function es( stroke , strokes , i ) {

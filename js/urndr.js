@@ -1341,7 +1341,7 @@ URNDR.StrokeStyle.prototype = {
 }
 
 // Model
-URNDR.Model = function() {
+URNDR.Model = function( args ) {
 
     this.id = "MODEL-" + THREE.Math.generateUUID();
     this.name = "";
@@ -1358,14 +1358,15 @@ URNDR.Model = function() {
     // THREE.js Objects
     this.mesh = undefined;
     this.geometry = undefined;
-    this.material = undefined;
+    this.material = args.material;
     this.animation = undefined;
 
     // Behaviours
-    this.init = function(){};
-    this.onfocus = function(){};
-    this.onblur = function(){};
-    this.onframe = function(){};
+    this.init = args.init || function(){};
+    this.onfocus = args.onfocus || function(){};
+    this.onblur = args.onblur || function(){};
+    this.onframe = args.onframe || function(){};
+
 }
 URNDR.Model.prototype = {
     get active () {
@@ -1391,13 +1392,12 @@ URNDR.Model.prototype = {
     },
     loadModel: function( file_path, callback ){
 
-        if (file_path) { this.file_path = file_path };
+        this.file_path = file_path
 
-        var model = this; // pass this scope into the callback function
+        var model = this;
         this.loader.load( this.file_path, function( _geometry, _material ) {
 
             model.geometry = _geometry;
-            model.geometry.computeBoundingBox();
             if (_material) { model.material = _material; }
 
             model.mesh = new THREE.Mesh( model.geometry, model.material )
@@ -1474,29 +1474,27 @@ URNDR.ThreeManager.prototype = {
     },
     createModelFromFile: function( file_path, args ) {
 
-        // CREATE
-        var manager = this, model = new URNDR.Model();
+        args.material = args.material || this.material;
 
-        model.material = manager.material;
-        model.parent = manager;
+        var model = new URNDR.Model( args );
 
-        if (args.init) { model.init = args.init; }
-        if (args.onfocus) { model.onfocus = args.onfocus; }
-        if (args.onblur) { model.onblur = args.onblur; }
-        if (args.onframe) { model.onframe = args.onframe; }
+        // Add
+        this.addModel( model )
 
-        // STORAGE
-        manager.models[ model.id ] = model;
-        manager.models_array.push( model.id )
-
+        // Load
+        var manager = this;
         model.loadModel( file_path , function(){
 
-            // THREE
             manager.scene.add( model.mesh );
 
         } );
 
-        return model;
+    },
+    addModel: function( model ) {
+
+        model.parent = this;
+        this.models[ model.id ] = model;
+        this.models_array.push( model.id );
 
     },
     getModel: function( input ) {
@@ -1504,17 +1502,20 @@ URNDR.ThreeManager.prototype = {
         if (typeof input === "string") {
             // search by id
             if ( this.models.hasOwnProperty( input ) ) {
-                return this.models[ input ]
+                return this.models[ input ];
             } else {
-                return -1
+                return -1;
             }
         } else if (typeof input === "number") {
             // search by index
             if (input >= 0 && input < this.models_array.length) {
-                return this.getModel( this.models_array[input] )
+                return this.getModel( this.models_array[input] );
             } else {
-                return -1
+                return -1;
             }
+        } else {
+            // return latest one
+            return this.getModel( this.count - 1 );
         }
 
     },
@@ -1681,4 +1682,14 @@ THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     return clamp( map( lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 ), 0, 1 );
 
+}
+
+THREE.MorphAnimation.prototype.stop = function() {
+    this.pause();
+    this.currentFrame = 1;
+    this.currentTime = 0;
+    for ( var a = 0; a < this.frames; a ++ ) {
+        this.mesh.morphTargetInfluences[a] = 0;
+    }
+    this.mesh.morphTargetInfluences[0] = 1;
 }
