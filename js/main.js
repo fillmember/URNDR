@@ -257,7 +257,7 @@ window.onload = function() {
         man: {
             init: function( model ) {
                 model.mesh.scale.multiplyScalar( 0.03 );
-                model.mesh.position.y = -3;
+                model.mesh.position.y = -3.6;
             },
             focus: function( model ) {}
         },
@@ -271,6 +271,7 @@ window.onload = function() {
         building: {
             init: function( model ) {
                 model.mesh.scale.multiplyScalar( 0.8 );
+                // model.mesh.scale.y = -3
             },
             onfocus: function( model ) {}
         }
@@ -332,7 +333,7 @@ window.onload = function() {
     });
 
     // Architecture
-    U3.createModelFromFile( "models/cube.js", {
+    U3.createModelFromFile( "models/arch_0.js", {
         init: function() {
             preset.building.init(this);
         },
@@ -341,7 +342,7 @@ window.onload = function() {
             U3.rig.target_theta = -0.785;
         }
     });
-    U3.createModelFromFile( "models/house.js", {
+    U3.createModelFromFile( "models/arch_1.js", {
         init: function() {
             preset.building.init(this);
             this.mesh.position.y -= 0.125;
@@ -351,7 +352,7 @@ window.onload = function() {
             U3.rig.target_theta = 0.785;
         }
     });
-    U3.createModelFromFile( "models/apartment.js",  {
+    U3.createModelFromFile( "models/arch_2.js", {
         init: function() {
             preset.building.init(this);
             this.mesh.position.y -= 0.25;
@@ -361,7 +362,7 @@ window.onload = function() {
             U3.rig.target_theta = 0.785 + 0.3;
         }
     });
-    U3.createModelFromFile( "models/railhouse.js", {
+    U3.createModelFromFile( "models/arch_3.js", {
         init: function() {
             preset.building.init(this);
             this.mesh.position.y -= 0.5;
@@ -370,6 +371,16 @@ window.onload = function() {
         onfocus: function(){
             U3.rig.target_pitch = 2;
             U3.rig.target_theta = -0.785;
+        }
+    });
+    U3.createModelFromFile( "models/arch_4.js", {
+        init: function() {
+            preset.building.init(this);
+            this.mesh.position.y -= 1.25;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.5;
+            U3.rig.target_theta = -1.8;
         }
     });
 
@@ -381,7 +392,6 @@ window.onload = function() {
         },
         onfocus: function(){
             preset.man.focus()
-            this.mesh.position.y += 0.5;
             preset.rig.pitch(1)
             preset.rig.theta(1)
         }
@@ -428,30 +438,31 @@ window.onload = function() {
             this.animation.pause();
         }
     });
-    // U3.createModelFromFile( "models/man_crazy.js", {
-    //     init: function() {
-    //         preset.man.init(this);
-    //         this.animation = new THREE.MorphAnimation( this.mesh );
-    //         this.speedFactor = 1.5;
-    //     },
-    //     onfocus: function(){
-    //         preset.man.focus()
-    //         this.animation.play();
-    //     },
-    //     onblur: function(){
-    //         this.animation.pause();
-    //     }
-    // });
+    U3.createModelFromFile( "models/man_crazy.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh );
+            this.speedFactor = 1.5;
+            this.mesh.position.y += 0.6;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
 
-    var old_arr = Object.create( U3.models_array );
-    var new_order = [  0,  4,  8 ,
-                       1,  5,  9 ,
-                       2,  6, 10 ,
-                       3,  7, 11 ]
-    U3.models_array = [];
-    new_order.forEach(function(value){
-        U3.models_array.push( old_arr[ value ] )
-    })
+    // var old_arr = Object.create( U3.models_array );
+    // var new_order = [  0,  4,  8 ,
+    //                    1,  5,  9 ,
+    //                    2,  6, 10 ,
+    //                    3,  7, 11 ]
+    // U3.models_array = [];
+    // new_order.forEach(function(value){
+    //     U3.models_array.push( old_arr[ value ] )
+    // })
 
 
     //
