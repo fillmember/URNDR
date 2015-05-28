@@ -2,6 +2,24 @@ MODULES.loadModules( {
 
 // COMMANDS
 
+exportGIF : function() {
+    var module = new URNDR.Module("Export GIF",URNDR.COMMAND_MODULE,88) // x
+    module.setFunction(function() {
+
+        var draw = MODULES.getModuleByName( "VANILLA DRAW" )
+        var tF = 40
+        var set = draw.settings;
+        if (set.rendering === false) {
+            set.rendering = true;
+            set.totalFrames = tF;
+        }
+
+        return "Render 30 frames of GIF"
+
+    })
+    return module
+},
+
 draw : function() {
     var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
     module.setFunction(function() {
@@ -614,7 +632,14 @@ wiggle : function() {
 default_draw_style : function() {
     var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
     module.interval = 20;
-    module.setConfiguration( {fillmember:false} )
+    module.setConfiguration( {
+        fillmember: false,
+        // GIF Maker
+        encoder: null,
+        rendering: false,
+        renderedFrames: 0,
+        totalFrames: 0
+    } )
     module.setFunction(function(params){
 
         function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
@@ -732,6 +757,50 @@ default_draw_style : function() {
 
             }
         } )
+
+        // IF RENDERING
+
+        if (settings.rendering) {
+            // RENDER
+            if (settings.renderedFrames < settings.totalFrames) {
+
+                // If this is the first time
+                if (settings.renderedFrames === 0) {
+                    
+                    // START
+                    settings.encoder = new GIFEncoder();
+                    settings.encoder.setRepeat( 0 );
+                    settings.encoder.setDelay( settings.gifDelay );
+                    settings.encoder.start();
+
+                }
+
+                settings.renderedFrames += 1;
+
+                // GIFEncoder part
+                settings.encoder.addFrame( ctx )
+
+                HUD.display( "Making GIF..." , settings.renderedFrames + "/" + settings.totalFrames );
+
+            } else {
+
+                // ANNOUNCE
+                HUD.display( "GIF made" );
+
+                // FINISH
+                settings.encoder.finish();
+                var binary_gif = settings.encoder.stream().getData();
+                var data_url = 'data:image/gif;base64,' + encode64(binary_gif);
+                window.open( data_url )
+
+                // RESET
+                settings.encoder = null;
+                settings.rendering = false;
+                settings.renderedFrames = 0;
+                settings.totalFrames = 0;
+
+            }
+        }
 
     })
     return module
