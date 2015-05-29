@@ -1213,8 +1213,7 @@ URNDR.Pen.prototype = {
         return [ this.ndc_x, this.ndc_y ];
     },
     set ndc( input ) {
-        var o = URNDR.Math.coordinateToPixel( 10 , 10 )
-        // var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
+        var o = URNDR.Math.coordinateToPixel( input[0], input[1] , this.canvas.width , this.canvas.height )
         this.x = o.x; this.y = o.y;
     },
     selectToolByID: function( id ) {
@@ -1589,21 +1588,17 @@ URNDR.ThreeManager.prototype = {
 URNDR.Math = {
 
     pixelToCoordinate: function( x , y , w , h ) {
-        // console.log( "pixel -> coord" , arguments )
-        var result = {
+        return {
             x : THREE.Math.mapLinear( x , 0 , w , -1 , 1 ),
             y : THREE.Math.mapLinear( y , 0 , h , 1 ,-1 )
-        }
-        return result;
+        };
     },
     
     coordinateToPixel : function( x , y , w , h ) {
-        console.log( "coord -> pixel" , arguments )
-        var result = {
+        return {
             x :  ( x / 2 + 0.5) * w, 
             y : -( y / 2 - 0.5) * h
-        }
-        return result;
+        };
     },
 
     // Compute barycentric coordinates (u,v,w) for point p with respect to triangle (a,b,c)

@@ -405,7 +405,9 @@ move_drawing_with_3d_model : function() {
                     c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project(U3.camera)
                     p = URNDR.Math.coordinateToPixel(
                         a.x * point.BU + b.x * point.BV + c.x * point.BW, 
-                        a.y * point.BU + b.y * point.BV + c.y * point.BW
+                        a.y * point.BU + b.y * point.BV + c.y * point.BW,
+                        cavMan.width,
+                        cavMan.height
                     )
 
                     // record this point's potential movement.
