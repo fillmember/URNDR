@@ -1,0 +1,28 @@
+body {}
+
+#main {
+	width: 750px;
+}
+
+#main tr {
+	margin-bottom: 9px;
+}
+
+#drawDesk {}
+#drawDesk .sidebar {
+	width: 250px;
+}
+
+.canvases {
+	border: 1px solid #333;
+}
+.canvases canvas {
+	width: 500px;
+	height: 500px;
+}
+
+#gallery {}
+#gallery img {
+	height: 244px;
+	width: 244px;
+}

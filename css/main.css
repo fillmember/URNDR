@@ -29,11 +29,6 @@ canvas {
 
 }
 
-#GUI {
-  z-index: 30;
-  right: 1em;
-}
-
 #HUD {
   z-index: 29;
   left: 1em;

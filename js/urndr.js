@@ -575,21 +575,17 @@ URNDR.Strokes.prototype = {
 
         } else if (alen === 1) {
 
-            var this_stroke = arguments[0]
+            var stk = arguments[0]
 
-            if (this_stroke instanceof URNDR.Stroke ) {
+            if (stk instanceof URNDR.Stroke ) {
+
+                stk.parent = this;
                 
-                this.strokes[this_stroke.id] = this_stroke;
-                this.strokesHistory.push( this_stroke.id )
-                this.strokesZDepth.push( this_stroke.id )
+                this.strokes[stk.id] = stk;
+                this.strokesHistory.push( stk.id );
+                this.strokesZDepth.push( stk.id );
 
-                return this_stroke.id; // return the id so people can identify it. 
-
-            } else {
-                
-                console.log("addStroke only accept Stroke objects. ")
-
-                return false;
+                return stk.id; // return the id so people can identify it. 
 
             }
 
@@ -676,6 +672,7 @@ URNDR.Stroke = function(tags) {
     this.id = "S-"+THREE.Math.generateUUID();
     this.tags = tags || {}; // for future stroke-specific effect.
     this.points = []; // must be sequential. From 0 to this.length.
+    this.parent = undefined;
 
     this.closed = false;     // for draw modules to implement close function
 
@@ -1051,7 +1048,17 @@ URNDR.Point = function( input ) {
 URNDR.Point.prototype = {
 
     get ndc() {
-        var a = URNDR.Math.pixelToCoordinate( this.X , this.Y )
+
+        var w, h;
+        if (this.parent && this.parent.parent) {
+            w = this.parent.parent.canvas.width;
+            h = this.parent.parent.canvas.height;
+        } else {
+            w = window.innerWidth;
+            h = window.innerHeight;
+        }
+
+        var a = URNDR.Math.pixelToCoordinate( this.X , this.Y , w , h )
         return new THREE.Vector2(a.x,a.y)
     },
     get binded() {
@@ -1206,7 +1213,8 @@ URNDR.Pen.prototype = {
         return [ this.ndc_x, this.ndc_y ];
     },
     set ndc( input ) {
-        var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
+        var o = URNDR.Math.coordinateToPixel( 10 , 10 )
+        // var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
         this.x = o.x; this.y = o.y;
     },
     selectToolByID: function( id ) {
@@ -1580,14 +1588,22 @@ URNDR.ThreeManager.prototype = {
 // Math
 URNDR.Math = {
 
-    pixelToCoordinate: function( x , y ) {
-        return {x : THREE.Math.mapLinear( x , 0 , window.innerWidth , -1 , 1 ),
-                y : THREE.Math.mapLinear( y , 0 , window.innerHeight , 1 ,-1 )}
+    pixelToCoordinate: function( x , y , w , h ) {
+        // console.log( "pixel -> coord" , arguments )
+        var result = {
+            x : THREE.Math.mapLinear( x , 0 , w , -1 , 1 ),
+            y : THREE.Math.mapLinear( y , 0 , h , 1 ,-1 )
+        }
+        return result;
     },
     
-    coordinateToPixel : function( x , y ) {
-        return { x : ( x / 2 + 0.5) * window.innerWidth,
-                 y : -( y / 2 - 0.5) * window.innerHeight }
+    coordinateToPixel : function( x , y , w , h ) {
+        console.log( "coord -> pixel" , arguments )
+        var result = {
+            x :  ( x / 2 + 0.5) * w, 
+            y : -( y / 2 - 0.5) * h
+        }
+        return result;
     },
 
     // Compute barycentric coordinates (u,v,w) for point p with respect to triangle (a,b,c)
