@@ -10,7 +10,6 @@ var U3 = new URNDR.ThreeManager( {
         morphTargets: true
     } )
 } )
-document.body.appendChild( U3.renderer.domElement );
 
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 
@@ -22,6 +21,8 @@ var cavMan = new URNDR.CanvasManager();
     cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
     cavMan.lineCap = STYLE.cap;
     cavMan.lineJoin = STYLE.join;
+    // Canvas
+    cavMan.resize( 500 , 500 );
 
 var PEN = new URNDR.Pen( cavMan.get("draw").element, cavMan.get("hud").element, WACOM );
 var STROKES = new URNDR.Strokes( cavMan.get("draw").element );
@@ -100,6 +101,9 @@ PEN.addTool( new URNDR.PenTool({
 
 }));
 window.onload = function() {
+
+    // Canvas
+    cavMan.resize( 500 , 500 )
 	
 	// Load Model
 	U3.createModelFromFile("models/man_walk.js",{

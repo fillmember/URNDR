@@ -1,28 +1,21 @@
-body {}
-
-#main {
-	width: 750px;
-}
-
-#main tr {
-	margin-bottom: 9px;
-}
-
-#drawDesk {}
-#drawDesk .sidebar {
-	width: 250px;
-}
-
-.canvases {
-	border: 1px solid #333;
-}
 .canvases canvas {
+
+	border: 1px solid yellow;
+	position: absolute;
+	top: 0; left: 0;
+
 	width: 500px;
 	height: 500px;
-}
 
-#gallery {}
-#gallery img {
-	height: 244px;
-	width: 244px;
+}
+  #canvas_hud { z-index:  20; }
+  #canvas_urndr { z-index:  10; }
+  #canvas_three { z-index: -10; }
+
+.unselectable {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
 }

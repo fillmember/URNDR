@@ -1447,7 +1447,7 @@ URNDR.ThreeManager = function( arg ) {
         precision: "lowp",
         alpha: true
     })
-    this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
+    this.camera = new THREE.PerspectiveCamera( 75, 1, 1, 500)
     this.scene = new THREE.Scene();
     if (arg.fog) { this.scene.fog = arg.fog; }
     this.raycaster = new THREE.Raycaster();
@@ -1470,7 +1470,6 @@ URNDR.ThreeManager = function( arg ) {
     }
     this.speed = 15;
 
-    this.renderer.setSize( window.innerWidth , window.innerHeight )
     this.camera.position.set( 0 , 0 , 5 )
 
 }
