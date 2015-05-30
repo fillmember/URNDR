@@ -1,27 +1,16 @@
+var $showcase = $(".showcase");
+$showcase.putGeneratedImage = function( url ){
+
+    $("<img />",{
+        class: "exported",
+        src: data_url
+    }).appendTo($(".showcase .insert"))
+
+}
+
 MODULES.loadModules( {
 
 // COMMANDS
-
-exportGIF : function() {
-    var module = new URNDR.Module("Export GIF",URNDR.COMMAND_MODULE,88) // x
-    module.setFunction(function() {
-
-        var draw = MODULES.getModuleByName( "VANILLA DRAW" );
-        var set = draw.settings;
-
-        var fps = 30;
-
-        var skip = 60 / fps; 
-        if (set.exporting === false) {
-            set.exporting = true;
-            set.frameEvery = 2;
-            set.totalFrames = 60;
-            set.gifDelay = 70;
-        }
-
-    })
-    return module
-},
 
 draw : function() {
     var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
@@ -473,25 +462,19 @@ wiggle : function() {
 // DRAW MODULES
 
 default_draw_style : function() {
-    var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
+    var module = new URNDR.Module("Render",URNDR.DRAW_MODULE,48,true);
     module.interval = 16.66;
     module.setConfiguration( {
+        // Styles
         fillmember: false,
         // GIF Maker
         encoder: null,
         exporting: false,
         renderedFrames: 0,
         totalFrames: 0,
-        frameEvery: 2
+        frameEvery: 2,
+        postExportAction: function(){}
     } )
-    module.GIFExporter = function(){
-        this.encoder;
-        this.exporting = false;
-        this.renderedFrames = 0;
-        this.totalFrames = 0;
-        this.frameEvery = 1;
-    }
-    module.GIFExporter.prototype = {}
     module.helpers = {
         stroke_basic: function( ctx , p0 , p1 , lineWidth , strokeStyle ) {
             ctx.beginPath();
@@ -546,14 +529,33 @@ default_draw_style : function() {
                 module.helpers.stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF");
                 ctx.restore();
             }
+        },
+        // General Export Setups
+        finishExport: function( mod ){
+            var mod = mod.settings;
+
+            // Finish GIF stream;
+            mod.encoder.finish();
+            mod.postExportAction( mod.encoder );
+
+            // Response
+            HUD.display("GIF Made.","100%")
+            
+            // Reset
+            mod.encoder = null;
+            mod.exporting = false;
+            mod.renderedFrames = 0;
+            mod.totalFrames = 0;
+            mod.postExportAction = function(){};
+
         }
     }
     module.setFunction(function(params){
 
         var settings = this.settings,
-            stroke_basic = module.helpers.stroke_basic,
-            getAlphaFactor = module.helpers.getAlphaFactor,
-            _fillmember = module.helpers.stroke_outline;
+            stroke_basic = this.helpers.stroke_basic,
+            getAlphaFactor = this.helpers.getAlphaFactor,
+            _fillmember = this.helpers.stroke_outline;
 
         var strokes = params.strokes, 
             canvases = params.canvasManager,
@@ -562,13 +564,12 @@ default_draw_style : function() {
         
         canvases.clear(1);
 
-        // PRE-RENDER ACTIONS
+        // PRE-RENDER PROCESSES
+        // #1 : EXPORTER
         if (settings.exporting) {
 
-            // RENDER : BACKGROUND PASS
+            //BACKGROUND PASS
             ctx.fillStyle = $(".canvas_bg").data("background");
-
-            //draw background / rect on entire canvas
             ctx.fillRect( 0, 0, ctx.canvas.width, ctx.canvas.height );
 
             // RENDER : COPY 3D image
@@ -576,7 +577,7 @@ default_draw_style : function() {
 
         }
 
-        // RENDER : STROKES PASS
+        // RENDER
         strokes.eachStroke( function( stk ){
 
             stk.eachPoint( function( pnt, stk, i ){
@@ -627,59 +628,64 @@ default_draw_style : function() {
             }
         } )
 
-        // POST-RENDER ACTION
-
-        // EXPORTER
+        // POST-RENDER PROCESSES
+        // #1 : EXPORTER
         if (settings.exporting) {
 
             // RENDER
             if (settings.renderedFrames < settings.totalFrames) {
-
-                // FIRST TIME PROCEDURE
-                if (settings.renderedFrames === 0) {
-                    
-                    // START
-                    settings.encoder = new GIFEncoder();
-                    settings.encoder.setRepeat( 0 );
-                    settings.encoder.setDelay( settings.gifDelay );
-                    settings.encoder.start();
-
-                }
-
+                
                 // SKIP FRAME DETECTION
-
                 if ( settings.renderedFrames % settings.frameEvery === 0 ) {
-
-                    // ENCODE GIF : insert current context
                     settings.encoder.addFrame( ctx )
-
                 }
                 
                 HUD.display( "Making GIF..." , settings.renderedFrames + "/" + settings.totalFrames );
-
                 settings.renderedFrames += 1;
 
             } else {
 
                 // ALL FRAMES EXPORTED
-                HUD.display( "GIF made" );
-
-                // FINISH
-                settings.encoder.finish();
-                var binary_gif = settings.encoder.stream().getData();
-                var data_url = 'data:image/gif;base64,' + encode64(binary_gif);
-                $("<img />").attr("src",data_url).appendTo($(".showcase .insert"))
-
-                // RESET
-                settings.encoder = null;
-                settings.exporting = false;
-                settings.renderedFrames = 0;
-                settings.totalFrames = 0;
+                this.helpers.finishExport( this );
 
             }
+
         }
 
     })
+    module.listener = function( evt ) {
+        if (evt === "GIF") {
+            // INIT GIF EXPORT PROCESS
+            var ss = this.settings;
+            
+            if (ss.exporting === false) {
+                // post-render action
+                ss.postExportAction = function( encoder ){
+                    var binary = encoder.stream().getData();
+                    var data_url = 'data:image/gif;base64,' + encode64(binary);
+                    $showcase.putGeneratedImage( data_url )
+                }
+                // config
+                ss.exporting = true;
+                ss.frameEvery = 2;
+                ss.totalFrames = 6;
+                ss.gifDelay = 70;
+                // encoder
+                ss.encoder = new GIFEncoder();
+                ss.encoder.setRepeat( 0 );
+                ss.encoder.setDelay( ss.gifDelay );
+                ss.encoder.start();
+                // display
+                HUD.display( "Making GIF." )
+            } else {
+                HUD.display( "Already Rendering." )
+            }
+
+        }
+        if (evt === "fillmember") {
+            this.settings.fillmember = !this.settings.fillmember;
+        }
+    }
     return module
 }
 
