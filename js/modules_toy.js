@@ -1,3 +1,5 @@
+var RENDER_INTERVAL = 16.666666;
+
 var $showcase = $(".showcase");
 $showcase.putGeneratedImage = function( url ){
 
@@ -7,7 +9,10 @@ $showcase.putGeneratedImage = function( url ){
 
     $btns.find(".del").on("click",function(evt){
         evt.preventDefault();
-        $(this).parents(".exported.item").remove();
+        var $tar = $(this).parents(".exported.item");
+        $tar.hide(300,function(){
+            $tar.remove();
+        })
     })
 
     $showcase.prepend( $new.append($img).append($btns) );
@@ -15,6 +20,16 @@ $showcase.putGeneratedImage = function( url ){
     if (! $showcase.is(":visible")) { $showcase.fadeIn(200); }
 
 }
+
+var trig = function() {
+    var _arguments = [].slice.call( arguments );
+        _arguments.shift();
+    MODULES.getModuleByName( arguments[0] ).func.apply( this , _arguments )
+}
+
+watch( STYLE , "brush_size" , function(){
+    $("input#brush_size").get(0).value = STYLE.brush_size;
+})
 
 MODULES.loadModules( {
 
@@ -38,7 +53,7 @@ eraser : function() {
 },
 
 clear_canvas : function() {
-    var module = new URNDR.Module("Clear",URNDR.COMMAND_MODULE,999)
+    var module = new URNDR.Module("Clear",URNDR.COMMAND_MODULE)
     module.setFunction(function( evt ){
         STROKES.reset();
         return "";
@@ -66,11 +81,11 @@ brush_size_down : function() {
 
 play_pause : function() {
     var module = new URNDR.Module("Play Pause",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function( arg ){
+    module.setFunction(function( arg , btn ){
         U3.eachModel( function(model){
             if (model.animation) {
 
-                switch (arg) {
+                switch ( arg ) {
                     case  1:
                         model.animation.pause();
                         model.animation.update( 16.6667 , true)
@@ -89,17 +104,6 @@ play_pause : function() {
 
             }
         } )
-        return "";
-    })
-    return module
-},
-
-pan_pan_pan : function() {
-    var module = new URNDR.Module("Pan",URNDR.COMMAND_MODULE,999)
-    module.setFunction(function( direction ){
-        U3.rig.target_theta += direction * 0.349
-
-        return "";
     })
     return module
 },
@@ -193,7 +197,7 @@ random_stroke_color : function() {
 random_point_position : function() {
     var module = new URNDR.Module("Random Point",URNDR.POINT_MODULE,68);
     // 
-    module.interval = 10;
+    module.interval = 30;
     module.setConfiguration({amp : 60})
     module.setFunction(function( point ) {
         var amp = this.getConfiguration().amp;
@@ -211,8 +215,8 @@ random_point_position : function() {
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
-    module.interval = 1;
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE99,true,999);
+    module.interval = 5;
     module.setConfiguration( {
         min_size : 5,
         max_size : 80
@@ -230,7 +234,7 @@ pressure_sensitivity : function() {
 
 auto_rotation : function(){
     var module = new URNDR.Module("Auto Rotate",URNDR.STROKE_MODULE,190,false);
-    module.interval = 16.6666;
+    module.interval = RENDER_INTERVAL;
     module.setConfiguration({
         direction: 1
     })
@@ -273,7 +277,7 @@ delete_flagged_strokes : function(){
 
 move_drawing_with_3d_model : function() {
     var module = new URNDR.Module("3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
-    module.interval = 16.6666;
+    module.interval = RENDER_INTERVAL;
     module.setConfiguration({
         delayFactor : 0.8
     })
@@ -498,7 +502,7 @@ wiggle : function() {
 
 default_draw_style : function() {
     var module = new URNDR.Module("Render",URNDR.DRAW_MODULE,48,true);
-    module.interval = 16.66;
+    module.interval = RENDER_INTERVAL;
     module.setConfiguration( {
         // Styles
         fillmember: false,
@@ -704,7 +708,7 @@ default_draw_style : function() {
                     // config
                     ss.exporting = true;
                     ss.frameEvery = 2;
-                    ss.totalFrames = 6;
+                    ss.totalFrames = 59;
                     ss.gifDelay = 70;
                     // encoder
                     ss.encoder = new GIFEncoder();
