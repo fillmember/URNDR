@@ -1,10 +1,18 @@
 var $showcase = $(".showcase");
 $showcase.putGeneratedImage = function( url ){
 
-    $("<img />",{
-        class: "exported",
-        src: data_url
-    }).appendTo($(".showcase .insert"))
+    var $new = $("<div>",{class:"exported item"}),
+        $img = $("<img>",{src: url}),
+        $btns= $('<div class="bar"><a href="#" class="del fa fa-trash-o"></a><a href="'+url+'" class="dw fa fa-download" download="urndr"></a></div>');
+
+    $btns.find(".del").on("click",function(evt){
+        evt.preventDefault();
+        $(this).parents(".exported.item").remove();
+    })
+
+    $showcase.prepend( $new.append($img).append($btns) );
+
+    if (! $showcase.is(":visible")) { $showcase.fadeIn(200); }
 
 }
 
@@ -58,14 +66,27 @@ brush_size_down : function() {
 
 play_pause : function() {
     var module = new URNDR.Module("Play Pause",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function(){
+    module.setFunction(function( arg ){
         U3.eachModel( function(model){
             if (model.animation) {
-                if ( model.animation.isPlaying ) {
-                    model.animation.pause();
-                } else {
-                    model.animation.play();
+
+                switch (arg) {
+                    case  1:
+                        model.animation.pause();
+                        model.animation.update( 16.6667 , true)
+                        break;
+                    case -1:
+                        model.animation.pause();
+                        model.animation.update( -32.3334 , true)
+                        break;
+                    default:
+                        if ( model.animation.isPlaying ) {
+                            model.animation.pause();
+                        } else {
+                            model.animation.play();
+                        }
                 }
+
             }
         } )
         return "";
@@ -210,9 +231,23 @@ pressure_sensitivity : function() {
 auto_rotation : function(){
     var module = new URNDR.Module("Auto Rotate",URNDR.STROKE_MODULE,190,false);
     module.interval = 16.6666;
-    module.setFunction(function(strokes){
-        U3.rig.target_theta += 0.1047
+    module.setConfiguration({
+        direction: 1
     })
+    module.setFunction(function(strokes){
+        U3.rig.target_theta += 0.1047 * this.settings.direction
+    })
+    module.listener = function (v) {
+        switch (v) {
+            case -1:
+                this.settings.direction = -1;
+                break;
+            case  1:
+                this.settings.direction = 1;
+                break;
+        }
+        this.enabled = ! this.enabled;
+    }
     return module;
 },
 
@@ -665,18 +700,20 @@ default_draw_style : function() {
                     var data_url = 'data:image/gif;base64,' + encode64(binary);
                     $showcase.putGeneratedImage( data_url )
                 }
-                // config
-                ss.exporting = true;
-                ss.frameEvery = 2;
-                ss.totalFrames = 6;
-                ss.gifDelay = 70;
-                // encoder
-                ss.encoder = new GIFEncoder();
-                ss.encoder.setRepeat( 0 );
-                ss.encoder.setDelay( ss.gifDelay );
-                ss.encoder.start();
-                // display
-                HUD.display( "Making GIF." )
+                $showcase.fadeOut(300,function(){
+                    // config
+                    ss.exporting = true;
+                    ss.frameEvery = 2;
+                    ss.totalFrames = 6;
+                    ss.gifDelay = 70;
+                    // encoder
+                    ss.encoder = new GIFEncoder();
+                    ss.encoder.setRepeat( 0 );
+                    ss.encoder.setDelay( ss.gifDelay );
+                    ss.encoder.start();
+                    // display
+                    HUD.display( "Making GIF." )
+                })
             } else {
                 HUD.display( "Already Rendering." )
             }

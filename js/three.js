@@ -30633,11 +30633,13 @@ THREE.MorphAnimation.prototype = {
 
 	},
 
-	update: function ( delta ) {
+	update: function ( delta , force ) {
 
-		if ( this.isPlaying === false ) return;
+		if ( this.isPlaying === false && force !== true ) return;
 
 		this.currentTime += delta;
+
+		if (this.currentTime < 0) { this.currentTime = this.duration; }
 
 		if ( this.loop === true && this.currentTime > this.duration ) {
 

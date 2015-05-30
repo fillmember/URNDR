@@ -1,9 +1,12 @@
-<html>
+<!DOCTYPE html>
 
   <head>
 
+    <meta charset="UTF-8">
+
     <title>URNDR - TOY</title>
 
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <link href='http://fonts.googleapis.com/css?family=Raleway:500,300' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="css/toy.css">
     
@@ -27,26 +30,33 @@
             </div>
             
             <div class="sidebar right">
-                <button onclick="javascript:MODULES.getModuleByName('Draw').func()">Draw</button>
-                <button onclick="javascript:MODULES.getModuleByName('Eraser').func()">Erase</button>
-                <button onclick="javascript:MODULES.getModuleByName('Clear').func()">Clear</button>
-                <hr />
-                <button onclick="javascript:MODULES.getModuleByName('Color Change').func()">Color Change</button>
-                <hr />
-                <button onclick="javascript:MODULES.getModuleByName('Play Pause').func()">Play/Pause</button>
-                <button onclick="javascript:MODULES.getModuleByName('Pan').func(-1)">Pan Left</button>
-                <button onclick="javascript:MODULES.getModuleByName('Pan').func(1)">Pan Right</button>
-                <button onclick="javascript:MODULES.getModuleByName('Auto Rotate').enabled = !MODULES.getModuleByName('Auto Rotate').enabled">Auto Turn</button>
-                <hr />
-                <button onclick="javascript:MODULES.getModuleByName('Render').receive('GIF')">Export GIF</button>
+
+                <h3><i class="fa fa-paint-brush"></i></h3>
+                <button onclick="javascript:MODULES.getModuleByName('Draw').func()" class="half"><i class="fa fa-pencil"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Eraser').func()" class="half"><i class="fa fa-eraser"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Clear').func()" class="half"><i class="fa fa-file-o"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Color Change').func()" class="half"><i class="fa fa-adjust"></i></button>
+                
+                <h3><i class="fa fa-child"></i></h3>
+                <button onclick="javascript:MODULES.getModuleByName('Play Pause').func()" class="third compress"><i class="fa fa-play"></i><i class="fa fa-pause"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Play Pause').func(-1)" class="third"><i class="fa fa-step-backward"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Play Pause').func(1)" class="third"><i class="fa fa-step-forward"></i></button>
+                
+                <h3><i class="fa fa-video-camera"></i></h3>
+                <button onclick="javascript:MODULES.getModuleByName('Pan').func(-1)" class="half"><i class="fa fa-repeat fa-rotate-270"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Pan').func(1)" class="half"><i class="fa fa-undo fa-rotate-90"></i></button>
+                
+                <h3><i class="fa fa-magic"></i></h3>
+                <button onclick="javascript:MODULES.getModuleByName('Auto Rotate').receive(-1)" class="half"><i class="fa fa-repeat fa-rotate-270"></i></button>
+                <button onclick="javascript:MODULES.getModuleByName('Auto Rotate').receive(1)" class="half"><i class="fa fa-undo fa-rotate-90"></i></button>
+
+                <h3><i class="fa fa-truck"></i></h3>
+                <button onclick="javascript:MODULES.getModuleByName('Render').receive('GIF')"><i class="fa fa-film"></i> GIF </button>
             </div>
         
         </div>
         
-        <div class="showcase">
-            <div class="insert"></div>
-            <div class="clear"></div>
-        </div>
+        <div class="showcase"> <div class="clear"></div> </div>
     </div>
 
     <object type="application/x-wacomtabletplugin" id="Wacom" class="unselectable"></object>
