@@ -1445,8 +1445,7 @@ URNDR.ThreeManager = function( arg ) {
     this.renderer = new THREE.WebGLRenderer({
         canvas: arg.canvas,
         precision: "lowp",
-        alpha: true,
-        // preserveDrawingBuffer: true
+        alpha: true
     })
     this.camera = new THREE.PerspectiveCamera( 75, 1, 1, 500)
     this.scene = new THREE.Scene();

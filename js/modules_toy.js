@@ -556,9 +556,13 @@ default_draw_style : function() {
 
             // RENDER : BACKGROUND PASS
             ctx.fillStyle = $(".canvas_bg").data("background");
-            
+
             //draw background / rect on entire canvas
             ctx.fillRect( 0, 0, ctx.canvas.width, ctx.canvas.height );
+
+            // RENDER : COPY 3D image
+
+            ctx.drawImage( U3.renderer.domElement , 0 , 0 )
 
         }
 
