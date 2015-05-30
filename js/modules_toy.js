@@ -12,8 +12,8 @@ exportGIF : function() {
         var fps = 30;
 
         var skip = 60 / fps; 
-        if (set.rendering === false) {
-            set.rendering = true;
+        if (set.exporting === false) {
+            set.exporting = true;
             set.frameEvery = 2;
             set.totalFrames = 60;
             set.gifDelay = 70;
@@ -479,22 +479,29 @@ default_draw_style : function() {
         fillmember: false,
         // GIF Maker
         encoder: null,
-        rendering: false,
+        exporting: false,
         renderedFrames: 0,
-        totalFrames: 0
+        totalFrames: 0,
+        frameEvery: 2
     } )
-    module.setFunction(function(params){
-
-        function stroke_basic( ctx , p0 , p1 , lineWidth , strokeStyle ) {
+    module.GIFExporter = function(){
+        this.encoder;
+        this.exporting = false;
+        this.renderedFrames = 0;
+        this.totalFrames = 0;
+        this.frameEvery = 1;
+    }
+    module.GIFExporter.prototype = {}
+    module.helpers = {
+        stroke_basic: function( ctx , p0 , p1 , lineWidth , strokeStyle ) {
             ctx.beginPath();
             ctx.strokeStyle = strokeStyle;
             ctx.lineWidth = lineWidth;
             ctx.moveTo( p0.X , p0.Y );
             ctx.lineTo( p1.X , p1.Y );
             ctx.stroke();
-        }
-
-        function getAlphaFactor( pnt, stk, i ){
+        },
+        getAlphaFactor: function( pnt, stk, i ){
 
             if (pnt.OBJECT && pnt.FACE) {
                             
@@ -531,19 +538,23 @@ default_draw_style : function() {
             // The rest of the cases: stroke is totally without any binding. 
 
             return 1
-
-        }
-
-        function _fillmember( ctx, prv, pnt, factor ){
-            if(settings.fillmember && pnt.A * factor > 0.1) {
+        },
+        stroke_outline: function( ctx, prv, pnt, factor ){
+            if(module.settings.fillmember && pnt.A * factor > 0.1) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'destination-over';
-                stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF");
+                module.helpers.stroke_basic(ctx, prv, pnt, pnt.S + 15, "#FFF");
                 ctx.restore();
             }
         }
+    }
+    module.setFunction(function(params){
 
-        var settings = this.getConfiguration();
+        var settings = this.settings,
+            stroke_basic = module.helpers.stroke_basic,
+            getAlphaFactor = module.helpers.getAlphaFactor,
+            _fillmember = module.helpers.stroke_outline;
+
         var strokes = params.strokes, 
             canvases = params.canvasManager,
             ctx = canvases.get("draw").context, 
@@ -552,7 +563,7 @@ default_draw_style : function() {
         canvases.clear(1);
 
         // PRE-RENDER ACTIONS
-        if (settings.rendering) {
+        if (settings.exporting) {
 
             // RENDER : BACKGROUND PASS
             ctx.fillStyle = $(".canvas_bg").data("background");
@@ -561,7 +572,6 @@ default_draw_style : function() {
             ctx.fillRect( 0, 0, ctx.canvas.width, ctx.canvas.height );
 
             // RENDER : COPY 3D image
-
             ctx.drawImage( U3.renderer.domElement , 0 , 0 )
 
         }
@@ -618,14 +628,14 @@ default_draw_style : function() {
         } )
 
         // POST-RENDER ACTION
-        if (settings.rendering) {
-            // Fill Background
 
+        // EXPORTER
+        if (settings.exporting) {
 
             // RENDER
             if (settings.renderedFrames < settings.totalFrames) {
 
-                // If this is the first time
+                // FIRST TIME PROCEDURE
                 if (settings.renderedFrames === 0) {
                     
                     // START
@@ -636,11 +646,11 @@ default_draw_style : function() {
 
                 }
 
-                // skip frame or not
+                // SKIP FRAME DETECTION
 
                 if ( settings.renderedFrames % settings.frameEvery === 0 ) {
 
-                    // GIFEncoder part
+                    // ENCODE GIF : insert current context
                     settings.encoder.addFrame( ctx )
 
                 }
@@ -651,7 +661,7 @@ default_draw_style : function() {
 
             } else {
 
-                // ANNOUNCE
+                // ALL FRAMES EXPORTED
                 HUD.display( "GIF made" );
 
                 // FINISH
@@ -662,7 +672,7 @@ default_draw_style : function() {
 
                 // RESET
                 settings.encoder = null;
-                settings.rendering = false;
+                settings.exporting = false;
                 settings.renderedFrames = 0;
                 settings.totalFrames = 0;
 
