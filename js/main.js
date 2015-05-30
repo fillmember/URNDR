@@ -14,7 +14,6 @@ var U3 = new URNDR.ThreeManager( {
         morphTargets: true
     } )
 } )
-document.body.appendChild( U3.renderer.domElement );
 
 //
 // OBJECTS
@@ -56,7 +55,7 @@ PEN.addTool(new URNDR.PenTool({
 
         this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
 
-        var point = new URNDR.Point({
+        var pnt = new URNDR.Point({
             X : pen.x,
             Y : pen.y,
             S : STYLE.brush_size,
@@ -64,14 +63,14 @@ PEN.addTool(new URNDR.PenTool({
             A : STYLE.color[3]
         });
 
-        point.refreshBinding( U3 )
-        
-        // Run modules that changes the point.
-        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , point )
-
         // WRITE POINT INTO STROKE
-        var active_stroke = this.strokes.getActiveStroke();
-        if (active_stroke !== 0) { this.strokes.getActiveStroke().addPoint( point ) }
+        var stk = this.strokes.getActiveStroke();
+        if (stk !== 0) { stk.addPoint( pnt ) }
+
+        // Run modules that changes the pnt.
+        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , pnt )
+
+        pnt.refreshBinding( U3 )
 
     }
 
@@ -293,7 +292,7 @@ window.onload = function() {
             preset.dog.init(this)
             this.animation = new THREE.MorphAnimation( this.mesh )
             this.animation.loop = false;
-            this.speedFactor = 0.8;
+            this.animation.duration = 800;
         },
         onfocus: function(){
             preset.dog.focus(this)
@@ -401,7 +400,7 @@ window.onload = function() {
             preset.man.init(this)
             this.animation = new THREE.MorphAnimation( this.mesh )
             this.animation.loop = false;
-            this.speedFactor = 0.8;
+            this.animation.duration = 800;
         },
         onfocus: function(){
             preset.man.focus()
@@ -428,7 +427,7 @@ window.onload = function() {
         init: function() {
             preset.man.init(this);
             this.animation = new THREE.MorphAnimation( this.mesh )
-            this.speedFactor = 1.5;
+            this.animation.duration = 1500;
         },
         onfocus: function(){
             preset.man.focus()
@@ -442,7 +441,7 @@ window.onload = function() {
         init: function() {
             preset.man.init(this);
             this.animation = new THREE.MorphAnimation( this.mesh );
-            this.speedFactor = 1.5;
+            this.animation.duration = 1200;
             this.mesh.position.y += 0.6;
         },
         onfocus: function(){

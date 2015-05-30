@@ -2,24 +2,6 @@ MODULES.loadModules( {
 
 // COMMANDS
 
-exportGIF : function() {
-    var module = new URNDR.Module("Export GIF",URNDR.COMMAND_MODULE,88) // x
-    module.setFunction(function() {
-
-        var draw = MODULES.getModuleByName( "VANILLA DRAW" )
-        var tF = 40
-        var set = draw.settings;
-        if (set.rendering === false) {
-            set.rendering = true;
-            set.totalFrames = tF;
-        }
-
-        return "Render 30 frames of GIF"
-
-    })
-    return module
-},
-
 draw : function() {
     var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
     module.setFunction(function() {
@@ -64,10 +46,10 @@ selector : function() {
 
 clear_canvas : function() {
     var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
-    module.setFunction(function( evt ){
+    module.setFunction(function( evt ) {
         STROKES.reset();
         return "";
-    })
+    } )
     return module
 },
 

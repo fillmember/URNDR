@@ -52,7 +52,8 @@ URNDR.CanvasManager.prototype = {
             _func( canvas.context )
         } );
         function _func( ctx ) {
-            if (a === 1) { ctx.clearRect(0,0,w,h)
+            if (a === 1) {
+                ctx.clearRect(0,0,w,h)
             } else {
                 ctx.save();
                 ctx.globalAlpha = a;
@@ -890,14 +891,14 @@ URNDR.Stroke.prototype = {
             return points;
         }
 
-        t = t === undefined || t < 0 ? 0.9 : t;
+        t = t === undefined || t < 0 ? 0.7 : t;
 
         this.points = simplify( this.points , t , true );
 
     },
     simplify_more: function( n ) {
 
-        n = n < 0 || n === undefined ? 12 : n
+        n = n < 0 || n === undefined ? 30 : n
 
         this.optimize( n )
 
@@ -1062,7 +1063,7 @@ URNDR.Point.prototype = {
         return new THREE.Vector2(a.x,a.y)
     },
     get binded() {
-        return (this.OBJECT && this.FACE)
+        return (this.OBJECT && this.FACE) ? true : false;
     },
     set binded( input ) {
         if (input === false) {
@@ -1355,7 +1356,6 @@ URNDR.Model = function( args ) {
 
     // Animation Attributes
     this.tags = {};
-    this.speedFactor = 1;
 
     // THREE JSONLoader related attributes
     this.file_path = "";
@@ -1426,7 +1426,7 @@ URNDR.Model.prototype = {
 
         if (this.active) {
             if (this.animation) {
-                this.animation.update( speed * this.speedFactor )
+                this.animation.update( speed )
             }
         }
 
@@ -1445,7 +1445,8 @@ URNDR.ThreeManager = function( arg ) {
     this.renderer = new THREE.WebGLRenderer({
         canvas: arg.canvas,
         precision: "lowp",
-        alpha: true
+        alpha: true,
+        // preserveDrawingBuffer: true
     })
     this.camera = new THREE.PerspectiveCamera( 75, 1, 1, 500)
     this.scene = new THREE.Scene();

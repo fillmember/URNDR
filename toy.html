@@ -3,15 +3,51 @@
   <head>
 
     <title>URNDR - TOY</title>
+
+    <link href='http://fonts.googleapis.com/css?family=Raleway:500,300' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="css/toy.css">
     
   </head>
 
   <body>
 
-    <canvas id="canvas_hud" class="unselectable"></canvas>
-    <canvas id="canvas_urndr" class="unselectable"></canvas>
-    <canvas id="canvas_three" class="unselectable"></canvas>
+    <div class="outer_wrapper">
+        <header>
+            <h1>URNDR</h1>
+            <h2>by FillMember</h2>
+        </header>
+        <div class="workspace">
+            
+            <div id="HUD" class="sidebar left"> a </div>
+            
+            <div class="canvas_container canvas_bg" data-background="#FFFFFF">
+                <canvas id="canvas_hud" class="unselectable"></canvas>
+                <canvas id="canvas_urndr" class="unselectable"></canvas>
+                <canvas id="canvas_three" class="unselectable"></canvas>
+            </div>
+            
+            <div class="sidebar right">
+                <button onclick="javascript:MODULES.getModuleByName('Draw').func()">Draw</button>
+                <button onclick="javascript:MODULES.getModuleByName('Eraser').func()">Erase</button>
+                <button onclick="javascript:MODULES.getModuleByName('Clear').func()">Clear</button>
+                <hr />
+                <button onclick="javascript:MODULES.getModuleByName('Color Change').func()">Color Change</button>
+                <hr />
+                <button onclick="javascript:MODULES.getModuleByName('Play Pause').func()">Play/Pause</button>
+                <button onclick="javascript:MODULES.getModuleByName('Pan').func(-1)">Pan Left</button>
+                <button onclick="javascript:MODULES.getModuleByName('Pan').func(1)">Pan Right</button>
+                <button onclick="javascript:MODULES.getModuleByName('Auto Rotate').enabled = !MODULES.getModuleByName('Auto Rotate').enabled">Auto Turn</button>
+                <hr />
+                <button onclick="javascript:MODULES.getModuleByName('Export GIF').func()">Export GIF</button>
+            </div>
+        
+        </div>
+        
+        <div class="showcase">
+            <div class="insert"></div>
+            <div class="clear"></div>
+        </div>
+    </div>
 
     <object type="application/x-wacomtabletplugin" id="Wacom" class="unselectable"></object>
 

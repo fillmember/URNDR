@@ -10,6 +10,7 @@ var U3 = new URNDR.ThreeManager( {
         morphTargets: true
     } )
 } )
+U3.renderer.context.preserveDrawingBuffer = true;
 
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 
@@ -21,8 +22,6 @@ var cavMan = new URNDR.CanvasManager();
     cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
     cavMan.lineCap = STYLE.cap;
     cavMan.lineJoin = STYLE.join;
-    // Canvas
-    cavMan.resize( 500 , 500 );
 
 var PEN = new URNDR.Pen( cavMan.get("draw").element, cavMan.get("hud").element, WACOM );
 var STROKES = new URNDR.Strokes( cavMan.get("draw").element );
@@ -46,7 +45,7 @@ PEN.addTool(new URNDR.PenTool({
 
         this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
 
-        var point = new URNDR.Point({
+        var pnt = new URNDR.Point({
             X : pen.x,
             Y : pen.y,
             S : STYLE.brush_size,
@@ -54,14 +53,14 @@ PEN.addTool(new URNDR.PenTool({
             A : STYLE.color[3]
         });
 
-        point.refreshBinding( U3 )
-        
-        // Run modules that changes the point.
-        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , point )
-
         // WRITE POINT INTO STROKE
-        var active_stroke = this.strokes.getActiveStroke();
-        if (active_stroke !== 0) { this.strokes.getActiveStroke().addPoint( point ) }
+        var stk = this.strokes.getActiveStroke();
+        if (stk !== 0) { stk.addPoint( pnt ) }
+
+        // Run modules that changes the pnt.
+        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , pnt )
+
+        pnt.refreshBinding( U3 )
 
     }
 
@@ -102,21 +101,72 @@ PEN.addTool( new URNDR.PenTool({
 }));
 window.onload = function() {
 
-    // Canvas
-    cavMan.resize( 500 , 500 )
+    // Canvas Setup
+    // notify the renderer of the size change
+    U3.renderer.setSize( 500, 500 );
+    // update the camera
+    U3.speed = 16.666666666666666;
+    U3.camera.aspect = 1;
+    U3.camera.updateProjectionMatrix();
+    cavMan.resize( 500 , 500 );
 	
 	// Load Model
 	U3.createModelFromFile("models/man_walk.js",{
 		init: function() {
 			this.mesh.scale.multiplyScalar( 0.03 );
-			this.mesh.position.y = -3.2;
+			this.mesh.position.y = -2.5;
 			this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.play();
 		}
 	})
 
+    //
+    // EVENTS
+    //
+
+    document.addEventListener("keydown", function (event) {
+
+        var i,k,key,ignores,commands;
+            key = event.keyCode || event.charCode
+
+            ignores = {
+                refresh: function() {
+                    return (key === 82) && event.metaKey;
+                },
+                console: function() {
+                    return (key === 73) && event.metaKey && event.altKey;
+                },
+                fullscreen: function() {
+                    return (key === 70) && event.ctrlKey && event.metaKey;
+                },
+                fullscreen2: function() {
+                    return (key === 70) && event.metaKey && event.shiftKey;
+                },
+            }
+            for ( var scenario in ignores ) {
+                if ( ignores[scenario]() ) {
+                    return false;
+                }
+            }
+
+            event.preventDefault();
+
+            var response = MODULES.trigger( event );
+
+            if (response === 0) {
+                HUD.display("key_pressed: "+key);
+            } else {
+                HUD.display(response.module.name, response.message);
+            }
+
+    });
+
 	// requestAnimationFrame
+    U3.playing = true;
 	var display = function() {
-		U3.update();
+        if (U3.playing) {
+		  U3.update();
+        }
 		MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES);
 		MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE, {
 			strokes: STROKES, 
