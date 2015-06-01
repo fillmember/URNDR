@@ -2,29 +2,36 @@
 
 body {
   font-family: 'Raleway', sans-serif;
-  font-weight: 300;
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 11px;
+  color: #333;
 }
 
-button {
-  font-size: 12px;
-  padding: 0;
-  margin: 0;
-  /*background: white;*/
+ul, li {
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+p, li {
+  line-height: 15.625px;
+}
+
+p {
+  margin: 0 0 9px 0;
 }
 
 hr {
   clear: both;
   border: 0;
-  height: 1px;
-  background: #CCC;
+  height: 0;
+  margin-bottom: 4.5px;
 }
 
-h1,h2,h3 {margin: 0; padding: 0;}
+h1,h2,h3,h4 {margin: 0; padding: 0;}
 
 h1 {
   font-size: 2em;
-  font-weight: 500;
 }
 h2 {
   font-size: 1.5em;
@@ -33,36 +40,52 @@ h2 {
 h3 {
   font-size: 1em;
   text-align: center;
+  clear: both;
+  font-size: 1.5em;
+  padding: 4.5px 0 4.5px 0;
 }
-.sidebar em{
-  font-size: 1em;
-  font-weight: 500;
-  font-variant: normal;
-  font-style: normal;
+h3:first-child {
+  padding-top: 0;
 }
+h4 {
+  text-decoration: underline;
+}
+
+table {}
+  th, td {
+    padding: 4.5px;
+  }
+  th {}
+  td {
+    text-align: justify;
+    vertical-align: top;
+  }
 
 /*Interface*/
 
 .outer_wrapper {
-  width: 750px;
-  min-height: 500px;
-
-  margin: 45px auto;
-
   position: relative;
+  width: 750px;
+  margin: 22.5px auto;
 }
 
-.workspace, .showcase {
+.section {
   width: 750px;
   margin-bottom: 9px;
-}
-.workspace {
   position: relative;
 }
-.showcase {}
+  .section:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+.header {
+  margin-bottom: 22.5px;
+}
 
 .sidebar {
-  width: 120px;
+  width: 116px;
   height: 500px;
 
   position: absolute;
@@ -70,38 +93,41 @@ h3 {
 }
   .sidebar.left {
     left: 0;
-    padding-right: 5px;
+    padding-right: 9px;
   }
   .sidebar.right {
     right: 0;
-    padding-left: 5px;
+    padding-left: 9px;
+  }
+  .hudWrapper {
+    position:absolute;
+    bottom:0;
+    width:104px;
   }
   #HUD {
-    /*text-align: center;*/
     height: 60px;
+    margin-top: 4px;
+    line-height: 28px;
   }
-  .sidebar h3 {
-    clear: both;
-    font-size: 1.5em;
-    padding: 9px;
-  }
-  .sidebar button, .sidebar span, .sidebar input {
+  .sidebar button, .sidebar span, .sidebar input, .sidebar label {
     display: block;
+    position: relative;
     float: left;
-    height: 30px;
-    width: 120px;
+
+    height: 31.25px;
     padding: 0; margin: 0;
-  }
-  .sidebar span {
-    line-height: 30px;
+    
+    line-height: 31.25px;
     font-weight: 500;
     text-align: center;
   }
-  .sidebar .compress { font-size: 90%; }
-  .sidebar .half { width: 60px; }
-  .sidebar .third { width: 40px; }
-  .sidebar .half_third { width: 90px; }
-  .sidebar .fourth { width: 30px; }
+  .sidebar label.toggle {
+    margin-top: 3.25px;
+    height: 28px;
+  }
+  .sidebar p {
+    text-align: justify;
+  }
 
 .canvas_container {
   width: 500px;
@@ -114,14 +140,15 @@ h3 {
     top:0;
     left:0;
 
-    cursor: crosshair;
+    cursor: url(../img/cursor-full.png) 16 16, crosshair;
   }
-    #canvas_hud   { z-index: 2; }
-    #canvas_urndr { z-index: 1; }
-    #canvas_three { z-index: 0; }
 
-.showcase {
-}
+.showcase {}
+  .showcase:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
   .showcase .item {
     float: left;
     margin: 0 0 9px 0;
@@ -173,33 +200,137 @@ h3 {
 
 /*Minor Objects*/
 
-#WACOM {
-	position: absolute;
-	left: -999px; top: -999px;
-	width: 0; height: 0;
-}
+  #WACOM {position: absolute;left: -999px; top: -999px;width: 0; height: 0;}
 
 /* addtional classes */
 
-.unselectable {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
-}
+  .unselectable {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+  }
 
-.hide {
-  display: none;
-}
+  .center { text-align: center; }
+  .clear { clear: both; }
 
-.clear {
-  clear: both;
-}
+  .float-left { float: left; }
+  .float-right { float: right; }
 
-/* extension on Font Awesome */
+  /* Modular Layout Classes */
+  .p100 { width: 100%; }
+  .p75 { width: 75%; }
+  .p66 { width: 66.66%; }
+  .p50 { width: 50%; }
+  .p33 { width: 33.33%; }
+  .p25 { width: 25%; }
 
-.ani-reverse {
-  -webkit-animation-direction: reverse;
-  animation-direction: reverse;
-}
+  .p50.float-left p, 
+  .p33.float-left p, 
+  .p66.float-left p, 
+  .p75.float-left p, 
+  .p25.float-left p {
+    margin-right: 9px;
+  }
+
+  .compress { font-size: 90%; }
+
+/* Inputs */
+
+  input, button, label {
+    cursor: pointer;
+    outline: none;
+  }
+
+  button {
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+
+    background: #FFF;
+    border-radius: 10px;
+  }
+    button i {
+      position: relative;
+      top: -2px;
+    }
+
+  .btnGroup {
+    height: 35.75px; /* = 31.25 + 4.5 */
+  }
+    .btnGroup:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    .btnGroup button { border-radius: 0; }
+    .btnGroup button:first-child {
+      border-radius: 10px 0 0 10px;
+    }
+    .btnGroup button:last-child {
+      border-radius: 0 10px 10px 0;
+    }
+    .btnGroup button:not(:last-child) {
+      border-right: 0;
+    }
+
+  .outlinedGroup {
+    border-radius: 10px;
+    padding: 4.5px;
+  }
+    .outlinedGroup h3 { padding-top: 0; }
+
+  input[type=checkbox] { display: none; }
+    input[type=checkbox] + label i.off, input[type=checkbox]:checked + label i.on  {
+      display: block;
+    }
+    input[type=checkbox]:checked + label i.on:after  {
+      content: "";
+      display: block;
+      width: 12.5px; height: 12.5px;
+      border-radius: 20px;
+
+      position: absolute;
+      top: 4.5px; right: 3.5px;
+    }
+    input[type=checkbox] + label i.on , input[type=checkbox]:checked + label i.off {
+      display: none;
+    }
+
+  input[type=range] {
+    margin: 0;
+    -webkit-appearance: none;
+  }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 20px;
+      background: #FFF;
+      border-radius: 20px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 16px;
+      width: 16px;
+      border-radius: 16px;
+      background: #FFF;
+      margin-top: 0px;
+      -webkit-appearance: none;
+    }
+
+  /* common styles */
+
+  button,
+  .outlinedGroup,
+  input[type=range]::-webkit-slider-runnable-track,
+  input[type=range]::-webkit-slider-thumb
+  {
+    border: 2px solid #333;
+  }
+
+  button:active,
+  input[type=checkbox]:checked + label i.on:after,
+  input[type=range]:active::-webkit-slider-thumb
+  {
+    background: #FF0;
+  }

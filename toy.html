@@ -15,60 +15,198 @@
   <body>
 
     <div class="outer_wrapper">
-        <header>
+        <header class="header section">
             <h1>URNDR</h1>
             <h2>by FillMember</h2>
         </header>
-        <div class="workspace">
+        <div class="workspace section">
             
             <div class="sidebar left">
-                <h3><i class="fa fa-comment-o"></i></h3>
-                <div id="HUD"></div>
-                <h3><i class="fa fa-keyboard-o"></i></h3>
-                <p>
-                    f - fade <br />
-                    d - random <br />
-                    z - shake <br />
-                    w - smooth
-                </p>
+                <!-- <h3><i class="fa fa-align-left"></i></h3> -->
+                <p>What if we are the ones who render?</p>
+                <p>URNDR provides an environment where users decide how should a 3d model looks like, by their drawings. Take back the control over the look of 3D graphic, to our own hands. </p>
+                <p><a href="http://fillmember.net/">More Info</a></p>
+                <div class="outlinedGroup hudWrapper">
+                    <i class="fa fa-comment-o" style="font-size:150%;margin-top:-5px;"></i>
+                    <div id="HUD"></div>
+                </div>
             </div>
             
             <div class="canvas_container canvas_bg" data-background="#FFFFFF">
-                <canvas id="canvas_hud" class="unselectable"></canvas>
-                <canvas id="canvas_urndr" class="unselectable"></canvas>
                 <canvas id="canvas_three" class="unselectable"></canvas>
+                <canvas id="canvas_urndr" class="unselectable"></canvas>
+                <canvas id="canvas_hud" class="unselectable"></canvas>
             </div>
             
             <div class="sidebar right">
 
                 <h3><i class="fa fa-paint-brush"></i></h3>
-                <button onclick="javascript:trig('Draw')" class="half"><i class="fa fa-pencil"></i></button>
-                <button onclick="javascript:trig('Eraser')" class="half"><i class="fa fa-eraser"></i></button>
-                <span class="fourth"><i class="fa fa-circle-thin"></i></span>
-                <input id="brush_size" onchange="javascript:STYLE.brush_size = parseFloat(this.value)" class="half_third" type="range" value="40" min="5" max="100" step="1" />
-                <button onclick="javascript:trig('Color Change','random')" class="half"><i class="fa fa-tint"></i></button>
-                <button onclick="javascript:trig('Clear')" class="half"><i class="fa fa-times-circle"></i></button>
+                <div class="btnGroup">
+                    <button onclick="javascript:trig('Draw')" id="draw" class="p50"><i class="fa fa-pencil"></i></button>
+                    <button onclick="javascript:trig('Eraser')" id="eraser" class="p50"><i class="fa fa-eraser"></i></button>
+                </div>
+
+                <button onclick="javascript:trig('Color Change','random')" class="p50"><i class="fa fa-tint"></i></button>
+                <span class="p25"><i class="fa fa-random"></i></span>
+                <input type="checkbox" id="random_stroke_color" onchange="mtogg('Random Stroke Color',this.checked)">
+                <label for="random_stroke_color" class="p25 toggle">
+                    <i class="off fa fa-toggle-off fa-fw fa-2x"></i>
+                    <i class="on fa fa-toggle-on fa-fw fa-2x"></i>
+                </label>
+                
+                <span class="p25"><i class="fa fa-circle-o"></i></span>
+                <input id="brush_size" oninput="javascript:STYLE.brush_size = parseFloat(this.value)" class="p75" type="range" value="40" min="1" max="100" step="1" />
                 
                 <h3><i class="fa fa-cube"></i></h3>
-                <button onclick="javascript:trig('Play Pause', 0)" class="third compress"><i class="fa fa-play"></i><i class="fa fa-pause"></i></button>
-                <button onclick="javascript:trig('Play Pause',-1)" class="third"><i class="fa fa-arrow-circle-left fa-lg"></i></button>
-                <button onclick="javascript:trig('Play Pause', 1)" class="third"><i class="fa fa-arrow-circle-right fa-lg"></i></button>
-                <span class="fourth"><i class="fa fa-rotate-left"></i></span>
-                <input id="target_theta" onchange="javascript:U3.rig.target_theta = parseFloat(this.value)" class="half_third" type="range" value="0" min="0" max="6" step="0.1" />
-                <span class="fourth"><i class="fa fa-search-plus"></i></span>
-                <input id="target_radius" onchange="javascript:U3.rig.target_radius = parseInt(this.value)" class="half_third" type="range" value="5" min="1" max="7" step="1" />
+                
+                <input id="models" oninput="javascript:U3.solo( parseInt(this.value) )" class="p75" type="range" value="0" min="0" max="4" step="1" />
+                
+                <label for="models" class="p25"><i class="fa fa-cubes"></i></label>
+                
+                <div class="btnGroup">
+                    <button onclick="javascript:trig('Play Pause',-1)" class="p33"><i class="fa fa-step-backward"></i></button>
+                    <button onclick="javascript:trig('Play Pause', 0)" class="p33 compress"><i class="fa fa-play"></i><i class="fa fa-pause"></i></button>
+                    <button onclick="javascript:trig('Play Pause', 1)" class="p33"><i class="fa fa-step-forward"></i></button>
+                </div>
 
-                <h3><i class="fa fa-magic"></i></h3>
-                <button onclick="javascript:MODULES.getModuleByName('Auto Rotate').receive(-1)" class="half"><i class="fa fa-refresh"></i></button>
-                <button onclick="javascript:MODULES.getModuleByName('Auto Rotate').receive( 1)" class="half"><i class="fa fa-refresh fa-flip-horizontal"></i></button>
+                <label for="view_offset_y" class="p25"><i class="fa fa-arrows-v"></i></label>
+                <input id="view_offset_y" oninput="javascript:trig('Camera Work','Y',parseFloat(this.value));" class="p75" type="range" value="0" min="-3" max="3" step="0.5" />
+                
+                <label for="target_theta" class="p25"><i class="fa fa-rotate-left"></i></label>
+                <input id="target_theta" oninput="javascript:U3.rig.target_theta = parseFloat(this.value)" class="p75" type="range" value="0" min="0" max="6.2831" step="0.0757" />
+                <label for="target_radius" class="p25"><i class="fa fa-search-minus fa-flip-horizontal"></i></label>
+                <input id="target_radius" oninput="javascript:U3.rig.target_radius = parseInt(this.value)" class="p75" type="range" value="5" min="1" max="6" step="0.5" />
 
-                <h3><i class="fa fa-truck"></i></h3>
-                <button onclick="javascript:MODULES.getModuleByName('Render').receive('GIF')"><i class="fa fa-film"></i> GIF </button>
+                <h3><i class="fa fa-plug"></i></h3>
+
+                <span class="p25">///</span>
+                <input type="checkbox" id="shake" onchange="mtogg('Fade Strokes',this.checked)">
+                <label for="shake" class="p25 toggle">
+                    <i class="off fa fa-toggle-off fa-fw fa-2x"></i>
+                    <i class="on fa fa-toggle-on fa-fw fa-2x"></i>
+                </label>
+
+                <span class="p25">～</span>
+                <input type="checkbox" id="fade-strokes" onchange="mtogg('Wiggle',this.checked)">
+                <label for="fade-strokes" class="p25 toggle">
+                    <i class="off fa fa-toggle-off fa-fw fa-2x"></i>
+                    <i class="on fa fa-toggle-on fa-fw fa-2x"></i>
+                </label>
+
+                <span class="p25"><i class="fa fa-refresh"></i></span>
+                <input id="auto_rotate" oninput="javascript:mreceive('Auto Rotate',parseFloat(this.value))" class="p50" type="range" value="0" min="-1" max="1" step="0.25" />
+                <span class="p25"><i class="fa fa-refresh fa-flip-horizontal"></i></span>
+
+                <h3><i class="fa fa-motorcycle"></i></h3>
+                <button onclick="javascript:mreceive('Render','GIF')" class="p100"><i class="fa fa-film fa-lg"></i></button>
+                <hr>
+                <button onclick="javascript:trig('Clear')" class="p100"><i class="fa fa-trash-o fa-lg"></i></button>
             </div>
         
         </div>
         
-        <div class="showcase"> <div class="clear"></div> </div>
+        <div class="showcase section">
+        </div>
+
+        <div class="document section">
+            <section class="float-left" style="width: 625px;">
+                <h3><i class="fa fa-book"></i></h3>
+                <p>
+                    Directly draw on top of the model. Or around it. Or somewhere in between. 
+                </p>
+                <h4>TIPS:</h4>
+                <p>
+                    #1 &nbsp; On some shortcuts you can hold SHIFT to engage special functions. <br />
+                    #2 &nbsp; Use effects and change parameters while exporting GIF for cool effects. 
+                </p>
+                <h4>LEGEND:</h4>
+                <table class="p100">
+                    <tr>
+                        <th class="p25"><i class="fa fa-paint-brush fa-2x"></i></th>
+                        <th class="p25"><i class="fa fa-cube fa-2x"></i></th>
+                        <th class="p25"><i class="fa fa-plug fa-2x"></i></th>
+                        <th class="p25"><i class="fa fa-motorcycle fa-2x"></i></th>
+                    </tr>
+                    <tr>
+                        <th>Paint</th>
+                        <th>Model</th>
+                        <th>Effects</th>
+                        <th>Exporter</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <p>
+                                <i class="fa fa-tint fa-fw"></i>
+                                Randomise color/bg <br>
+                                <i class="fa fa-random fa-fw"></i>
+                                Random brush color <br>
+                                <i class="fa fa-circle-o fa-fw"></i>
+                                Brush size
+                            </p>
+                        </td>
+                        <td>
+                            <p>
+                                <i class="fa fa-tint fa-fw"></i>
+                                Switch between models
+                            </p>
+                            <p>
+                                <i class="fa fa-arrows-v fa-fw"></i>
+                                <i class="fa fa-rotate-left fa-fw"></i>
+                                <i class="fa fa-search-minus fa-fw"></i>
+                                Control camera by height, rotation and zoom. 
+                            </p>
+                            <p>Note: camera will point at models automatically. </p>
+                        </td>
+                        <td>
+                            /// Fade <br>
+                            ～ Wiggle <br>
+                            <i class="fa fa-refresh"></i>
+                            Auto Rotation
+                            <i class="fa fa-refresh fa-flip-horizontal"></i>
+                        </td>
+                        <td>yee</td>
+                    </tr>
+                </table>
+            </section>
+            <section style="width: 116px; float: right;">
+
+                <h3><i class="fa fa-keyboard-o"></i></h3>
+                <ul>
+                    <li>b - brush</li>
+                    <li>e - eraser</li>
+                    <li>f - fade</li>
+                    <li>d - zig zag brush</li>
+                    <li>z - shake</li>
+                    <li>w - smooth</li>
+                    <li>/ - random color</li>
+                </ul>
+
+                <h3><i class="fa fa-laptop"></i></h3>
+                <p>
+                    This is an open source project. The source code is hosted on <a href="http://github.com/fillmember/urndr">GitHub</a>
+                </p>
+                <p>
+                    URNDR can't be possible without these libraries, references and communities:
+                        <a href="http://google.com/">GifPaint</a>
+                        <a href="http://google.com/">Three.js</a>
+                        <a href="http://google.com/">Watch.js</a>
+                        <a href="http://google.com/">jQuery</a>
+                        <a href="http://google.com/">dat.GUI</a>
+                        <a href="http://google.com/">jsGIF</a>
+                </p>
+
+                <h3><i class="fa fa-share-square-o"></i></h3>
+                <p>
+                    Share
+                </p>
+            </section>
+        </div>
+        <div class="footer section">
+            <section class="p100 center">
+                <p>Made in Master Animation 2014 - 2015, AKV|St.Joost, Breda, the Netherlands. </p>
+                <p>Develop & Design by FillMember 2015. </p>
+            </section>
+        </div>
     </div>
 
     <object type="application/x-wacomtabletplugin" id="Wacom" class="unselectable"></object>

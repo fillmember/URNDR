@@ -5,7 +5,7 @@ $showcase.putGeneratedImage = function( url ){
 
     var $new = $("<div>",{class:"exported item"}),
         $img = $("<img>",{src: url}),
-        $btns= $('<div class="bar"><a href="#" class="del fa fa-trash-o"></a><a href="'+url+'" class="dw fa fa-download" download="urndr"></a></div>');
+        $btns= $('<div class="bar"><a href="#" class="del fa fa-trash-o"></a><a href="'+url+'" target="_blank" class="dw fa fa-download" download="urndr"></a></div>');
 
     $btns.find(".del").on("click",function(evt){
         evt.preventDefault();
@@ -22,21 +22,39 @@ $showcase.putGeneratedImage = function( url ){
 }
 
 var trig = function() {
-    var _arguments = [].slice.call( arguments );
+    var module = MODULES.getModuleByName( arguments[0] ),
+        _arguments = [].slice.call( arguments );
         _arguments.shift();
-    MODULES.getModuleByName( arguments[0] ).func.apply( this , _arguments )
+    module.func.apply( module , _arguments )
+}
+var mreceive = function() {
+    var module = MODULES.getModuleByName( arguments[0] ),
+        _arguments = [].slice.call( arguments );
+        _arguments.shift();
+    module.receive.apply( module , _arguments )
+}
+var mtogg = function( mod_name , value ) {
+    var module = MODULES.getModuleByName( arguments[0] );
+    if (value != undefined) {
+        module.enabled = value;
+    } else {
+        module.enabled = ! module.enabled;
+    }
 }
 
 watch( STYLE , "brush_size" , function(){
     $("input#brush_size").get(0).value = STYLE.brush_size;
 })
 
+
+// URNDR Modules
+
 MODULES.loadModules( {
 
 // COMMANDS
 
 draw : function() {
-    var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
+    var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,66) // b
     module.setFunction(function() {
         PEN.selectToolByName("Draw");
         return "";
@@ -80,7 +98,7 @@ brush_size_down : function() {
 },
 
 play_pause : function() {
-    var module = new URNDR.Module("Play Pause",URNDR.COMMAND_MODULE,32)
+    var module = new URNDR.Module("Play Pause",URNDR.COMMAND_MODULE)
     module.setFunction(function( arg , btn ){
         U3.eachModel( function(model){
             if (model.animation) {
@@ -109,7 +127,7 @@ play_pause : function() {
 },
 
 random_color_scheme : function() {
-    var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,222)
+    var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,191)
     module.setFunction(function( evt ){
 
         var round = Math.round, random = Math.random;
@@ -151,14 +169,16 @@ random_color_scheme : function() {
         var dark = hslToRgb( _hue , _sat * 0.80 , 0.2 );
         var pale = hslToRgb( _hue - 0.075 , _sat * 0.80 , 0.6 );
 
+        var _f = function(v) {
+            var b = 30, bh = b * 0.5;
+            return round(v + random() * b - bh)
+        };
+
         STROKES.eachStroke( function( stk ){
             stk.eachPoint( function( pnt ){
-                f = 0.8;
-                rf = 1 - f;
-                pnt.R = round(contrast[0] * f + random() * contrast[0] * rf)
-                pnt.G = round(contrast[1] * f + random() * contrast[1] * rf)
-                pnt.B = round(contrast[2] * f + random() * contrast[2] * rf)
-                pnt.A = 1;
+                pnt.R = _f(contrast[0])
+                pnt.G = _f(contrast[1])
+                pnt.B = _f(contrast[2])
             }, stk)
             stk.tags = {};
         } )
@@ -166,16 +186,32 @@ random_color_scheme : function() {
         STYLE.color[0] = contrast[0]
         STYLE.color[1] = contrast[1]
         STYLE.color[2] = contrast[2]
-
         U3.material.color = new THREE.Color( _rgb(pale) )
-
-        $(".canvas_bg")
-            .css(  "background", _rgb(primary) )
-            .data( "background", _rgb(primary) )
+        U3.renderer.setClearColor( _rgb(primary) )
 
         return _msg;
     })
     return module;
+},
+
+camera_work : function() {
+    var module = new URNDR.Module("Camera Work",URNDR.COMMAND_MODULE,901)
+    module.setFunction( function( directive ){
+        var _arguments = [].slice.call( arguments );
+            _arguments.shift();
+        var directives = {}
+        directives["Y"] = function( v ){
+            var am = U3.getModel(U3.activeModel);
+            if (am.focusPoint != undefined) {
+                U3.rig.focus.y = am.focusPoint;
+            } else {
+                U3.rig.focus.y = v;
+            }
+            U3.rig.target_pitch = v;
+        }
+        directives[directive].apply( this , _arguments )
+    } )
+    return module
 },
 
 // STYLE MODULES
@@ -185,9 +221,26 @@ random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
     module.interval = 70;
     module.setFunction(function(STYLE) {
-        STYLE.color[0] = URNDR.Math.random(255,{round: true});
-        STYLE.color[1] = URNDR.Math.random(255,{round: true});
-        STYLE.color[2] = URNDR.Math.random(255,{round: true});
+        var round = Math.round, random = Math.random;
+        STYLE.color[0] = round(random() * 255);
+        STYLE.color[1] = round(random() * 255);
+        STYLE.color[2] = round(random() * 255);
+    })
+    return module
+},
+
+subtle_pen_variation : function() {
+    var module = new URNDR.Module("Subtle Pen Variation",URNDR.STYLE_MODULE,true,999);
+    module.interval = 70;
+    module.setFunction(function(STYLE) {
+        var round = Math.round, random = Math.random;
+        var _f = function(v) {
+            var b = 15, bh = b * 0.5;
+            return round(v + random() * b - bh)
+        };
+        STYLE.color[0] = _f(STYLE.color[0]);
+        STYLE.color[1] = _f(STYLE.color[1]);
+        STYLE.color[2] = _f(STYLE.color[2]);
     })
     return module
 },
@@ -233,7 +286,7 @@ pressure_sensitivity : function() {
 // STROKE DATA MODULES
 
 auto_rotation : function(){
-    var module = new URNDR.Module("Auto Rotate",URNDR.STROKE_MODULE,190,false);
+    var module = new URNDR.Module("Auto Rotate",URNDR.STROKE_MODULE,9999,false);
     module.interval = RENDER_INTERVAL;
     module.setConfiguration({
         direction: 1
@@ -242,15 +295,13 @@ auto_rotation : function(){
         U3.rig.target_theta += 0.1047 * this.settings.direction
     })
     module.listener = function (v) {
-        switch (v) {
-            case -1:
-                this.settings.direction = -1;
-                break;
-            case  1:
-                this.settings.direction = 1;
-                break;
+        console.log( v )
+        if (v === 0) {
+            this.enabled = false;
+        } else {
+            this.enabled = true;
+            this.settings.direction = v;
         }
-        this.enabled = ! this.enabled;
     }
     return module;
 },
@@ -501,7 +552,7 @@ wiggle : function() {
 // DRAW MODULES
 
 default_draw_style : function() {
-    var module = new URNDR.Module("Render",URNDR.DRAW_MODULE,48,true);
+    var module = new URNDR.Module("Render",URNDR.DRAW_MODULE,902,true);
     module.interval = RENDER_INTERVAL;
     module.setConfiguration( {
         // Styles
@@ -603,69 +654,73 @@ default_draw_style : function() {
         
         canvases.clear(1);
 
+        var frame_this = settings.renderedFrames % settings.frameEvery === 0;
+
         // PRE-RENDER PROCESSES
         // #1 : EXPORTER
         if (settings.exporting) {
 
-            //BACKGROUND PASS
-            ctx.fillStyle = $(".canvas_bg").data("background");
-            ctx.fillRect( 0, 0, ctx.canvas.width, ctx.canvas.height );
-
-            // RENDER : COPY 3D image
-            ctx.drawImage( U3.renderer.domElement , 0 , 0 )
+            if ( frame_this ) {
+                // RENDER : COPY 3D image
+                ctx.drawImage( U3.renderer.domElement , 0 , 0 )
+            }
 
         }
 
         // RENDER
-        strokes.eachStroke( function( stk ){
+        if ( ! settings.exporting || settings.exporting && frame_this ) {
 
-            stk.eachPoint( function( pnt, stk, i ){
+            strokes.eachStroke( function( stk ){
 
-                var prv = stk.getPoint( i - 1 );
-                if (prv !== 0) {
-                    var factor = getAlphaFactor(pnt,stk,i);
-                    if (factor > 0) {
-                        _fillmember( ctx, prv, pnt, factor );
-                        stroke_basic(ctx, prv, pnt, pnt.S, STYLE.gradientMaker( ctx , prv , pnt , factor ) )
+                stk.eachPoint( function( pnt, stk, i ){
+
+                    var prv = stk.getPoint( i - 1 );
+                    if (prv !== 0) {
+                        var factor = getAlphaFactor(pnt,stk,i);
+                        if (factor > 0) {
+                            _fillmember( ctx, prv, pnt, factor );
+                            stroke_basic(ctx, prv, pnt, pnt.S, STYLE.gradientMaker( ctx , prv , pnt , factor ) )
+                        }
                     }
+
+                } , stk)
+
+                if ( stk.selected ) {
+
+                    var pnt = stk.getPoint(0);
+
+                    hudCtx.strokeStyle = "#FF0"
+                    hudCtx.beginPath();
+                    hudCtx.moveTo( pnt.X , pnt.Y )
+                    stk.eachPoint( function(pnt) {
+                        hudCtx.lineTo( pnt.X , pnt.Y )
+                        hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
+                    } )
+
+                    hudCtx.stroke();
+
+                } else if ( stk.hovered ) {
+                    
+                    hudCtx.strokeStyle = "#FFF"
+                    stk.eachPoint( function(pnt) {
+                        hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
+                    } )
+                
                 }
 
-            } , stk)
+                if (stk.closed) {
+                    
+                    var prv = stk.points[ 0 ],
+                        pnt = stk.points[ stk.length - 1 ],
+                        factor = getAlphaFactor(pnt,stk,0);
 
-            if ( stk.selected ) {
+                    _fillmember( ctx, prv, pnt, factor );
+                    stroke_basic(ctx, pnt, prv, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' );
 
-                var pnt = stk.getPoint(0);
+                }
+            } )
 
-                hudCtx.strokeStyle = "#FF0"
-                hudCtx.beginPath();
-                hudCtx.moveTo( pnt.X , pnt.Y )
-                stk.eachPoint( function(pnt) {
-                    hudCtx.lineTo( pnt.X , pnt.Y )
-                    hudCtx.strokeRect( pnt.X - 4 , pnt.Y - 4 , 8, 8);
-                } )
-
-                hudCtx.stroke();
-
-            } else if ( stk.hovered ) {
-                
-                hudCtx.strokeStyle = "#FFF"
-                stk.eachPoint( function(pnt) {
-                    hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
-                } )
-            
-            }
-
-            if (stk.closed) {
-                
-                var prv = stk.points[ 0 ],
-                    pnt = stk.points[ stk.length - 1 ],
-                    factor = getAlphaFactor(pnt,stk,0);
-
-                _fillmember( ctx, prv, pnt, factor );
-                stroke_basic(ctx, pnt, prv, pnt.S, 'rgba('+pnt.R+','+pnt.G+','+pnt.B+','+pnt.A * factor +')' );
-
-            }
-        } )
+        }
 
         // POST-RENDER PROCESSES
         // #1 : EXPORTER
@@ -675,11 +730,14 @@ default_draw_style : function() {
             if (settings.renderedFrames < settings.totalFrames) {
                 
                 // SKIP FRAME DETECTION
-                if ( settings.renderedFrames % settings.frameEvery === 0 ) {
+                if ( frame_this ) {
                     settings.encoder.addFrame( ctx )
                 }
+
+                var p = settings.renderedFrames / settings.totalFrames;
+                p = Math.round( p * 100 )
                 
-                HUD.display( "Making GIF..." , settings.renderedFrames + "/" + settings.totalFrames );
+                HUD.display( "Making GIF..." , p + "%" );
                 settings.renderedFrames += 1;
 
             } else {
@@ -707,9 +765,9 @@ default_draw_style : function() {
                 $showcase.fadeOut(300,function(){
                     // config
                     ss.exporting = true;
-                    ss.frameEvery = 2;
+                    ss.frameEvery = 3;
                     ss.totalFrames = 59;
-                    ss.gifDelay = 70;
+                    ss.gifDelay = 50;
                     // encoder
                     ss.encoder = new GIFEncoder();
                     ss.encoder.setRepeat( 0 );

@@ -1,5 +1,14 @@
 "use strict";
 
+$.fn.flash = function(_color, _duration) {
+    console.log("Welcome to Flash",this)
+    var color = _color || "#FF0";
+    var duration = _duration || 100;
+    var originalBg = this.css("background-color");
+    this.css("background-color", color)
+        .animate({backgroundColor: originalBg}, duration);
+};
+
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
@@ -10,7 +19,6 @@ var U3 = new URNDR.ThreeManager( {
         morphTargets: true
     } )
 } )
-U3.renderer.context.preserveDrawingBuffer = true;
 
 var HUD = new URNDR.Hud( document.getElementById('HUD') );
 
@@ -105,7 +113,7 @@ window.onload = function() {
     // notify the renderer of the size change
     U3.renderer.setSize( 500, 500 );
     // update the camera
-    U3.speed = 16.666666666666666;
+    U3.speed = 16.6666;
     U3.camera.aspect = 1;
     U3.camera.updateProjectionMatrix();
     cavMan.resize( 500 , 500 );
@@ -113,12 +121,37 @@ window.onload = function() {
 	// Load Model
 	U3.createModelFromFile("models/man_walk.js",{
 		init: function() {
-			this.mesh.scale.multiplyScalar( 0.03 );
-			this.mesh.position.y = -2.5;
-			this.animation = new THREE.MorphAnimation( this.mesh )
+			this.animation = new THREE.MorphAnimation( this.mesh );
+            this.mesh.scale.multiplyScalar( 0.03 );
+            this.mesh.position.y = -2.7;
+		},
+        onfocus: function(){this.animation.play();},
+        onblur: function(){ this.animation.pause(); }
+	});
+    U3.createModelFromFile( "models/dog_run.js", {
+        init: function() {
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.mesh.scale.multiplyScalar( 0.04 );
+            this.mesh.position.y = -1.7;
+            this.focusPoint = 0;
+        },
+        onfocus: function(){
             this.animation.play();
-		}
-	})
+            U3.rig.focus.y = 0;
+        },
+        onblur: function(){ this.animation.pause(); }
+    });
+    U3.createModelFromFile( "models/waterfilter.js", {
+        init: function() {
+            this.mesh.scale.multiplyScalar( 0.08 );
+            this.mesh.rotation.y = 1;
+            this.focusPoint = 0.25;
+        },
+        onfocus: function(){
+            U3.rig.focus.y = 0;
+        },
+    });
+    U3.solo(0)
 
     //
     // EVENTS
@@ -154,19 +187,21 @@ window.onload = function() {
             var response = MODULES.trigger( event );
 
             if (response === 0) {
-                HUD.display("key_pressed: "+key);
+                // Do Nothing
+                HUD.display(key)
             } else {
-                HUD.display(response.module.name, response.message);
+                var name = response.module.name;
+                if (name.length > 15) {
+                    name = name.replace(/[aeiou]/g,'')
+                }
+                HUD.display(name, response.message);
             }
 
     });
 
 	// requestAnimationFrame
-    U3.playing = true;
 	var display = function() {
-        if (U3.playing) {
-		  U3.update();
-        }
+        U3.update();
 		MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES);
 		MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE, {
 			strokes: STROKES, 

@@ -1288,6 +1288,7 @@ URNDR.PenTool = function(parameters) {
 
 // Hud
 URNDR.Hud = function(box) {
+    this.muted = false;
     this.box = box;
     this.style = {
         prefix : '<div class="argument">',
@@ -1298,6 +1299,8 @@ URNDR.Hud = function(box) {
 URNDR.Hud.prototype = {
     display: function() {
 
+        if (this.muted) { return; }
+
         this.box.innerHTML = this.wrap( arguments[0] );
 
         for (var i=1;i<arguments.length;i++) {
@@ -1306,6 +1309,8 @@ URNDR.Hud.prototype = {
 
     },
     appendToDisplay: function() {
+
+        if (this.muted) { return; }
         
         for (var i=0;i<arguments.length;i++) {
             this.box.innerHTML += this.style.space + this.wrap( arguments[i] );
@@ -1366,7 +1371,7 @@ URNDR.Model = function( args ) {
     this.mesh = undefined;
     this.geometry = undefined;
     this.material = args.material;
-    this.animation = undefined;
+    this.animation = {play:function(){},stop:function(){},pause:function(){},update:function(){}};
 
     // Behaviours
     this.init = args.init || function(){};
@@ -1384,12 +1389,14 @@ URNDR.Model.prototype = {
         }
     },
     set active (value) {
-        var original = 0;
+        var original = null;
         if (this.mesh) {
             original = this.mesh.visible;
             this.mesh.visible = value;
+        } else {
+            this._active = value;
         }
-        if (original !== value) {
+        if (original !== null && original !== value) {
             if (value) {
                 this.onfocus();
             } else {
@@ -1411,10 +1418,16 @@ URNDR.Model.prototype = {
 
             // UNLOCK
             model.loaded = true;
-            model.active = true;
+            if (model._active !== undefined) {
+                model.active = model._active;
+                delete model._active;
+            } else {
+                model.active = true;
+            }
 
-            // Init Function
             model.init( model );
+            
+            model.onfocus();
 
             // CALLBACK
             callback( model );
@@ -1466,7 +1479,8 @@ URNDR.ThreeManager = function( arg ) {
         pitch : 0,
         target_pitch : 0,
         speed : 0.1,
-        focus : new THREE.Vector3(0,0,0)
+        focus : new THREE.Vector3(0,0,0),
+        _focus : new THREE.Vector3(0,0,0)
     }
     this.speed = 15;
 
@@ -1492,6 +1506,10 @@ URNDR.ThreeManager.prototype = {
         model.loadModel( file_path , function(){
 
             manager.scene.add( model.mesh );
+
+            if (typeof args.loaded === "function") {
+                args.loaded();
+            }
 
         } );
 
@@ -1534,9 +1552,23 @@ URNDR.ThreeManager.prototype = {
     },
     solo: function( n ){
         var manager = this;
-        manager.models_array.forEach( function(o,i){
-            manager.models[o].active = (i === n) ? true : false
-        } )
+        if (typeof n === "number") {
+            manager.models_array.forEach( function(o,i){
+                if (i === n) {
+                    manager.activeModel = n;
+                    manager.models[o].active = true;
+                } else {
+                    manager.models[o].active = false;
+                }
+            } )
+        } else if (typeof n === "string") {
+            var pos = manager.models_array.indexOf(n);
+            if (pos !== -1) {
+                this.solo( pos );
+            }
+        } else if (n instanceof URNDR.Model) {
+            this.solo( n.id )
+        }
     },
     update: function() {
 
@@ -1570,11 +1602,12 @@ URNDR.ThreeManager.prototype = {
         rig.theta += ( rig.target_theta - rig.theta ) * rig.speed;
         rig.pitch += ( rig.target_pitch - rig.pitch ) * rig.speed;
         rig.radius += ( rig.target_radius - rig.radius ) * rig.speed;
+        rig._focus.lerp( rig.focus , rig.speed );
 
         U3.camera.position.z = Math.sin( rig.theta ) * rig.radius;
         U3.camera.position.x = Math.cos( rig.theta ) * rig.radius;
-        U3.camera.position.y = THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )
-        U3.camera.lookAt(rig.focus)
+        U3.camera.position.y = rig.pitch
+        U3.camera.lookAt(rig._focus)
 
         // Renderer
         
