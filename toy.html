@@ -41,7 +41,7 @@
             <div class="sidebar right">
 
                 <h3><i class="fa fa-paint-brush"></i></h3>
-                <div class="btnGroup">
+                <div class="btnGroup p100">
                     <button onclick="javascript:trig('Draw')" id="draw" class="p50"><i class="fa fa-pencil"></i></button>
                     <button onclick="javascript:trig('Eraser')" id="eraser" class="p50"><i class="fa fa-eraser"></i></button>
                 </div>
@@ -49,10 +49,7 @@
                 <button onclick="javascript:trig('Color Change','random')" class="p50"><i class="fa fa-tint"></i></button>
                 <span class="p25"><i class="fa fa-random"></i></span>
                 <input type="checkbox" id="random_stroke_color" onchange="mtogg('Random Stroke Color',this.checked)">
-                <label for="random_stroke_color" class="p25 toggle">
-                    <i class="off fa fa-toggle-off fa-fw fa-2x"></i>
-                    <i class="on fa fa-toggle-on fa-fw fa-2x"></i>
-                </label>
+                <label for="random_stroke_color" class="p25 toggle"></label>
                 
                 <span class="p25"><i class="fa fa-circle-o"></i></span>
                 <input id="brush_size" oninput="javascript:STYLE.brush_size = parseFloat(this.value)" class="p75" type="range" value="40" min="1" max="100" step="1" />
@@ -63,39 +60,38 @@
                 
                 <label for="models" class="p25"><i class="fa fa-cubes"></i></label>
                 
-                <div class="btnGroup">
+                <div class="btnGroup p100">
                     <button onclick="javascript:trig('Play Pause',-1)" class="p33"><i class="fa fa-step-backward"></i></button>
                     <button onclick="javascript:trig('Play Pause', 0)" class="p33 compress"><i class="fa fa-play"></i><i class="fa fa-pause"></i></button>
                     <button onclick="javascript:trig('Play Pause', 1)" class="p33"><i class="fa fa-step-forward"></i></button>
                 </div>
 
-                <label for="view_offset_y" class="p25"><i class="fa fa-arrows-v"></i></label>
-                <input id="view_offset_y" oninput="javascript:trig('Camera Work','Y',parseFloat(this.value));" class="p75" type="range" value="0" min="-3" max="3" step="0.5" />
-                
-                <label for="target_theta" class="p25"><i class="fa fa-rotate-left"></i></label>
-                <input id="target_theta" oninput="javascript:U3.rig.target_theta = parseFloat(this.value)" class="p75" type="range" value="0" min="0" max="6.2831" step="0.0757" />
-                <label for="target_radius" class="p25"><i class="fa fa-search-minus fa-flip-horizontal"></i></label>
-                <input id="target_radius" oninput="javascript:U3.rig.target_radius = parseInt(this.value)" class="p75" type="range" value="5" min="1" max="6" step="0.5" />
+                <div class="p100 group close">
+                    <label for="view_offset_y" class="p25"><i class="fa fa-arrows-v"></i></label>
+                    <input id="view_offset_y" oninput="javascript:trig('Camera Work','Y',parseFloat(this.value));" class="p75" type="range" value="0" min="-3" max="3" step="0.5" />
+                    <label for="target_theta" class="p25"><i class="fa fa-rotate-left"></i></label>
+                    <input id="target_theta" oninput="javascript:U3.rig.target_theta = parseFloat(this.value)" class="p75" type="range" value="0" min="0" max="6.2831" step="0.0757" />
+                    <label for="target_radius" class="p25"><i class="fa fa-search-minus fa-flip-horizontal"></i></label>
+                    <input id="target_radius" oninput="javascript:U3.rig.target_radius = parseInt(this.value)" class="p75" type="range" value="5" min="1" max="6" step="0.5" />
+                </div>
 
                 <h3><i class="fa fa-plug"></i></h3>
-
-                <span class="p25">///</span>
-                <input type="checkbox" id="shake" onchange="mtogg('Fade Strokes',this.checked)">
-                <label for="shake" class="p25 toggle">
-                    <i class="off fa fa-toggle-off fa-fw fa-2x"></i>
-                    <i class="on fa fa-toggle-on fa-fw fa-2x"></i>
-                </label>
-
-                <span class="p25">～</span>
-                <input type="checkbox" id="fade-strokes" onchange="mtogg('Wiggle',this.checked)">
-                <label for="fade-strokes" class="p25 toggle">
-                    <i class="off fa fa-toggle-off fa-fw fa-2x"></i>
-                    <i class="on fa fa-toggle-on fa-fw fa-2x"></i>
-                </label>
-
-                <span class="p25"><i class="fa fa-refresh"></i></span>
-                <input id="auto_rotate" oninput="javascript:mreceive('Auto Rotate',parseFloat(this.value))" class="p50" type="range" value="0" min="-1" max="1" step="0.25" />
-                <span class="p25"><i class="fa fa-refresh fa-flip-horizontal"></i></span>
+                    
+                <div class="p100 group">
+                    <span class="p25">///</span>
+                    <input type="checkbox" id="shake" onchange="mtogg('Fade Strokes',this.checked)">
+                    <label for="shake" class="p25 toggle"></label>
+                    
+                    <span class="p25">～</span>
+                    <input type="checkbox" id="fade-strokes" onchange="mtogg('Wiggle',this.checked)">
+                    <label for="fade-strokes" class="p25 toggle"></label>
+                </div>
+                
+                <div class="p100 group" style="margin-top:-9px;">
+                    <span class="p25"><i class="fa fa-refresh"></i></span>
+                    <input id="auto_rotate" oninput="javascript:mreceive('Auto Rotate',parseFloat(this.value))" class="p50" type="range" value="0" min="-1" max="1" step="0.25" />
+                    <span class="p25"><i class="fa fa-refresh fa-flip-horizontal"></i></span>
+                </div>
 
                 <h3><i class="fa fa-motorcycle"></i></h3>
                 <button onclick="javascript:mreceive('Render','GIF')" class="p100"><i class="fa fa-film fa-lg"></i></button>
@@ -193,6 +189,7 @@
                         <a href="http://google.com/">jQuery</a>
                         <a href="http://google.com/">dat.GUI</a>
                         <a href="http://google.com/">jsGIF</a>
+                        <a href="http://google.com/">Font Awesome</a>
                 </p>
 
                 <h3><i class="fa fa-share-square-o"></i></h3>

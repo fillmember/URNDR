@@ -188,7 +188,7 @@ window.onload = function() {
 
             if (response === 0) {
                 // Do Nothing
-                HUD.display(key)
+                // HUD.display(key)
             } else {
                 var name = response.module.name;
                 if (name.length > 15) {

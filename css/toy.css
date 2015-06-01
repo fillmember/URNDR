@@ -38,15 +38,17 @@ h2 {
   font-weight: 300;
 }
 h3 {
-  font-size: 1em;
   text-align: center;
   clear: both;
-  font-size: 1.5em;
+  font-size: 1.7em;
   padding: 4.5px 0 4.5px 0;
 }
-h3:first-child {
-  padding-top: 0;
-}
+  h3:first-child {
+    padding-top: 0;
+  }
+  h3 i {
+    height: 100%;
+  }
 h4 {
   text-decoration: underline;
 }
@@ -109,22 +111,24 @@ table {}
     margin-top: 4px;
     line-height: 28px;
   }
-  .sidebar button, .sidebar span, .sidebar input, .sidebar label {
+  .sidebar button, .sidebar span, .sidebar input, .sidebar label, .sidebar .btnGroup {
     display: block;
     position: relative;
     float: left;
 
-    height: 31.25px;
-    padding: 0; margin: 0;
+    height: 30px;
+
+    padding: 0; margin: 0 0 1.25px 0;
     
     line-height: 31.25px;
+
     font-weight: 500;
     text-align: center;
   }
-  .sidebar label.toggle {
-    margin-top: 3.25px;
-    height: 28px;
+  .sidebar h3 {
+    height: 22.25px;
   }
+  .sidebar label.toggle {}
   .sidebar p {
     text-align: justify;
   }
@@ -256,9 +260,22 @@ table {}
       top: -2px;
     }
 
-  .btnGroup {
-    height: 35.75px; /* = 31.25 + 4.5 */
-  }
+  .group {}
+    .group:after{
+      content: "";
+      display: table;
+      clear: both;
+    }
+    .group.close {}
+      .group.close > *:not(:last-child) {
+        margin-bottom: -4.5px;
+      }
+    .group.extra-close {}
+      .group.extra-close > *:not(:last-child) {
+        margin-bottom: -9px; 
+      }
+
+  .btnGroup {}
     .btnGroup:after {
       content: "";
       display: table;
@@ -282,39 +299,74 @@ table {}
     .outlinedGroup h3 { padding-top: 0; }
 
   input[type=checkbox] { display: none; }
-    input[type=checkbox] + label i.off, input[type=checkbox]:checked + label i.on  {
-      display: block;
-    }
-    input[type=checkbox]:checked + label i.on:after  {
-      content: "";
-      display: block;
-      width: 12.5px; height: 12.5px;
-      border-radius: 20px;
+    input[type=checkbox] + label {
+      cursor: pointer;
+      outline: none;
 
-      position: absolute;
-      top: 4.5px; right: 3.5px;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+
+      /*STYLE*/
+
+      height: 20px;
+      width: 29px;
+      margin: 5.625px 0;
+      background-color: #333;
+      border-radius: 30px;
+
+      transition: background .2s;
     }
-    input[type=checkbox] + label i.on , input[type=checkbox]:checked + label i.off {
-      display: none;
+    input[type=checkbox] + label:before,
+    input[type=checkbox] + label:after {
+      display: block;
+      position: absolute;
+      content: "";
+    }
+    input[type=checkbox] + label:before {
+      top: 2px;
+      left: 2px;
+      bottom: 2px;
+      right: 2px;
+      background-color: #FFF;
+      border-radius: 60px;
+      transition: background .2s;
+    }
+    input[type=checkbox] + label:after {
+      top: 2px;
+      left: 2px;
+      bottom: 2px;
+      width: 12px;
+      background-color: #FFF;
+      border: 2px solid #333;
+      border-radius: 12px;
+      transition: margin .1s linear, background .2s;
+    }
+    input[type=checkbox]:checked + label:before {
+      background-color: #FF0;
+    }
+    input[type=checkbox]:checked + label:after {
+      margin-left: 9px;
+      /*label width - 20px*/
     }
 
   input[type=range] {
-    margin: 0;
     -webkit-appearance: none;
   }
     input[type=range]:focus { outline: none; }
     input[type=range]::-webkit-slider-runnable-track {
       width: 100%;
-      height: 20px;
+      margin-top: 2px;
+      height: 16px;
       background: #FFF;
-      border-radius: 20px;
+      border-radius: 18px;
     }
     input[type=range]::-webkit-slider-thumb {
-      height: 16px;
-      width: 16px;
-      border-radius: 16px;
+      height: 18px;
+      width: 18px;
+      border-radius: 18px;
       background: #FFF;
-      margin-top: 0px;
+      margin-top: -3px;
       -webkit-appearance: none;
     }
 
