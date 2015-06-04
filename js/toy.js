@@ -122,6 +122,7 @@ window.onload = function() {
 	U3.createModelFromFile("models/man_walk.js",{
 		init: function() {
 			this.animation = new THREE.MorphAnimation( this.mesh );
+            this.animation.duration = 2000;
             this.mesh.scale.multiplyScalar( 0.03 );
             this.mesh.position.y = -2.7;
 		},
@@ -131,6 +132,7 @@ window.onload = function() {
     U3.createModelFromFile( "models/dog_run.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.duration = 2000;
             this.mesh.scale.multiplyScalar( 0.04 );
             this.mesh.position.y = -1.7;
             this.focusPoint = 0;
@@ -162,38 +164,16 @@ window.onload = function() {
         var i,k,key,ignores,commands;
             key = event.keyCode || event.charCode
 
-            ignores = {
-                refresh: function() {
-                    return (key === 82) && event.metaKey;
-                },
-                console: function() {
-                    return (key === 73) && event.metaKey && event.altKey;
-                },
-                fullscreen: function() {
-                    return (key === 70) && event.ctrlKey && event.metaKey;
-                },
-                fullscreen2: function() {
-                    return (key === 70) && event.metaKey && event.shiftKey;
-                },
-            }
-            for ( var scenario in ignores ) {
-                if ( ignores[scenario]() ) {
-                    return false;
-                }
-            }
-
-            event.preventDefault();
-
             var response = MODULES.trigger( event );
-
             if (response === 0) {
-                // Do Nothing
                 // HUD.display(key)
             } else {
+                
                 var name = response.module.name;
                 if (name.length > 15) {
                     name = name.replace(/[aeiou]/g,'')
                 }
+
                 HUD.display(name, response.message);
             }
 

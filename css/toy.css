@@ -13,6 +13,10 @@ ul, li {
   list-style:none;
 }
 
+li {
+  margin-bottom: 9px;
+}
+
 p, li {
   line-height: 15.625px;
 }

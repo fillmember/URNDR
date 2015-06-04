@@ -291,7 +291,7 @@ URNDR.Module.prototype = {
         this.initialConfiguration = Object.create( this.configuration )
     },
     getConfiguration: function() { return this.configuration },
-    receive: function( event ) { return this.listener( event ) }
+    receive: function( arguments ) { return this.listener.apply( this, arguments ) }
 }
 
 // Module Manager
@@ -1365,7 +1365,6 @@ URNDR.Model = function( args ) {
     // THREE JSONLoader related attributes
     this.file_path = "";
     this.loader = new THREE.JSONLoader();
-    this.loaded = false;
 
     // THREE.js Objects
     this.mesh = undefined;
@@ -1411,13 +1410,13 @@ URNDR.Model.prototype = {
         var model = this;
         this.loader.load( this.file_path, function( _geometry, _material ) {
 
+            // Loaded
             model.geometry = _geometry;
             if (_material) { model.material = _material; }
 
             model.mesh = new THREE.Mesh( model.geometry, model.material )
 
             // UNLOCK
-            model.loaded = true;
             if (model._active !== undefined) {
                 model.active = model._active;
                 delete model._active;
@@ -1494,22 +1493,17 @@ URNDR.ThreeManager.prototype = {
     },
     createModelFromFile: function( file_path, args ) {
 
+        // Arguments
         args.material = args.material || this.material;
-
+        
         var model = new URNDR.Model( args );
-
-        // Add
         this.addModel( model )
-
         // Load
         var manager = this;
         model.loadModel( file_path , function(){
 
             manager.scene.add( model.mesh );
-
-            if (typeof args.loaded === "function") {
-                args.loaded();
-            }
+            manager.solo( model );
 
         } );
 
@@ -1578,7 +1572,7 @@ URNDR.ThreeManager.prototype = {
 
         manager.eachModel( function( model , manager ){
 
-            if (model.loaded && model.active) {
+            if (model.active) {
 
                 model.update( manager.speed );
 

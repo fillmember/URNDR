@@ -31,7 +31,7 @@ var mreceive = function() {
     var module = MODULES.getModuleByName( arguments[0] ),
         _arguments = [].slice.call( arguments );
         _arguments.shift();
-    module.receive.apply( module , _arguments )
+    module.listener.apply( module , _arguments )
 }
 var mtogg = function( mod_name , value ) {
     var module = MODULES.getModuleByName( arguments[0] );
@@ -750,7 +750,8 @@ default_draw_style : function() {
         }
 
     })
-    module.listener = function( evt ) {
+    module.listener = function( evt , frames ) {
+        console.log( arguments )
         if (evt === "GIF") {
             // INIT GIF EXPORT PROCESS
             var ss = this.settings;
@@ -766,7 +767,7 @@ default_draw_style : function() {
                     // config
                     ss.exporting = true;
                     ss.frameEvery = 3;
-                    ss.totalFrames = 59;
+                    ss.totalFrames = frames || 59;
                     ss.gifDelay = 50;
                     // encoder
                     ss.encoder = new GIFEncoder();
