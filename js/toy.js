@@ -1,14 +1,5 @@
 "use strict";
 
-$.fn.flash = function(_color, _duration) {
-    console.log("Welcome to Flash",this)
-    var color = _color || "#FF0";
-    var duration = _duration || 100;
-    var originalBg = this.css("background-color");
-    this.css("background-color", color)
-        .animate({backgroundColor: originalBg}, duration);
-};
-
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
