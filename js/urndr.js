@@ -6,6 +6,13 @@ URNDR.POINT_MODULE = "POINT_MODULES"
 URNDR.STROKE_MODULE = "STROKE_MODULES"
 URNDR.DRAW_MODULE = "DRAW_MODULES"
 
+// Options
+
+URNDR.options = {
+    DELETE_OUT_OF_RANGE_STROKES: false,
+    DELETE_INVISIBLE_POINTS: false
+}
+
 // CanvasManager
 
 URNDR.CanvasManager = function(){
@@ -291,7 +298,7 @@ URNDR.Module.prototype = {
         this.initialConfiguration = Object.create( this.configuration )
     },
     getConfiguration: function() { return this.configuration },
-    receive: function( arguments ) { return this.listener.apply( this, arguments ) }
+    receive: function() { return this.listener.apply( this, arguments ); }
 }
 
 // Module Manager
@@ -696,21 +703,32 @@ URNDR.Stroke.prototype = {
         if (this.length < 1) { return false; }
         if (this._flag_to_delete === true) { return true; }
         
+        // sum up A and check
         var sum_A = 0;
-        var flag_invisible = true;
-        
-        this.eachPoint(function(pnt){
-            sum_A+=pnt.A
-            if (flag_invisible) {
-                var ndc = pnt.ndc
-                if (ndc.x > -1 && ndc.x < 1 && ndc.y > -1 && ndc.y < 1) {
-                    flag_invisible = false;
+        this.eachPoint(function(pnt) {sum_A+=pnt.A;})
+        if (sum_A < 0.05) {
+            return true;
+        }
+
+        // check out of range stroke
+        if (URNDR.options.DELETE_OUT_OF_RANGE_STROKES) {
+
+            var flag_invisible = true;
+            this.eachPoint(function(pnt) {
+                if (flag_invisible) {
+                    var ndc = pnt.ndc
+                    if (ndc.x > -1 && ndc.x < 1 && ndc.y > -1 && ndc.y < 1) {
+                        flag_invisible = false;
+                    }
                 }
-            }
-        })
+            })
+            if (flag_invisible) { return true; }
+
+        }
+
+        // Pass all test...
+        return false;
         
-        if (flag_invisible) { return true; }
-        if (sum_A < 0.05) { return true; } else { return false; }
     },
     deleteStroke: function(){ this._flag_to_delete = true; },
     addPoint: function( arg ) {
@@ -726,23 +744,28 @@ URNDR.Stroke.prototype = {
         }
 
     },
-    getPoint: function( point_n ) {
+    getPoint: function( i ) {
 
-        if ( point_n >= 0 && point_n < this.length ) {
-            return this.points[ point_n ]
+        if ( i >= 0 && i < this.length ) {
+            return this.points[ i ]
         } else {
+
+            if (i < 0) {
+                return this.getPoint( this.length - i )
+            }
+
+            if (i > this.length) {
+                return this.getPoint( i - this.length )
+            }
+
             return 0
         }
 
     },
     getTrack: function( track_name ) {
 
-        var len, result
-        len = this.length;
-        result = [];
-
-        if (len === 0) { return result; }
-        if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
+        var len = this.length,
+            result = [];
 
         for ( var i = 0; i < len; i++ ) { result.push( this.getPoint(i)[ track_name ] ) }
         return result;
@@ -969,8 +992,7 @@ URNDR.Stroke.prototype = {
         if (this.getPoint(n).hasOwnProperty( track_name ) === false ) { return 0; }
 
         var track = this.getTrack( track_name ),
-            len = track.length,
-            before_me, b, after_me, a, result;
+            before_me, after_me, result;
 
         before_me = after_me = false;
         
@@ -981,25 +1003,25 @@ URNDR.Stroke.prototype = {
             after_distance: Infinity
         }
         
-        for (b = n - 1; b >= 0; b--) {
+        for (var b = n; b >= 0; b--) {
             if ( track[b] != null ) {
                 before_me = b;
                 break;
             }
         }
         
-        for (a = n; a < len; a++) {
+        for (var a = n, len = track.length; a < len; a++) {
             if ( track[a] != null ) {
                 after_me = a;
                 break;
             }
         }
 
-        if (before_me != false) {
+        if (before_me !== false) {
             result.before = this.getPoint( before_me )
             result.before_distance = n - before_me
         }
-        if (after_me != false) {
+        if (after_me !== false) {
             result.after = this.getPoint( after_me );
             result.after_distance = after_me - n;
         }

@@ -98,6 +98,86 @@ PEN.addTool( new URNDR.PenTool({
     }
 
 }));
+PEN.addTool( new URNDR.PenTool({
+
+    name: "Stroke Selector",
+    strokes: STROKES,
+    limit: 400,
+    selectedPoint: 0,
+    sqr_dist: function( p, q ) {
+        var dX = p.x - q.x, 
+            dY = p.y - q.y;
+        return dX * dX + dY * dY
+    },
+    pick: function( q , str ) {
+        if ( q.hasOwnProperty("reference") ) {
+            if ( q.reference.hasOwnProperty( str ) ) {
+                return true;
+            }
+        }
+        return false;
+    },
+    nearest: function( p, arr, str ) {
+
+        var len = arr.length,
+            candidate = false,
+            nearest_so_far = this.limit,
+            dist;
+
+        for (var i = 0; i < len; i++) {
+            if ( this.pick( arr[i] , str ) ) {
+                dist = this.sqr_dist( p, arr[i] )
+                if ( dist < nearest_so_far ) {
+                    candidate = i;
+                    nearest_so_far = dist;
+                }
+            }
+        }
+
+        return candidate
+    },
+    onmousemove: function(pen,evt){
+
+        this.strokes.eachStroke( function( stk ){ stk.hovered = false; })
+
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 0, 0 )
+        var nearest = this.nearest( pen, query, "point" );
+        if (nearest !== false) {
+            nearest = query[ nearest ].reference
+            nearest.stroke.hovered = true;
+            if (pen.isDown) {
+                if (this.selectedPoint === 0) {
+                    this.selectedPoint = nearest.point;
+                }
+            }
+        }
+        if (this.selectedPoint !== 0) {
+            this.selectedPoint.X = pen.x;
+            this.selectedPoint.Y = pen.y;
+            this.selectedPoint.refreshBinding( U3 )
+        }
+
+    },
+    onmouseup: function(pen,evt){
+
+        if (this.selectedPoint !== 0) { }
+
+        this.selectedPoint = 0;
+
+        this.strokes.eachStroke( function( stk ){ stk.selected = false; })
+
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 );
+        var nearest = this.nearest( pen, query, "point" );
+        if ( nearest !== false) {
+            nearest = query[ nearest ].reference
+            nearest.stroke.selected = true;
+            this.strokes.active_stroke = nearest.stroke.id;
+        }
+
+    }
+
+}));
+
 window.onload = function() {
 
     // Canvas Setup
@@ -144,7 +224,6 @@ window.onload = function() {
             U3.rig.focus.y = 0;
         },
     });
-    U3.solo(0)
 
     //
     // EVENTS
@@ -157,7 +236,7 @@ window.onload = function() {
 
             var response = MODULES.trigger( event );
             if (response === 0) {
-                // HUD.display(key)
+                HUD.display(key)
             } else {
                 
                 var name = response.module.name;

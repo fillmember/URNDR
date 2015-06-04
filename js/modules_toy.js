@@ -70,6 +70,14 @@ eraser : function() {
     return module
 },
 
+selector : function() {
+    var module = new URNDR.Module("Selector",URNDR.COMMAND_MODULE,83) // s
+    module.setFunction(function() {
+        PEN.selectToolByName("Stroke Selector"); return "Select Point"
+    })
+    return module
+},
+
 clear_canvas : function() {
     var module = new URNDR.Module("Clear",URNDR.COMMAND_MODULE)
     module.setFunction(function( evt ){
@@ -102,15 +110,16 @@ play_pause : function() {
     module.setFunction(function( arg , btn ){
         U3.eachModel( function(model){
             if (model.animation) {
+                var step = model.animation.duration / 60;
 
                 switch ( arg ) {
                     case  1:
                         model.animation.pause();
-                        model.animation.update( 16.6667 , true)
+                        model.animation.update( step * 2 , true)
                         break;
                     case -1:
                         model.animation.pause();
-                        model.animation.update( -32.3334 , true)
+                        model.animation.update( step * -2 , true)
                         break;
                     default:
                         if ( model.animation.isPlaying ) {
@@ -230,12 +239,12 @@ random_stroke_color : function() {
 },
 
 subtle_pen_variation : function() {
-    var module = new URNDR.Module("Subtle Pen Variation",URNDR.STYLE_MODULE,true,999);
-    module.interval = 70;
+    var module = new URNDR.Module("Subtle Pen Variation",URNDR.STYLE_MODULE,9999,true);
+    module.interval = 80;
     module.setFunction(function(STYLE) {
         var round = Math.round, random = Math.random;
         var _f = function(v) {
-            var b = 15, bh = b * 0.5;
+            var b = 8, bh = b * 0.5;
             return round(v + random() * b - bh)
         };
         STYLE.color[0] = _f(STYLE.color[0]);
@@ -268,8 +277,8 @@ random_point_position : function() {
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE99,true,999);
-    module.interval = 5;
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,9001,true);
+    module.interval = 1;
     module.setConfiguration( {
         min_size : 5,
         max_size : 80
@@ -311,17 +320,22 @@ delete_flagged_strokes : function(){
     module.interval = 1000;
     module.setFunction( function(strokes){
         var strokes_to_delete = [];
+        
         strokes.eachStroke(function(stk){
+
             if (stk.flag_to_delete) {
                 strokes_to_delete.push( stk.id )
                 if (stk.id === strokes.active_stroke) {
                     strokes.active_stroke = 0;
                 }
             }
+
         })
+        
         for ( var i = 0, max = strokes_to_delete.length; i < max; i++) {
             strokes.deleteStrokeByID( strokes_to_delete[i] );
         }
+        
     })
     return module;
 },
