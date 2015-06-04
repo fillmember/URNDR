@@ -236,7 +236,7 @@ window.onload = function() {
 
             var response = MODULES.trigger( event );
             if (response === 0) {
-                HUD.display(key)
+                // HUD.display(key)
             } else {
                 
                 var name = response.module.name;
