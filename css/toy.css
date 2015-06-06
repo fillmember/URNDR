@@ -13,16 +13,9 @@ ul, li {
   list-style:none;
 }
 
-li {
-  margin-bottom: 9px;
-}
-
 p, li {
-  line-height: 15.625px;
-}
-
-p {
   margin: 0 0 9px 0;
+  line-height: 15.625px;
 }
 
 hr {
