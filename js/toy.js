@@ -12,6 +12,7 @@ var U3 = new URNDR.ThreeManager({
         morphTargets: true
     })
 })
+    U3.renderer.setClearColor("#FFFFFF")
 
 var HUD = new URNDR.Hud(document.getElementById('HUD'));
 
@@ -33,18 +34,14 @@ PEN.addTool(new URNDR.PenTool({
     strokes: STROKES,
     modules: MODULES,
     u3: U3,
-    onmousedown: function(pen, evt) {
-        this.strokes.beginNewStroke();
-    },
+    onmousedown: function(pen, evt) { this.strokes.beginNewStroke(); },
     onmouseup: function(pen, evt) {
         var astk = this.strokes.getActiveStroke()
         astk.optimize();
     },
     onmousemove: function(pen, evt) {
 
-        if (pen.isDown !== 1) {
-            return;
-        }
+        if (pen.isDown !== 1) { return; }
 
         this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE)
 
@@ -207,38 +204,31 @@ window.onload = function() {
     cavMan.resize(500, 500);
 
     // Load Model
-    U3.createModelFromFile("models/man_walk.js", {
+    U3.createModelFromFile("models/newman.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh);
-            this.animation.duration = 2000;
             this.mesh.scale.multiplyScalar(0.03);
-            this.mesh.position.y = -2.7;
+            this.mesh.position.y = -2.5;
+            this.focusPoint = {max: 2.2, min:0}
         },
-        onfocus: function() {
-            this.animation.play();
-        },
-        onblur: function() {
-            this.animation.pause();
-        }
+        onfocus: function() { this.animation.play(); },
+        onblur: function() { this.animation.pause(); }
     });
     U3.createModelFromFile("models/mannequin.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh);
-            this.animation.duration = 1000;
             this.mesh.scale.multiplyScalar(0.04);
-            this.mesh.position.y = -3;
+            this.mesh.position.y = -3.1;
+            this.mesh.position.x = 0.5;
+            this.mesh.rotation.y = -4.3149;
+            this.focusPoint = {max:1.8,min:-2}
         },
-        onfocus: function() {
-            this.animation.play();
-        },
-        onblur: function() {
-            this.animation.pause();
-        }
+        onfocus: function() { this.animation.play(); },
+        onblur: function() { this.animation.pause(); }
     });
     U3.createModelFromFile("models/dog_run.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh)
-            this.animation.duration = 2000;
             this.mesh.scale.multiplyScalar(0.04);
             this.mesh.position.y = -1.7;
             this.focusPoint = 0;
@@ -247,43 +237,58 @@ window.onload = function() {
             this.animation.play();
             U3.rig.focus.y = 0;
         },
-        onblur: function() {
-            this.animation.pause();
-        }
+        onblur: function() { this.animation.pause(); }
+    });
+    U3.createModelFromFile("models/twister.js", {
+        init: function() {
+            this.animation = new THREE.MorphAnimation(this.mesh)
+            this.animation.duration = 2000;
+            var f = 0.11;
+            this.mesh.geometry.computeBoundingBox();
+            var b = this.mesh.geometry.boundingBox;
+            this.mesh.scale.multiplyScalar(f);
+            this.mesh.position.x = (b.max.x + b.min.x) * -0.5 * f;
+            this.mesh.position.y = (b.max.y + b.min.y) * -0.5 * f;
+            this.mesh.position.z = (b.max.z + b.min.z) * -0.5 * f;
+            this.focusPoint = 0;
+        },
+        onfocus: function() {
+            this.animation.play();
+            U3.rig.focus.y = 0;
+        },
+        onblur: function() { this.animation.pause(); }
     });
     U3.createModelFromFile("models/waterfilter.js", {
         init: function() {
+            this.animation = new THREE.MorphAnimation(this.mesh)
+            this.animation.duration = 500;
             this.mesh.scale.multiplyScalar(0.08);
             this.mesh.rotation.y = 1;
             this.focusPoint = 0.25;
         },
         onfocus: function() {
+            this.animation.play();
             U3.rig.focus.y = 0;
         },
+        onblur: function() { this.animation.pause(); }
     });
+    U3.solo(0)
 
     //
     // EVENTS
     //
 
     document.addEventListener("keydown", function(event) {
-
-        var i, k, key, ignores, commands;
-        key = event.keyCode || event.charCode
-
         var response = MODULES.trigger(event);
         if (response === 0) {
-            // HUD.display(key)
+            // HUD.display( event.charCode || event.keyCode )
         } else {
-
             var name = response.module.name;
             if (name.length > 15) {
                 name = name.replace(/[aeiou]/g, '')
             }
-
             HUD.display(name, response.message);
         }
-
     });
 
     // requestAnimationFrame

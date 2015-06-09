@@ -1523,10 +1523,7 @@ URNDR.ThreeManager.prototype = {
         // Load
         var manager = this;
         model.loadModel( file_path , function(){
-
             manager.scene.add( model.mesh );
-            manager.solo( model );
-
         } );
 
     },

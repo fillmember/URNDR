@@ -210,9 +210,14 @@ camera_work : function() {
             _arguments.shift();
         var directives = {}
         directives["Y"] = function( v ){
-            var am = U3.getModel(U3.activeModel);
-            if (am.focusPoint != undefined) {
-                U3.rig.focus.y = am.focusPoint;
+            var am = U3.getModel(U3.activeModel),
+                amf = am.focusPoint;
+            if (amf != undefined) {
+                if (typeof amf === "object") {
+                    U3.rig.focus.y = THREE.Math.mapLinear( v , -3, 3, amf.min, amf.max);
+                } else {
+                    U3.rig.focus.y = amf;
+                }
             } else {
                 U3.rig.focus.y = v;
             }
@@ -304,7 +309,6 @@ auto_rotation : function(){
         U3.rig.target_theta += 0.1047 * this.settings.direction
     })
     module.listener = function (v) {
-        console.log( v )
         if (v === 0) {
             this.enabled = false;
         } else {
@@ -765,7 +769,6 @@ default_draw_style : function() {
 
     })
     module.listener = function( evt , frames ) {
-        console.log( arguments )
         if (evt === "GIF") {
             // INIT GIF EXPORT PROCESS
             var ss = this.settings;

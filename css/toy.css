@@ -8,9 +8,9 @@ body {
   line-height: 15.625px;
 }
 
-a,a:visited {color: #00F;}
-a:hover {color: #29F;}
-a:active {color: #F00;}
+a,a:visited {color: #333;}
+a:hover {background-color: #FF0;}
+a:active {color: #FF0;}
 
 ul, li {
   margin: 15.625px 0 0 0;
