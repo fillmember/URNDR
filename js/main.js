@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 //
 // APIs & Libraries
@@ -7,52 +7,30 @@
 var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
-    // fog: new THREE.Fog( 0xF0F0F0, 3, 5 ),
-    defaultMaterial: new THREE.MeshBasicMaterial( {
-
-        // color: 0xF0F0F0,
-        color: 0xE0E0E0,
-        // color: "rgba(0,255,255,0.1)",
-        vertexColors: THREE.FaceColors, 
-        
-        fog: true,
-        
+    material: new THREE.MeshBasicMaterial( {
+        color: 0xCCCCCC,
         wireframe: true, 
-        wireframeLinewidth: 0.1,
-
-        morphTargets: true,
-
-        side: THREE.FrontSide
-
+        wireframeLinewidth: 2,
+        morphTargets: true
     } )
 } )
-
-var light = new THREE.PointLight( 0xFF0000, 100, 100 );
-light.position.set( 5, 5, 0 );
-U3.scene.add( light );
 
 //
 // OBJECTS
 //
-var CANVAS_HUD = document.getElementById('canvas_hud');
-var hudCtx = CANVAS_HUD.getContext("2d");
-var CANVAS = document.getElementById('canvas_urndr'),
-    PAPER = CANVAS.getContext("2d"),
-    STYLE = new URNDR.StrokeStyle(),
-    PEN = new URNDR.Pen( CANVAS, CANVAS_HUD, WACOM ),
-    MODULES = new URNDR.ModuleManager(),
-    HUD = new URNDR.Hud( document.getElementById('HUD') );
 
-document.body.appendChild( U3.renderer.domElement );
-CANVAS_HUD.width = CANVAS.width = U3.renderer.domElement.width;
-CANVAS_HUD.height = CANVAS.height = U3.renderer.domElement.height;
-PAPER.lineCap = STYLE.cap
-PAPER.lineJoin = STYLE.join
+var HUD = new URNDR.Hud( document.getElementById('HUD') );
+var MODULES = new URNDR.ModuleManager();
+var STYLE = new URNDR.StrokeStyle();
 
-var STROKES = new URNDR.Strokes({
-    canvasWidth: CANVAS.width,
-    canvasHeight: CANVAS.height
-})
+var cavMan = new URNDR.CanvasManager();
+    cavMan.add( document.getElementById('canvas_urndr') , "draw" , "2d" )
+    cavMan.add( document.getElementById('canvas_hud') , "hud" , "2d" )
+    cavMan.lineCap = STYLE.cap;
+    cavMan.lineJoin = STYLE.join;
+
+var PEN = new URNDR.Pen( cavMan.get("draw").element, cavMan.get("hud").element, WACOM );
+var STROKES = new URNDR.Strokes( cavMan.get("draw").element );
 
 //
 // PenTools
@@ -77,7 +55,7 @@ PEN.addTool(new URNDR.PenTool({
 
         this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
 
-        var point = new URNDR.Point({
+        var pnt = new URNDR.Point({
             X : pen.x,
             Y : pen.y,
             S : STYLE.brush_size,
@@ -85,14 +63,14 @@ PEN.addTool(new URNDR.PenTool({
             A : STYLE.color[3]
         });
 
-        point.refreshBinding( U3 )
-        
-        // Run modules that changes the point.
-        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , point )
-
         // WRITE POINT INTO STROKE
-        var active_stroke = this.strokes.getActiveStroke();
-        if (active_stroke !== 0) { this.strokes.getActiveStroke().addPoint( point ) }
+        var stk = this.strokes.getActiveStroke();
+        if (stk !== 0) { stk.addPoint( pnt ) }
+
+        // Run modules that changes the pnt.
+        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , pnt )
+
+        pnt.refreshBinding( U3 )
 
     }
 
@@ -103,9 +81,9 @@ PEN.addTool( new URNDR.PenTool({
     style: STYLE,
     strokes: STROKES,
     delMod: undefined,
-    init: function(){ this.del_func = MODULES.getModuleByName( "delete flagged strokes" ).func },
+    init: function(){},
     onmousedown: function(pen, evt){},
-    onmouseup: function(pen, evt){ this.del_func( this.strokes ); },
+    onmouseup: function(pen, evt){},
     onmousemove: function(pen, evt){
 
         if (pen.isDown !== 1) { return; }
@@ -113,24 +91,21 @@ PEN.addTool( new URNDR.PenTool({
         if (s < 0.1) {s = 0.1};
 
         var query = this.strokes.getFromQuadTree( pen.x, pen.y, s, s ),
-            pnt, 
-            dist_sq,
-            size_sq = s * this.style.brush_size * s * this.style.brush_size * 0.3,
-            power = (1.1 - s);
+            pnt, dx, dy, dist_sq,
+            size_sq = s * this.style.brush_size * this.style.brush_size,
+            power = 1 - s;
 
-        power = power > 0.9 ? 0.9 : power;
+        power = power > 0.75 ? 0.75 : power;
 
         for(var q in query) {
             pnt = query[q].reference.point;
-            dist_sq = ( pen.x - pnt.X )*( pen.x - pnt.X ) + ( pen.y - pnt.Y )*( pen.y - pnt.Y );
+            dx = pen.x - pnt.X; dy = pen.y - pnt.Y;
+            dist_sq = dx * dx + dy * dy;
             if ( dist_sq < size_sq ) {
-                if (pnt.A > 0.2) {
-                    pnt.A *= power;
-                } else {
-                    pnt.A = 0
-                }
+                pnt.A = pnt.A > 0.2 ? pnt.A * power : 0;
             }
         }
+
     }
 
 }));
@@ -147,13 +122,8 @@ PEN.addTool( new URNDR.PenTool({
 
         this.timer = setInterval( function(){
 
-            tool.threeManager.eachModel( function(model,value) {
-
-                model.mesh.rotation.y += value;
-
-                // model.animationObject.update( 10 )
-
-            }, pen.ndc_x * 0.1 )
+            U3.rig.target_theta += pen.ndc_x * THREE.Math.clamp( THREE.Math.mapLinear( U3.speed , 30 , 60 , 0.1 , 0.2 ) , 0.1 , 0.2 );
+            U3.rig.target_pitch = THREE.Math.mapLinear( pen.ndc_y, 1, -1, -2, 2 )
 
         } , 20)
 
@@ -169,10 +139,10 @@ PEN.addTool( new URNDR.PenTool({
 
     name: "Stroke Selector",
     strokes: STROKES,
-    limit: 360,
+    limit: 400,
     selectedPoint: 0,
     sqr_dist: function( p, q ) {
-        var dX = p.x - q.x,
+        var dX = p.x - q.x, 
             dY = p.y - q.y;
         return dX * dX + dY * dY
     },
@@ -194,7 +164,7 @@ PEN.addTool( new URNDR.PenTool({
         for (var i = 0; i < len; i++) {
             if ( this.pick( arr[i] , str ) ) {
                 dist = this.sqr_dist( p, arr[i] )
-                if ( dist < this.limit && dist < nearest_so_far ) {
+                if ( dist < nearest_so_far ) {
                     candidate = i;
                     nearest_so_far = dist;
                 }
@@ -207,7 +177,7 @@ PEN.addTool( new URNDR.PenTool({
 
         this.strokes.eachStroke( function( stk ){ stk.hovered = false; })
 
-        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 5, 5 )
+        var query = this.strokes.getFromQuadTree( pen.x, pen.y, 0, 0 )
         var nearest = this.nearest( pen, query, "point" );
         if (nearest !== false) {
             nearest = query[ nearest ].reference
@@ -245,6 +215,18 @@ PEN.addTool( new URNDR.PenTool({
 
 }))
 
+window.onresize = size_and_style;
+function size_and_style() {
+    // notify the renderer of the size change
+    U3.renderer.setSize( window.innerWidth, window.innerHeight );
+    // update the camera
+    U3.camera.aspect   = window.innerWidth / window.innerHeight;
+    U3.camera.updateProjectionMatrix();
+    // CavMan
+    cavMan.resize(window.innerWidth,window.innerHeight)
+}
+size_and_style();
+
 //
 // INIT
 //
@@ -255,31 +237,232 @@ window.onload = function() {
     // Models
     //
 
-    // U3.createModelFromFile( "models/sphere.js", function( model ) {
-    //     model.speed = 2;
-    // } );
+    var preset = {
+        rig: {
+            pitch: function(x) {
+                // X : 1/10
+                // THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )
+                U3.rig.target_pitch = x * 0.1;
+            },
+            theta: function(x) {
+                // X : 1 per 10 degree.
+                // 10 degress = 1/36 * 2 * Math.PI() in radian = 0.1744444
+                U3.rig.target_theta = x * 0.17444444;
+            },
+            add: function(property, x) {
+                U3.rig["target_" + property] += preset.rig[property]( x );
+            }
+        },
+        man: {
+            init: function( model ) {
+                model.mesh.scale.multiplyScalar( 0.03 );
+                model.mesh.position.y = -3.6;
+            },
+            focus: function( model ) {}
+        },
+        dog: {
+            init: function( model ) {
+                model.mesh.scale.multiplyScalar( 0.04 );
+                model.mesh.position.y = -1;
+            },
+            focus: function( model ) {}
+        },
+        building: {
+            init: function( model ) {
+                model.mesh.scale.multiplyScalar( 0.8 );
+                // model.mesh.scale.y = -3
+            },
+            onfocus: function( model ) {}
+        }
+    }
 
-    // U3.createModelFromFile( "models/human_02.js", function( model ) {
-    //     model.speed = 0
-    //     model.mesh.scale.multiplyScalar( 1.1 )
-    //     model.mesh.position.y = -2.5
-    // }  );
-    U3.createModelFromFile( "models/human_01.js", function( model ) {
-        model.speed = 10
-        model.mesh.scale.multiplyScalar( 1.1 )
-        model.mesh.position.y = -2.5
-        model.mesh.rotation.y = -2
-    }  );
-    // for(var i = 0; i < 5; i++) {
-    //     U3.createModelFromFile( "models/human_02.js", function( model , i ) {
-    //         model.speed = 10 + i;
-    //         model.update( i * 10 );
-    //         model.mesh.scale.multiplyScalar( 1 )
-    //         model.mesh.position.x = -4 + i * 2
-    //         model.mesh.position.y = -2
-    //         model.mesh.rotation.y = -2.5 + i * 0.5
-    //     }, i );
-    // }
+    U3.createModelFromFile( "models/dog_idle.js", {
+        init: function() {
+            preset.dog.init(this)
+            this.mesh.morphTargetInfluences[ 0 ] = 1
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            preset.rig.pitch(1)
+            preset.rig.theta(-2)
+        }
+    });
+    U3.createModelFromFile( "models/dog_idle.js", {
+        init: function() {
+            preset.dog.init(this)
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.loop = false;
+            this.animation.duration = 800;
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.stop();
+        }
+    });
+    U3.createModelFromFile( "models/dog_walk.js", {
+        init: function() {
+            preset.dog.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.mesh.position.y -= 0.75;
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/dog_run.js", {
+        init: function() {
+            preset.dog.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.mesh.position.y -= 0.75;
+        },
+        onfocus: function(){
+            preset.dog.focus(this)
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+
+    // Architecture
+    U3.createModelFromFile( "models/arch_0.js", {
+        init: function() {
+            preset.building.init(this);
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.2;
+            U3.rig.target_theta = -0.785;
+        }
+    });
+    U3.createModelFromFile( "models/arch_1.js", {
+        init: function() {
+            preset.building.init(this);
+            this.mesh.position.y -= 0.125;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.4;
+            U3.rig.target_theta = 0.785;
+        }
+    });
+    U3.createModelFromFile( "models/arch_2.js", {
+        init: function() {
+            preset.building.init(this);
+            this.mesh.position.y -= 0.25;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.7;
+            U3.rig.target_theta = 0.785 + 0.3;
+        }
+    });
+    U3.createModelFromFile( "models/arch_3.js", {
+        init: function() {
+            preset.building.init(this);
+            this.mesh.position.y -= 0.5;
+            this.mesh.position.x -= 1;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 2;
+            U3.rig.target_theta = -0.785;
+        }
+    });
+    U3.createModelFromFile( "models/arch_4.js", {
+        init: function() {
+            preset.building.init(this);
+            this.mesh.position.y -= 1.25;
+        },
+        onfocus: function(){
+            U3.rig.target_pitch = 1.5;
+            U3.rig.target_theta = -1.8;
+        }
+    });
+
+    // Man
+    U3.createModelFromFile( "models/man_idle.js", {
+        init: function() {
+            preset.man.init(this)
+            this.mesh.morphTargetInfluences[ 0 ] = 1
+        },
+        onfocus: function(){
+            preset.man.focus()
+            preset.rig.pitch(1)
+            preset.rig.theta(1)
+        }
+    });
+    U3.createModelFromFile( "models/man_idle.js", {
+        init: function() {
+            preset.man.init(this)
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.loop = false;
+            this.animation.duration = 800;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.stop();
+        }
+    });
+    U3.createModelFromFile( "models/man_walk.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/man_run.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.duration = 1500;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/man_crazy.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh );
+            this.animation.duration = 1200;
+            this.mesh.position.y += 0.6;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+
+    // var old_arr = Object.create( U3.models_array );
+    // var new_order = [  0,  4,  8 ,
+    //                    1,  5,  9 ,
+    //                    2,  6, 10 ,
+    //                    3,  7, 11 ]
+    // U3.models_array = [];
+    // new_order.forEach(function(value){
+    //     U3.models_array.push( old_arr[ value ] )
+    // })
+
 
     //
     // EVENTS
@@ -291,33 +474,33 @@ window.onload = function() {
             key = event.keyCode || event.charCode
 
             ignores = {
-                CmdR : function() { return (key === 82) && event.metaKey },
-                mac_console : function() { return (key === 73) && event.metaKey && event.altKey; },
-                chrome_presentation_mode : function() { return (key === 70) && event.metaKey && event.shiftKey; },
-                full_screen : function() { return (key === 70) && event.ctrlKey && event.metaKey; }
+                refresh: function() {
+                    return (key === 82) && event.metaKey;
+                },
+                console: function() {
+                    return (key === 73) && event.metaKey && event.altKey;
+                },
+                fullscreen: function() {
+                    return (key === 70) && event.ctrlKey && event.metaKey;
+                },
+                fullscreen2: function() {
+                    return (key === 70) && event.metaKey && event.shiftKey;
+                },
             }
-            for ( var scenario in ignores ) { if (ignores[scenario]()) { return false; } }
+            for ( var scenario in ignores ) {
+                if ( ignores[scenario]() ) {
+                    return false;
+                }
+            }
 
-            var result = MODULES.toggleModuleByKey( key );
-        
-            if (result.type === URNDR.COMMAND_MODULE) {
+            event.preventDefault();
 
-                event.preventDefault();
+            var response = MODULES.trigger( event );
 
-                var msg = result.func()
-
-                HUD.display(result.name , msg )
-
-            } else if (result !== 0) {
-
-                event.preventDefault();
-
-                HUD.display(result.name,( result.enabled ? "ON" : "OFF" ));
-
-            } else {
-
+            if (response === 0) {
                 HUD.display("key_pressed: "+key);
-
+            } else {
+                HUD.display(response.module.name, response.message);
             }
 
     });
@@ -328,33 +511,16 @@ window.onload = function() {
         U3.update();
 
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {strokes:STROKES, context:PAPER} );
+        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {
+            strokes:STROKES, 
+            canvasManager: cavMan
+        } );
 
         STROKES.rebuildQuadTree();
         
-        // recursive
         requestAnimationFrame( display );
 
     }
     display();
 
-}
-
-//
-// HELPER FUNCTIONS
-//
-
-function clear(a) {
-    function func( ctx ){
-        if (a === 1) { ctx.clearRect(0,0,CANVAS.width,CANVAS.height)
-        } else {
-            ctx.save();
-            ctx.globalAlpha = a;
-            ctx.globalCompositeOperation = "destination-out";
-            ctx.fillRect(0,0,CANVAS.width,CANVAS.height);
-            ctx.restore();
-        }
-    }
-    func( PAPER )
-    func( hudCtx )
 }

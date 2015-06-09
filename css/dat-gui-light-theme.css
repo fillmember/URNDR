@@ -1,5 +1,10 @@
 .dg.ac {
+    /*transform: scale(0.5);*/
+    right: 0;
     z-index: 50;
+}
+.dg.a {
+    margin: 0;
 }
 
 .dg.main.taller-than-window .close-button {

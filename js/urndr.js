@@ -6,6 +6,82 @@ URNDR.POINT_MODULE = "POINT_MODULES"
 URNDR.STROKE_MODULE = "STROKE_MODULES"
 URNDR.DRAW_MODULE = "DRAW_MODULES"
 
+// Options
+
+URNDR.options = {
+    DELETE_OUT_OF_RANGE_STROKES: false,
+    DELETE_INVISIBLE_POINTS: false
+}
+
+// CanvasManager
+
+URNDR.CanvasManager = function(){
+    this.list = {};
+}
+URNDR.CanvasManager.prototype = {
+    get width () { return this.get(0).element.width; },
+    get height () { return this.get(0).element.height; },
+    add: function( domElement , name , context ) {
+        this.list[name] = {};
+        this.list[name].element = domElement;
+        this.list[name].context = domElement.getContext( context );
+    },
+    get: function( v ) {
+        if (this.list.hasOwnProperty(v)) {
+            return this.list[ v ];
+        } else if (typeof v === "number") {
+            return this.list[ Object.keys( this.list )[ v ] ]
+        } else {
+            return 0;
+        }
+    },
+    each: function( func ) {
+        for ( var n in this.list ) {
+            func( this.list[n] )
+        }
+    },
+    resize: function( w , h ) {
+        if ( w == undefined ) {w = this.width;}
+        if ( h == undefined ) {h = this.width;}
+        this.each( function(item) {
+            var _cap = item.context.lineCap,
+                _join = item.context.lineJoin;
+            item.element.width = w;
+            item.element.height = h;
+            item.context.lineCap = _cap;
+            item.context.lineJoin = _join;
+        } )
+    },
+    clear: function( a ){
+        var w = this.width;
+        var h = this.height;
+        this.each( function( canvas ){
+            _func( canvas.context )
+        } );
+        function _func( ctx ) {
+            if (a === 1) {
+                ctx.clearRect(0,0,w,h)
+            } else {
+                ctx.save();
+                ctx.globalAlpha = a;
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.fillRect(0,0,w,h);
+                ctx.restore();
+            }
+        }
+    },
+    set lineCap (v) {
+        this.each( function( item ) {
+            item.context.lineCap = v;
+        } )
+    },
+    set lineJoin (v) {
+        this.each( function( item ) {
+            item.context.lineJoin = v;
+        } )
+    }
+}
+
 // QuadTree
 // source: http://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374
 URNDR.QuadTree = function( pLevel , pBounds) {
@@ -24,7 +100,7 @@ URNDR.QuadTree.prototype = {
     clear : function() {
         
         this.objects = []
-        for (var i = 0; i < this.nodes.length; i++) {
+        for (var i = 0, max = this.nodes.length; i < max; i++) {
             if (this.nodes[i] !== null) {
                 this.nodes[i].clear()
                 this.nodes[i] = null
@@ -34,26 +110,33 @@ URNDR.QuadTree.prototype = {
     },
     split : function() {
 
-        var subWidth,subHeight,x,y
-            subWidth = this.bounds.width / 2
-            subHeight = this.bounds.height / 2
-            x = this.bounds.x
-            y = this.bounds.y
+        var w,h,x,y,lvl;
+        
+        lvl = this.level + 1;
+        w = this.bounds.width / 2;
+        h = this.bounds.height / 2;
+        x = this.bounds.x;
+        y = this.bounds.y;
 
-        this.nodes[0] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x + subWidth, y, subWidth, subHeight) )
-        this.nodes[1] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x, y, subWidth, subHeight) )
-        this.nodes[2] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x, y + subHeight, subWidth, subHeight) )
-        this.nodes[3] = new URNDR.QuadTree(this.level+1, new URNDR.Rectangle(x + subWidth, y + subHeight, subWidth, subHeight) )
+        var qt = URNDR.QuadTree, rect = URNDR.Rectangle;
+
+        this.nodes[0] = new qt( lvl, new rect(x + w, y    , w, h) )
+        this.nodes[1] = new qt( lvl, new rect(x    , y    , w, h) )
+        this.nodes[2] = new qt( lvl, new rect(x    , y + h, w, h) )
+        this.nodes[3] = new qt( lvl, new rect(x + w, y + h, w, h) )
 
     },
     getIndex : function(rect){
 
-        var index,verticalMidPoint,horizontalMidPoint,topQuadrant,bottomQuadrant
-            index = -1
-            verticalMidPoint = this.bounds.x + this.bounds.width / 2
-            horizontalMidPoint = this.bounds.y + this.bounds.height / 2
+        var index,verticalMidPoint,horizontalMidPoint,topQuadrant,bottomQuadrant;
+
+            index = -1;
+            verticalMidPoint = this.bounds.x + this.bounds.width * 0.5;
+            horizontalMidPoint = this.bounds.y + this.bounds.height * 0.5;
+
             // object can completely fit within the top quadrants
             topQuadrant = rect.y < horizontalMidPoint && rect.y + rect.height < horizontalMidPoint
+            
             // object can completely fit within the bottom quadrants
             bottomQuadrant = rect.y > horizontalMidPoint
 
@@ -146,28 +229,76 @@ URNDR.Rectangle = function(x,y,w,h,ref) {
 
 // Module
 URNDR.Module = function(n,t,k,e) {
+
+    // Parameter Control
+    var _name, _type, _keycode, _enabled;
+    if (e == undefined) {
+        _enabled = false
+        if (typeof k == "number") {
+            _keycode = k
+        } else {
+            // don't assign keycode
+            _enabled = k
+            _keycode = false;
+        }
+    } else {
+        _enabled = e
+        _keycode = k
+    }
+    _type = t
+    _name = n
+
+    // Properties that will always be
     this.id = "MOD-"+THREE.Math.generateUUID()
     this.priority = 1
-    this.type = t
-    this.name = n
-    this.enabled = false
-    //
-    if ( typeof k === "boolean" && e === undefined ) {
-        // no keycode data is sent
-        this.enabled = k
-    } else {
-        if (typeof k === "number") { this.keyCode = k }
-        if (typeof e === "boolean" && t !== URNDR.COMMAND_MODULE) { this.enabled = e }
+    this.enabled = _enabled;
+    this.type = _type
+    this.name = _name
+    this.timeControlObject = {
+        then: Date.now(),
+        interval: 25
     }
+    this.func = function(){};
+
+    // Properties that could be
+    if (_type != URNDR.COMMAND_MODULE) {
+        this.listener = function(){};
+    }
+    if (_keycode) {
+        this.keyCode = _keycode;
+    }
+
 }
 URNDR.Module.prototype = {
+    get timeControl () {
+        var obj = this.timeControlObject,
+            now = Date.now(), 
+            delta = now - obj.then;
+        if (delta < obj.interval) {
+            return false;
+        } else {
+            obj.then = now - (delta % obj.interval);
+            return true;
+        }
+    },
+    set interval (v) {
+        this.timeControlObject.interval = v;
+    },
+    set settings ( s ) {
+        this.configuration = s;
+        this.initialConfiguration = Object.create(s);
+    },
+    get settings () {
+        return this.configuration;
+    },
     setFunction: function( f ) { this.func = f },
     getFunction: function() { return this.func },
     setConfiguration: function( s ) {
         this.configuration = s;
         this.initialConfiguration = Object.create( this.configuration )
     },
-    getConfiguration: function() { return this.configuration }
+    getConfiguration: function() { return this.configuration },
+    receive: function() { return this.listener.apply( this, arguments ); }
 }
 
 // Module Manager
@@ -181,19 +312,23 @@ URNDR.ModuleManager = function() {
     
     this.KEY_PREFIX = "key";
     this.key_map = {};
+
+    this.counter = 0;
     
     // functions
     this.setKeyMap = function( keyCode , id ) {
 
-        this.key_map[ this.KEY_PREFIX + keyCode ] = { id: id }
+        this.key_map[ this.KEY_PREFIX + keyCode ] = id;
 
     }
+
     this.getModuleIDbyKey = function( keyCode ) {
 
         var result = this.key_map[ this.KEY_PREFIX + keyCode ];
         return (result? result : false)
 
     }
+
     this.loadModule = function ( module ) {
 
         if (module instanceof URNDR.Module === false) {
@@ -218,6 +353,7 @@ URNDR.ModuleManager = function() {
         }
 
     }
+
     this.loadModules = function ( list ) {
     
         for ( var l in list ) { this.loadModule( list[l] ); }
@@ -238,53 +374,71 @@ URNDR.ModuleManager = function() {
         }
         return false
     }
+    this.trigger = function (evt) {
+        var keyCode = evt.keyCode || evt.charCode,
+            module = this.getModuleIDbyKey(keyCode);
 
-    this.toggleModuleByKey = function (keyCode) {
-
-        var mod_ref = this.getModuleIDbyKey(keyCode);
-        
-        if ( ! mod_ref ) { return 0; }
-        
-        var module = this.getModule(mod_ref.id);
-
-        switch( module.type ) {
-
-            case URNDR.COMMAND_MODULE:
-                return { type: URNDR.COMMAND_MODULE , name: module.name , func: module.getFunction() }
-                break;
+        if ( module ) {
             
-            case URNDR.DRAW_MODULE:
-                this.soloModule( module );
-                return { name: module.name , enabled : module.enabled }
-                break;
+            module = this.getModule( module );
             
-            default:
-                module.enabled = ! module.enabled;
-                return { name: module.name , enabled : module.enabled }
-                break;
+            var response = {module: module};
+            
+            switch( module.type ) {
+            
+                case URNDR.COMMAND_MODULE:
+                    response.message = module.func( evt );
+                    break;
+            
+                case URNDR.DRAW_MODULE:
+                    this.soloModule( module )
+                    response.message = "Activated";
+                    break;
+
+                // every other kind of modules (realtime modules & such...)
+                default:
+                    module.enabled = ! module.enabled;
+                    _msg = module.receive( evt );
+                    response.message = module.enabled ? "ON" : "OFF";
+                    if (_msg) {
+                        response.message += " : " + _msg;
+                    }
+                    break;
+            
+            }
+
+            return response
+            
+        } else {
+
+            return 0;
 
         }
-
     }
     this.soloModule = function( mod ) {
 
         var list = this[mod.type];
-        for( var m in list ) { list[m].enabled = (list[m].id === mod.id) ? true : false }
+
+        for( var m in list ) {
+
+            list[m].enabled = (list[m].id === mod.id) ? true : false
+
+        }
 
     }
     this.runEnabledModulesInList = function (list_name, params) {
 
-        var list = this[list_name],
-            enabled_count = 0;
+        var list = this[list_name];
+        var m,mod;
 
-        for ( var m in list ) {
-            if (list[m].enabled) {
-                list[m].func(params);
-                enabled_count ++;
+        for ( m in list ) {
+            mod = list[m];
+            if (mod.enabled) {
+                if (mod.timeControl) {
+                    mod.func(params);
+                }
             }
         }
-
-        return enabled_count;
 
     }
     this.getEnabledModulesCount = function( list_name ) {
@@ -295,36 +449,24 @@ URNDR.ModuleManager = function() {
         return enabled_count;
 
     }
-    this.resetModules = function( list_name ) {}
 }
 
 // Strokes
-URNDR.Strokes = function(){
+URNDR.Strokes = function( _canvas ){
     
     // Data
     this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
     this.strokesHistory = []; // Store stroke ID. Record order of creation.
     this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
+
     // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
     this.active_stroke = 0;
-    // QuadTree
-    var _qtw = arguments[0].canvasWidth || window.innerWidth
-    var _qth = arguments[0].canvasHeight || window.innerWidth
-    this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
+    this.canvas = _canvas;
+
 }
 URNDR.Strokes.prototype = {
     get strokeCount() {
         return this.strokesHistory.length;
-    },
-    exportJSON: function() {
-        
-        for (var i in this.strokes) {
-
-            this.strokes[i]
-
-        }
-        console.log( obj )
-        // console.log( JSON.stringify(obj) )
     },
     reset: function() {
 
@@ -339,9 +481,11 @@ URNDR.Strokes.prototype = {
     },
     rebuildQuadTree: function() {
 
-        var qt = this.quadTree;
+        // Create QuadTree
+        var _qtw = this.canvas.canvasWidth || window.innerWidth, 
+            _qth = this.canvas.canvasHeight || window.innerWidth;
 
-        qt.clear();
+        this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
 
         this.eachStroke( function(stk,strokes){
 
@@ -358,16 +502,9 @@ URNDR.Strokes.prototype = {
         if (obj instanceof URNDR.Stroke) {
 
             obj.eachPoint( function(pnt,stk,i){
-
-                hit_size = pnt.S,
-                half_hit = - hit_size * 0.5;
                 
                 qt.insert( new URNDR.Rectangle(
-                    pnt.X + half_hit, // X
-                    pnt.Y + half_hit, // Y
-                    hit_size, // W
-                    hit_size, // H
-                    // Reference
+                    pnt.X, pnt.Y, 1, 1, 
                     { stroke: stk, pointIndex: i, point: pnt }
                 ) );
 
@@ -390,7 +527,7 @@ URNDR.Strokes.prototype = {
         // return: array contains Point objects
         var rects = this.quadTree.retrieve( [], rect )
         var result = [];
-        for (var r in rects) {
+        for (var r = 0, max = rects.length; r < max; r ++) {
             result.push( rects[r] )
         }
 
@@ -416,7 +553,7 @@ URNDR.Strokes.prototype = {
         }
 
     },
-    getLastStrokeInHistory: function() {
+    getLatestStroke: function() {
 
         return this.getStrokeByID( this.strokesHistory[ this.strokesHistory.length - 1 ] );
 
@@ -446,21 +583,17 @@ URNDR.Strokes.prototype = {
 
         } else if (alen === 1) {
 
-            var this_stroke = arguments[0]
+            var stk = arguments[0]
 
-            if (this_stroke instanceof URNDR.Stroke ) {
+            if (stk instanceof URNDR.Stroke ) {
+
+                stk.parent = this;
                 
-                this.strokes[this_stroke.id] = this_stroke;
-                this.strokesHistory.push( this_stroke.id )
-                this.strokesZDepth.push( this_stroke.id )
+                this.strokes[stk.id] = stk;
+                this.strokesHistory.push( stk.id );
+                this.strokesZDepth.push( stk.id );
 
-                return this_stroke.id; // return the id so people can identify it. 
-
-            } else {
-                
-                console.log("addStroke only accept Stroke objects. ")
-
-                return false;
+                return stk.id; // return the id so people can identify it. 
 
             }
 
@@ -490,10 +623,6 @@ URNDR.Strokes.prototype = {
             if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) } // auto check consistency, something might be wrong :(
 
             delete this.strokes[id]
-
-        } else {
-
-            console.log("Warning : Stroke not found. Did nothing. ")
 
         }
 
@@ -533,7 +662,6 @@ URNDR.Strokes.prototype = {
             console.log("")
         } else {
             console.log("Warning to developer : there's inconsistency between strokes and other two arrays! (slen,hlen,zlen) = (",slen,hlen,zlen,")");
-            console.log("Tips : Don't control strokes without Strokes object's interface. ");
         }
 
     },
@@ -552,6 +680,7 @@ URNDR.Stroke = function(tags) {
     this.id = "S-"+THREE.Math.generateUUID();
     this.tags = tags || {}; // for future stroke-specific effect.
     this.points = []; // must be sequential. From 0 to this.length.
+    this.parent = undefined;
 
     this.closed = false;     // for draw modules to implement close function
 
@@ -570,27 +699,43 @@ URNDR.Stroke.prototype = {
         return this.points.length;
     },
     get flag_to_delete() {
+
         if (this.length < 1) { return false; }
         if (this._flag_to_delete === true) { return true; }
+        
+        // sum up A and check
         var sum_A = 0;
-        var flag_invisible = true;
-        this.eachPoint(function(pnt){
-            sum_A+=pnt.A
-            if (flag_invisible) {
-                var ndc = pnt.ndc
-                if (ndc.x > -1 && ndc.x < 1 && ndc.y > -1 && ndc.y < 1) {
-                    flag_invisible = false;
+        this.eachPoint(function(pnt) {sum_A+=pnt.A;})
+        if (sum_A < 0.05) {
+            return true;
+        }
+
+        // check out of range stroke
+        if (URNDR.options.DELETE_OUT_OF_RANGE_STROKES) {
+
+            var flag_invisible = true;
+            this.eachPoint(function(pnt) {
+                if (flag_invisible) {
+                    var ndc = pnt.ndc
+                    if (ndc.x > -1 && ndc.x < 1 && ndc.y > -1 && ndc.y < 1) {
+                        flag_invisible = false;
+                    }
                 }
-            }
-        })
-        if (flag_invisible) { return true; }
-        if (sum_A < 0.05) { return true; } else { return false; }
+            })
+            if (flag_invisible) { return true; }
+
+        }
+
+        // Pass all test...
+        return false;
+        
     },
     deleteStroke: function(){ this._flag_to_delete = true; },
     addPoint: function( arg ) {
 
         if ( arg instanceof URNDR.Point ) {
             // already a Point object, just push it
+            arg.parent = this;
             this.points.push( arg );
         } else {
             arg = arg != undefined ? arg : { parent: this };
@@ -599,23 +744,28 @@ URNDR.Stroke.prototype = {
         }
 
     },
-    getPoint: function( point_n ) {
+    getPoint: function( i ) {
 
-        if ( point_n >= 0 && point_n < this.length ) {
-            return this.points[ point_n ]
+        if ( i >= 0 && i < this.length ) {
+            return this.points[ i ]
         } else {
+
+            if (i < 0) {
+                return this.getPoint( this.length - i )
+            }
+
+            if (i > this.length) {
+                return this.getPoint( i - this.length )
+            }
+
             return 0
         }
 
     },
     getTrack: function( track_name ) {
 
-        var len, result
-        len = this.length;
-        result = [];
-
-        if (len === 0) { return result; }
-        if ( this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
+        var len = this.length,
+            result = [];
 
         for ( var i = 0; i < len; i++ ) { result.push( this.getPoint(i)[ track_name ] ) }
         return result;
@@ -633,9 +783,9 @@ URNDR.Stroke.prototype = {
     removePoint: function( point_n ) {
 
         if ( point_n >= 0 && point_n < this.length ) {
+
             this.points.splice( point_n , 1)
-        } else {
-            console.log("Warning: can't find the targeted point to remove. Index:",point_n,"/"+this.length )
+
         }
 
     },
@@ -764,14 +914,14 @@ URNDR.Stroke.prototype = {
             return points;
         }
 
-        t = t === undefined || t < 0 ? 0.9 : t;
+        t = t === undefined || t < 0 ? 0.7 : t;
 
         this.points = simplify( this.points , t , true );
 
     },
     simplify_more: function( n ) {
 
-        n = n < 0 || n === undefined ? 12 : n
+        n = n < 0 || n === undefined ? 30 : n
 
         this.optimize( n )
 
@@ -831,66 +981,57 @@ URNDR.Stroke.prototype = {
 
     },
     eachPoint: function( my_function , parameters ) {
-        var len = this.length
         var arr = this.points.slice(0)
-        for (var j = 0; j < len; j++ ) {
+        for (var j = 0, len = this.length; j < len; j++ ) {
             my_function( arr[ j ] , parameters , j )
         }
     },
     getNearestPointWith: function( track_name , n ) {
 
         if (this.length < 2) { return 0; }
-        if (this.getPoint(0).hasOwnProperty( track_name ) === false ) { return 0; }
+        if (this.getPoint(n).hasOwnProperty( track_name ) === false ) { return 0; }
 
-        var track = this.getTrack( track_name );
-        var track_leng = track.length;
-        var before_me, b, after_me, a;
-        before_me = undefined;
-        after_me = undefined;
-        var result = {
-            before: 0, after: 0, nearest: 0, 
-            before_distance: 0, after_distance: 0, nearest_distance: 0, 
+        var track = this.getTrack( track_name ),
+            before_me, after_me, result;
+
+        before_me = after_me = false;
+        
+        result = {
+            before: 0, 
+            before_distance: Infinity, 
+            after: 0, 
+            after_distance: Infinity
         }
-        for (b = n - 1; b >= 0; b--) {
+        
+        for (var b = n; b >= 0; b--) {
             if ( track[b] != null ) {
                 before_me = b;
                 break;
             }
         }
-        for (a = n; a < track_leng; a++) {
+        
+        for (var a = n, len = track.length; a < len; a++) {
             if ( track[a] != null ) {
                 after_me = a;
                 break;
             }
         }
-        if (after_me == undefined) {
-            if (before_me == undefined) {
-                return 0;
-            } else {
-                result.before = this.getPoint( before_me )
-                result.before_distance = n - before_me
-                result.nearest = result.before
-                result.nearest_distance = result.before_distance
-            }
+
+        if (before_me !== false) {
+            result.before = this.getPoint( before_me )
+            result.before_distance = n - before_me
+        }
+        if (after_me !== false) {
+            result.after = this.getPoint( after_me );
+            result.after_distance = after_me - n;
+        }
+
+        if (result.before_distance < result.after_distance) {
+            result.nearest = result.before
+            result.nearest_distance = result.before_distance
         } else {
-            if (before_me == undefined) {
-                result.after = this.getPoint( after_me )
-                result.after_distance = after_me - n
-                result.nearest = result.after
-                result.nearest_distance = result.after_distance
-            } else {
-                result.before = this.getPoint( before_me )
-                result.before_distance = n - before_me
-                result.after = this.getPoint( after_me )
-                result.after_distance = after_me - n
-                if (result.before_distance > result.after_distance) {
-                    result.nearest = result.after
-                    result.nearest_distance = result.after_distance
-                } else {
-                    result.nearest = result.before
-                    result.nearest_distance = result.before_distance
-                }
-            }
+            result.nearest = result.after
+            result.nearest_distance = result.after_distance
         }
 
         return result
@@ -930,11 +1071,21 @@ URNDR.Point = function( input ) {
 URNDR.Point.prototype = {
 
     get ndc() {
-        var a = URNDR.Math.pixelToCoordinate( this.X , this.Y )
+
+        var w, h;
+        if (this.parent && this.parent.parent) {
+            w = this.parent.parent.canvas.width;
+            h = this.parent.parent.canvas.height;
+        } else {
+            w = window.innerWidth;
+            h = window.innerHeight;
+        }
+
+        var a = URNDR.Math.pixelToCoordinate( this.X , this.Y , w , h )
         return new THREE.Vector2(a.x,a.y)
     },
     get binded() {
-        return (this.OBJECT && this.FACE)
+        return (this.OBJECT && this.FACE) ? true : false;
     },
     set binded( input ) {
         if (input === false) {
@@ -962,7 +1113,7 @@ URNDR.Point.prototype = {
     },
     distanceTo: function( pnt ) {
 
-        return Math.sqrt( this.distanceToSquared( v ) );
+        return Math.sqrt( this.distanceToSquared( pnt ) );
 
     },
     updatePoint: function( input ) {
@@ -978,12 +1129,18 @@ URNDR.Point.prototype = {
 
         U3.raycaster.setFromCamera( new THREE.Vector2( this.ndc.x , this.ndc.y ) , threeManager.camera )
 
-        var intersects = threeManager.raycaster.intersectObjects( threeManager.scene.children )
+        var intersects_raw = threeManager.raycaster.intersectObjects( threeManager.scene.children )
+        var intersects = [];
+        intersects_raw.forEach(function(o){
+            if (o.object.visible) {
+                intersects.push(o);
+            }
+        })
         if (intersects.length > 0) {
 
-            var obj = intersects[0].object,
-                face = intersects[0].face,
-                a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
+            var obj = intersects[0].object, face = intersects[0].face;
+
+            var a = obj.localToWorld( obj.getMorphedVertex( face.a ) ).project( threeManager.camera ),
                 b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project( threeManager.camera ),
                 c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project( threeManager.camera ),
                 bary = URNDR.Math.getBarycentricCoordinate( this.ndc , a , b , c );
@@ -1055,30 +1212,60 @@ URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
 
     // event
     var this_pen = this
-    canvas_hud.addEventListener("mousedown", function(evt){  this_pen.onmousedown( this_pen, evt)  } );
-    canvas_hud.addEventListener("mouseup", function(evt){  this_pen.onmouseup( this_pen, evt)  } );
-    canvas_hud.addEventListener("mousemove", function(evt){  this_pen.onmousemove( this_pen, evt)  } );
-    canvas_hud.addEventListener("mouseout", function(evt){  this_pen.onmouseout( this_pen, evt)  } );
+    canvas_hud.addEventListener("mousedown", function(evt){
+        this_pen.onmousedown( this_pen, evt);
+    } );
+    canvas_hud.addEventListener("mouseup", function(evt){
+        this_pen.onmouseup( this_pen, evt);
+    } );
+    canvas_hud.addEventListener("mousemove", function(evt){
+        this_pen.onmousemove( this_pen, evt);
+    } );
+    canvas_hud.addEventListener("mouseout", function(evt){
+        this_pen.onmouseout( this_pen, evt);
+    } );
 }
 URNDR.Pen.prototype = {
-    get ndc_x() { return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 ); },
-    get ndc_y() { return this.ndc_y = THREE.Math.mapLinear( this.y , 0 , this.canvas.height , 1 , -1 ); },
-    get ndc() { return [ this.ndc_x, this.ndc_y ]; },
+    get ndc_x() {
+        return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 );
+    },
+    get ndc_y() {
+        return THREE.Math.mapLinear( this.y , 0 , this.canvas.height , 1 , -1 );
+    },
+    get ndc() {
+        return [ this.ndc_x, this.ndc_y ];
+    },
     set ndc( input ) {
-        var o = URNDR.Math.coordinateToPixel( input[0], input[1] )
+        var o = URNDR.Math.coordinateToPixel( input[0], input[1] , this.canvas.width , this.canvas.height )
         this.x = o.x; this.y = o.y;
     },
     selectToolByID: function( id ) {
 
-        if (this.tools.hasOwnProperty(id)) { this.active_tool = this.tools[id] }
+        if (this.tools.hasOwnProperty(id)) {
+            
+            if (this.active_tool instanceof URNDR.PenTool) {
+                this.active_tool.disengage();
+            }
+            
+            this.active_tool = this.tools[id]
+            this.active_tool.engage();
+
+        }
 
     },
     selectToolByName: function( name ) {
 
         for ( var l in this.tools ) {
             if ( this.tools[l].name === name ) {
+
+                if (this.active_tool instanceof URNDR.PenTool) {
+                    this.active_tool.disengage();
+                }
+                
                 this.active_tool = this.tools[l]
+                this.active_tool.engage();
                 return true;
+            
             }
         }
 
@@ -1100,8 +1287,12 @@ URNDR.PenTool = function(parameters) {
     this.onmousedown = parameters.onmousedown || function(){};
     this.onmouseup = parameters.onmouseup || function(){};
     this.onmousemove = parameters.onmousemove || function(){};
-    this.onmouseout = parameters.onmouseout || function(){};    
+    this.onmouseout = parameters.onmouseout || function(){};
+    this.engage = parameters.engage || function(){};
+    this.disengage = parameters.disengage || function(){};
     this.size = parameters.size || 5;
+
+    // this is a very weird hack to put parameters in...
     for (var p in parameters) {
         var flag = true
         // exclude these
@@ -1119,149 +1310,51 @@ URNDR.PenTool = function(parameters) {
 
 // Hud
 URNDR.Hud = function(box) {
+    this.muted = false;
     this.box = box;
-    this.messageStyle = { prefix : '<div class="argument">', suffix : '</div>', seperation : '' }
-    this.vocal = true;
-    this.devToDisplay = true;
-    this.msg_count = 0;
-    this.MAX_msg_count = 8;
+    this.style = {
+        prefix : '<div class="argument">',
+        suffix : '</div>',
+        space : ''
+    }
 }
 URNDR.Hud.prototype = {
     display: function() {
 
-        this.box.innerHTML = this.makeMessage( arguments[0] );
-        this.msg_count = 1;
+        if (this.muted) { return; }
+
+        this.box.innerHTML = this.wrap( arguments[0] );
 
         for (var i=1;i<arguments.length;i++) {
-            this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
-            this.msg_count += 1;
+            this.box.innerHTML += this.style.space + this.wrap( arguments[i] );
         }
 
     },
     appendToDisplay: function() {
+
+        if (this.muted) { return; }
         
         for (var i=0;i<arguments.length;i++) {
-            this.box.innerHTML += this.messageStyle.seperation + this.makeMessage( arguments[i] );
-            this.msg_count += 1;
+            this.box.innerHTML += this.style.space + this.wrap( arguments[i] );
         }
 
     },
-    makeMessage: function(msg) {
+    wrap: function(msg) {
 
-        return this.messageStyle.prefix + msg + this.messageStyle.suffix;
+        return this.style.prefix + msg + this.style.suffix;
 
     },
-    clearDisplay: function() {
+    clear: function() {
 
         this.box.innerHTML = null;
-        this.msg_count = 0;
 
     },
-    setPosition: function(left,top) {
+    position: function(left,top) {
         
         var style = this.box.style
         style.left = left || style.left;
         style.top = top || style.top;
 
-    },
-    devChannel: function(msg) {
-
-        if (this.vocal) {
-            if (this.devToDisplay) {
-                this.appendToDisplay(msg)
-            } else {
-                console.log(msg)
-            }
-        }
-
-    }
-}
-
-// FramesManager
-URNDR.FramesManager = function() {
-    this.data = {};
-    this.KEY_PREFIX = "f";
-    this.DEFAULT_FRAME_NAME = "Frame";
-    this.DEFAULT_FRAME_TYPE = "keyframe";
-    this.DEFAULT_FRAME_DURATION = 1;
-    this.activeFrame = 0;
-}
-URNDR.FramesManager.prototype = {
-    getFrame : function ( frame_n ) {
-        var f = this.KEY_PREFIX+frame_n;
-        if ( this.data.hasOwnProperty(f) ) {
-            return this.data[f];
-        } else {
-            return false;
-        }
-    },
-    getFramesCount : function() {
-        return Object.keys(this.data).length;
-    },
-    setFrame : function ( frame_n , data ) {
-        var this_frame = this.getFrame(frame_n);
-        if (this_frame) {
-            if (data === undefined) return HUD.display("Error","Set exisiting frame "+frame_n+" but without data. ")
-            for( var p in this_frame ){ if( data.hasOwnProperty(p) ) { this_frame[p] = data[p]; } }
-        } else {
-            this.createNewFrame(frame_n, data);
-        }
-    },
-    deleteFrame : function ( frame_n ) {
-        try {
-            delete this.data[this.KEY_PREFIX + frame_n]
-            return true;
-        } catch (error) {
-            console.log(error)
-            return false;
-        }
-    },
-    clearFrame : function ( frame_n ) {
-        var f = getFrame(frame_n)
-        if (f) {
-            f.strokes_data = null;
-        } else {
-            return false;
-        }
-    },
-    createNewFrame : function ( frame_n , data ) {
-        this.data[this.KEY_PREFIX + frame_n] = this.createFrameInstance( data );
-    },
-    createFrameInstance : function ( data ) {
-        var obj = {
-            frame_name : this.DEFAULT_FRAME_NAME,
-            frame_type : this.DEFAULT_FRAME_TYPE,
-            frame_duration : this.DEFAULT_FRAME_DURATION,
-            strokes_data : {}
-        };
-        if(data) { for ( var p in obj ){ if( data.hasOwnProperty(p) ){ obj[p] = data[p] } } }
-        return obj;
-    },
-    getNearestFrameNumber : function ( frame_n , direction , frame_type ) {
-        var keys,leng,pos;
-            keys = Object.keys(this.data).sort();
-            leng = keys.length;
-        if (leng === 0) return false;
-            pos = keys.indexOf( this.KEY_PREFIX + frame_n );
-        if (pos === keys.length - 1 ) return false;
-        if (pos === 0) return false;
-        return pos + direction;
-    },
-    requestCanvasExport : function() {
-        var req = new XMLHttpRequest();
-        var i = new Date().getTime();
-        var data = PAPER.toDataURL();
-            data = 'data=' + encodeURIComponent(data) + '&i=' + i;
-        req.open('post','php/saveframe.php')
-        req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        req.setRequestHeader("Content-length", data.length);
-        req.setRequestHeader("Connection", "close");
-        req.onreadystatechange = function() {
-            if (req.readyState === 4 && req.status === 200) {
-                console.log("Request done for frame " + i)
-            }
-        }
-        req.send(data)
     }
 }
 
@@ -1270,73 +1363,92 @@ URNDR.StrokeStyle = function() {
     this.cap = "round";
     this.join = "round";
     this.composit = "source-over";
-    this.brush_size = 50;
+    this.brush_size = 40;
     this.color = [0,0,255,1];
 }
 URNDR.StrokeStyle.prototype = {
-    gradientMaker: function(ctx,p1,p2) {
+    gradientMaker: function(ctx,p1,p2,factor) {
         var grad = ctx.createLinearGradient( p1.X , p1.Y , p2.X , p2.Y );
-        grad.addColorStop(0,'rgba('+p1.R+','+p1.G+','+p1.B+','+p1.A+')')
-        grad.addColorStop(1,'rgba('+p2.R+','+p2.G+','+p2.B+','+p2.A+')')
+        grad.addColorStop(0,'rgba('+p1.R+','+p1.G+','+p1.B+','+p1.A * factor+')')
+        grad.addColorStop(1,'rgba('+p2.R+','+p2.G+','+p2.B+','+p2.A * factor+')')
         return grad
     }
 }
 
 // Model
-URNDR.Model = function() {
+URNDR.Model = function( args ) {
 
     this.id = "MODEL-" + THREE.Math.generateUUID();
     this.name = "";
 
     // Animation Attributes
-    this.active = false;
     this.tags = {};
-    this.speed = 0;
 
     // THREE JSONLoader related attributes
     this.file_path = "";
     this.loader = new THREE.JSONLoader();
-    this.loaded = false;
 
     // THREE.js Objects
     this.mesh = undefined;
     this.geometry = undefined;
-    this.material = undefined;
-    this.animationObject = undefined;
+    this.material = args.material;
+    this.animation = {play:function(){},stop:function(){},pause:function(){},update:function(){}};
+
+    // Behaviours
+    this.init = args.init || function(){};
+    this.onfocus = args.onfocus || function(){};
+    this.onblur = args.onblur || function(){};
+    this.onframe = args.onframe || function(){};
+
 }
 URNDR.Model.prototype = {
+    get active () {
+        if (this.mesh) {
+            return this.mesh.visible;
+        } else {
+            return false;
+        }
+    },
+    set active (value) {
+        var original = null;
+        if (this.mesh) {
+            original = this.mesh.visible;
+            this.mesh.visible = value;
+        } else {
+            this._active = value;
+        }
+        if (original !== null && original !== value) {
+            if (value) {
+                this.onfocus();
+            } else {
+                this.onblur();
+            }
+        }
+    },
     loadModel: function( file_path, callback ){
 
-        if (file_path) { this.file_path = file_path };
+        this.file_path = file_path
 
-        var model = this; // pass this scope into the callback function
+        var model = this;
         this.loader.load( this.file_path, function( _geometry, _material ) {
 
+            // Loaded
             model.geometry = _geometry;
-            model.geometry.computeBoundingBox();
             if (_material) { model.material = _material; }
 
             model.mesh = new THREE.Mesh( model.geometry, model.material )
 
-            // SET MODEL POSITION
-            var y_len = (model.mesh.geometry.boundingBox.max.y - model.mesh.geometry.boundingBox.min.y);
-            model.mesh.scale.multiplyScalar( 5 / y_len )
-            model.mesh.rotation.set( 0, 0, 0 )
-            model.mesh.position.set( 0, 0 , -5 )
-
-            // ANMATION
-            if (model.geometry.morphTargets.length > 0) {
-
-                model.animationObject = new THREE.MorphAnimation( model.mesh )
-                model.animationObject.play();
-                // initialize the morphTarget array...
-                model.animationObject.update( model.animationObject.duration / model.animationObject.frames )
-
+            // UNLOCK
+            if (model._active !== undefined) {
+                model.active = model._active;
+                delete model._active;
+            } else {
+                model.active = true;
             }
 
-            // UNLOCK
-            model.loaded = true;
-            model.active = true;
+            model.init( model );
+            
+            model.onfocus();
 
             // CALLBACK
             callback( model );
@@ -1344,15 +1456,15 @@ URNDR.Model.prototype = {
         });
 
     },
-    update: function( animSpeed ) {
+    update: function( speed ) {
 
-        if (this.animationObject != undefined && this.speed > 0) {
-
-            this.animationObject.update( this.speed )
-            
+        if (this.active) {
+            if (this.animation) {
+                this.animation.update( speed )
+            }
         }
 
-    }
+    },
 }
 
 // ThreeManager -- to manage all things regards Three.js
@@ -1360,7 +1472,8 @@ URNDR.ThreeManager = function( arg ) {
 
     // Storage
     this.models = {}
-    this.models_sequence = []
+    this.models_array = []
+    this.activeModel = 0;
     
     // THREE
     this.renderer = new THREE.WebGLRenderer({
@@ -1368,41 +1481,57 @@ URNDR.ThreeManager = function( arg ) {
         precision: "lowp",
         alpha: true
     })
-    this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500)
+    this.camera = new THREE.PerspectiveCamera( 75, 1, 1, 500)
     this.scene = new THREE.Scene();
-    this.raycaster = new THREE.Raycaster();
-    this.defaultMaterial = arg.defaultMaterial || new THREE.MeshBasicMaterial({morphTargets: true,color: 0xCCCCCC})
     if (arg.fog) { this.scene.fog = arg.fog; }
-    this.defaultAnimationSpeed = 15;
+    this.raycaster = new THREE.Raycaster();
+    
+    this.material = arg.material || new THREE.MeshBasicMaterial({
+        morphTargets: true,color: 0x0000CC
+    })
+    this.material.index0AttributeName = "position";
+    
+    // controls
+    this.rig = {
+        radius: 5,
+        target_radius: 5,
+        theta : 0,
+        target_theta : 0,
+        pitch : 0,
+        target_pitch : 0,
+        speed : 0.1,
+        focus : new THREE.Vector3(0,0,0),
+        _focus : new THREE.Vector3(0,0,0)
+    }
+    this.speed = 15;
 
-    // THREE setup
-    this.renderer.setSize( window.innerWidth , window.innerHeight )
-    this.camera.position.set( 0 , 0 , 0 )
+    this.camera.position.set( 0 , 0 , 5 )
+
 }
 URNDR.ThreeManager.prototype = {
 
-    createModelFromFile: function( file_path, callback , args ) {
+    get count() {
+        return this.models_array.length;
+    },
+    createModelFromFile: function( file_path, args ) {
 
-        // CREATE
-        var manager = this, model = new URNDR.Model();
-
-        model.material = manager.defaultMaterial;
-        model.speed = manager.defaultAnimationSpeed;
+        // Arguments
+        args.material = args.material || this.material;
+        
+        var model = new URNDR.Model( args );
+        this.addModel( model )
+        // Load
+        var manager = this;
         model.loadModel( file_path , function(){
-
-            // THREE
             manager.scene.add( model.mesh );
-
-            // STORAGE
-            manager.models[ model.id ] = model;
-            manager.models_sequence.push( model.id )
-
-            // CALLBACK
-            callback( model , args );
-
         } );
 
-        return model;
+    },
+    addModel: function( model ) {
+
+        model.parent = this;
+        this.models[ model.id ] = model;
+        this.models_array.push( model.id );
 
     },
     getModel: function( input ) {
@@ -1410,17 +1539,20 @@ URNDR.ThreeManager.prototype = {
         if (typeof input === "string") {
             // search by id
             if ( this.models.hasOwnProperty( input ) ) {
-                return this.models[ input ]
+                return this.models[ input ];
             } else {
-                return -1
+                return -1;
             }
         } else if (typeof input === "number") {
             // search by index
-            if (input >= 0 && input < this.models_sequence.length) {
-                return this.getModel( this.models_sequence[input] )
+            if (input >= 0 && input < this.models_array.length) {
+                return this.getModel( this.models_array[input] );
             } else {
-                return -1
+                return -1;
             }
+        } else {
+            // return latest one
+            return this.getModel( this.count - 1 );
         }
 
     },
@@ -1431,19 +1563,66 @@ URNDR.ThreeManager.prototype = {
         }
 
     },
+    solo: function( n ){
+        var manager = this;
+        if (typeof n === "number") {
+            manager.models_array.forEach( function(o,i){
+                if (i === n) {
+                    manager.activeModel = n;
+                    manager.models[o].active = true;
+                } else {
+                    manager.models[o].active = false;
+                }
+            } )
+        } else if (typeof n === "string") {
+            var pos = manager.models_array.indexOf(n);
+            if (pos !== -1) {
+                this.solo( pos );
+            }
+        } else if (n instanceof URNDR.Model) {
+            this.solo( n.id )
+        }
+    },
     update: function() {
 
         var manager = this;
 
+        // Model
+
         manager.eachModel( function( model , manager ){
 
-            if (model.loaded && model.active) {
+            if (model.active) {
 
-                model.update();
+                model.update( manager.speed );
 
             }
 
         }, manager )
+
+        // Camera
+
+        var rig = this.rig;
+        
+        var circle = 6.283185247;
+        if (rig.theta >= circle) {
+             rig.theta -= circle;
+             rig.target_theta -= circle;
+        } else if (rig.theta < -circle) {
+             rig.theta += circle;
+             rig.target_theta += circle;
+        }
+        
+        rig.theta += ( rig.target_theta - rig.theta ) * rig.speed;
+        rig.pitch += ( rig.target_pitch - rig.pitch ) * rig.speed;
+        rig.radius += ( rig.target_radius - rig.radius ) * rig.speed;
+        rig._focus.lerp( rig.focus , rig.speed );
+
+        U3.camera.position.z = Math.sin( rig.theta ) * rig.radius;
+        U3.camera.position.x = Math.cos( rig.theta ) * rig.radius;
+        U3.camera.position.y = rig.pitch
+        U3.camera.lookAt(rig._focus)
+
+        // Renderer
         
         manager.renderer.render( this.scene , this.camera )
 
@@ -1453,14 +1632,18 @@ URNDR.ThreeManager.prototype = {
 // Math
 URNDR.Math = {
 
-    pixelToCoordinate: function( x , y ) {
-        return {x : THREE.Math.mapLinear( x , 0 , window.innerWidth , -1 , 1 ),
-                y : THREE.Math.mapLinear( y , 0 , window.innerHeight , 1 ,-1 )}
+    pixelToCoordinate: function( x , y , w , h ) {
+        return {
+            x : THREE.Math.mapLinear( x , 0 , w , -1 , 1 ),
+            y : THREE.Math.mapLinear( y , 0 , h , 1 ,-1 )
+        };
     },
     
-    coordinateToPixel : function( x , y ) {
-        return { x : ( x / 2 + 0.5) * window.innerWidth,
-                 y : -( y / 2 - 0.5) * window.innerHeight }
+    coordinateToPixel : function( x , y , w , h ) {
+        return {
+            x :  ( x / 2 + 0.5) * w, 
+            y : -( y / 2 - 0.5) * h
+        };
     },
 
     // Compute barycentric coordinates (u,v,w) for point p with respect to triangle (a,b,c)
@@ -1479,47 +1662,13 @@ URNDR.Math = {
         w = (d00 * d21 - d01 * d20) * denom;
         u = 1 - v - w;
         return [u,v,w];
-    }
-}
-
-// Helper
-URNDR.Helpers = {
-
-    replaceLastElements : function(arr,rep) {
-        var l = arr.length, 
-            n = rep.length;
-
-        if ( l <= n ) {
-            arr = rep.slice( 0 , l );
-        } else {
-            arr = arr.slice( 0 , l - n ).concat(rep);
-        }
-
-        return arr;
     },
 
-    getLastElements : function(arr,n) {
-
-        if (n > arr.length) { return Object.create(arr); }
-
-        return arr.slice( - n );
-
-    },
-
-    smoothArray : function(arr,params) {
-        var l = arr.length;
-        for ( var i = 1 ; i < l - 1 ; i ++ ) {
-            arr[i] = (arr[i-1] + arr[i] * params.factor + arr[i+1]) / (params.factor + 2);
-            if (params.round) { arr[i] = Math.round(arr[i]); }
-        }
-    },
-
-    randomNumber : function(number,params) {
+    random : function(number,params) {
 
         if (!number) { number = 1; }
         
-        var result;
-            result = number * Math.random();
+        var result = number * Math.random();
         
         if (params) {
             if (params.round) result = Math.round(result);
@@ -1527,51 +1676,76 @@ URNDR.Helpers = {
 
         return result
     
-    },
+    }
 
-    randomiseArray : function(arr , amp) {
-        var l = arr.length;
+}
+
+// Helper
+URNDR.Helpers = {
+
+    randomizeArray : function(arr , amp) {
         if (!amp) {amp = 10;}
-        for ( i = 0 ; i < l ; i ++ ) {
-            arr[i] += amp/2 - Math.random() * amp
+        var half = amp * 0.5;
+        for ( var i = 0, l = arr.length; i < l; i ++ ) {
+            arr[i] += half - Math.random() * amp
         }
         return arr
     }
+
 }
 
 // EXTEND THREE.JS for connecting my custom objects.
 THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
 
     var geo = this.geometry,
-        target_count = geo.morphTargets.length,
-        influence_sum = this.morphTargetInfluences.reduce(function(a,b){return a+b});
-    if ( target_count === 0 || influence_sum === 0 ) {
-        return geo.vertices[ vertex_index ].clone();
+        flu = this.morphTargetInfluences;
+
+    if ( flu && geo.morphTargets ) {
+        
+        if (geo.morphTargets.length > 0) {
+            
+            var result = new THREE.Vector3(),
+                sum = 0;
+            
+            for ( var i = 0, max = geo.morphTargets.length; i < max; i ++ ) {
+                var vert = geo.morphTargets[ i ].vertices[ vertex_index ];
+                result.x += vert.x * flu[ i ]
+                result.y += vert.y * flu[ i ]
+                result.z += vert.z * flu[ i ]
+                sum += flu[ i ]
+            }
+            
+            if ( sum != 0 ) {
+                return result
+            }
+
+        }
+
     }
 
-    // compute the vertex by morphTargets. 
-    var result = new THREE.Vector3();
-    for ( var i = 0; i < target_count; i++ ) {
-        result.add( geo.morphTargets[i].vertices[ vertex_index ].clone().multiplyScalar( this.morphTargetInfluences[ i ] ) )
-    }
+    return geo.vertices[ vertex_index ].clone();
 
-    return result
 }
-
-THREE.Camera.prototype.calculateLookAtVector = function() { this.lookAtVector = new THREE.Vector3( 0, 0, -1 ).applyQuaternion( this.quaternion ); }
 THREE.Camera.prototype.checkVisibility = function( obj, face ) {
 
     if (obj.visible === false) { return 0; }
 
-    if (!this.lookAtVector) { this.calculateLookAtVector(); }
+    var map = THREE.Math.mapLinear, clamp = THREE.Math.clamp;
 
-    var normalMatrix, N, result;
+    var normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld ),
+        N = face.normal.clone().applyMatrix3( normalMatrix ).negate(), 
+        lookAtVector = new THREE.Vector3(0,0,-1).applyQuaternion(this.quaternion);
 
-    normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld );
-    N = face.normal.clone().applyMatrix3( normalMatrix ).negate();
-    result = THREE.Math.mapLinear( this.lookAtVector.angleTo(N), 1.2, 1.57, 1, 0 )
-    result = THREE.Math.clamp( result, 0, 1 )
+    return clamp( map( lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 ), 0, 1 );
 
-    return result;
+}
 
+THREE.MorphAnimation.prototype.stop = function() {
+    this.pause();
+    this.currentFrame = 1;
+    this.currentTime = 0;
+    for ( var a = 0; a < this.frames; a ++ ) {
+        this.mesh.morphTargetInfluences[a] = 0;
+    }
+    this.mesh.morphTargetInfluences[0] = 1;
 }
