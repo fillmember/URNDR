@@ -1,18 +1,16 @@
 "use strict";
 
-var WACOM = document.getElementById('Wacom').penAPI || {
-    pressure: 1
-};
+var WACOM = document.getElementById('Wacom').penAPI || { pressure: 1, nowacom: true };
 var U3 = new URNDR.ThreeManager({
     canvas: document.getElementById('canvas_three'),
     material: new THREE.MeshBasicMaterial({
         color: 0xCCCCCC,
         wireframe: true,
-        wireframeLinewidth: 2,
+        wireframeLinewidth: 0.5,
         morphTargets: true
     })
 })
-    U3.renderer.setClearColor("#FFFFFF")
+    U3.renderer.setClearColor("#FFFFFF");
 
 var HUD = new URNDR.Hud(document.getElementById('HUD'));
 
@@ -209,7 +207,7 @@ window.onload = function() {
             this.animation = new THREE.MorphAnimation(this.mesh);
             this.mesh.scale.multiplyScalar(0.03);
             this.mesh.position.y = -2.5;
-            this.focusPoint = {max: 2.2, min:0}
+            this.focusPoint = {max: 2, min:-1.3}
         },
         onfocus: function() { this.animation.play(); },
         onblur: function() { this.animation.pause(); }

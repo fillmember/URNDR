@@ -1084,10 +1084,10 @@ URNDR.Point.prototype = {
         var a = URNDR.Math.pixelToCoordinate( this.X , this.Y , w , h )
         return new THREE.Vector2(a.x,a.y)
     },
-    get binded() {
+    get bound() {
         return (this.OBJECT && this.FACE) ? true : false;
     },
-    set binded( input ) {
+    set bound( input ) {
         if (input === false) {
             this.OBJECT = null;
             this.FACE = null;
@@ -1153,7 +1153,7 @@ URNDR.Point.prototype = {
 
         } else {
 
-            this.binded = false;
+            this.bound = false;
             
         }
 

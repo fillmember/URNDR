@@ -8,9 +8,14 @@ body {
   line-height: 15.625px;
 }
 
+hr {
+  clear: both;
+  border: 0;
+  height: 4.5px;
+}
+
 a,a:visited {color: #333;}
-a:hover {background-color: #FF0;}
-a:active {color: #FF0;}
+a:hover, a:active {background-color: #FF0;}
 
 ul, li {
   margin: 15.625px 0 0 0;
@@ -20,28 +25,25 @@ ul, li {
 
 p, li {margin: 0 0 15.625px 0;}
 
-hr {
-  clear: both;
-  border: 0;
-  height: 4.5px;
-}
-
 h1,h2,h3,h4 {margin: 0; padding: 0;}
-
-h1 {font-size: 2em;}
-h2 {
-  font-size: 1.5em;
-  font-weight: 300;
-}
-h3 {
-  text-align: center;
-  clear: both;
-  font-size: 1.7em;
-  padding: 4.5px 0 4.5px 0;
-}
-  h3:first-child {padding-top: 0;}
-  h3 i {height: 100%;}
-h4 {text-decoration: underline;}
+  h1 {
+    font-weight: 500;
+    margin-bottom: 0.2em;
+    font-size: 1.66em;
+  }
+  h2 {
+    font-size: 1.2em;
+    font-weight: 300;
+  }
+  h3 {
+    text-align: center;
+    clear: both;
+    font-size: 1.7em;
+    padding: 0;
+  }
+    h3:first-child {padding-top: 0;}
+    h3 i {height: 100%;}
+  h4 {text-decoration: underline;}
 
 /*Interface*/
 
@@ -79,7 +81,8 @@ h4 {text-decoration: underline;}
     padding-left: 9px;
   }
   .hudWrapper {
-    margin-top:60.5px;
+    position: absolute;
+    bottom: 0;
     width:104px;
   }
   #HUD {
@@ -98,14 +101,17 @@ h4 {text-decoration: underline;}
 
     height: 30px;
 
-    padding: 0; margin: 0 0 1.25px 0;
+    padding: 0; margin: 0 0 1px 0;
     
-    line-height: 31.25px;
+    line-height: 30px;
 
     font-weight: 500;
     text-align: center;
   }
-  .sidebar h3 {height: 22.25px;}
+  .sidebar h3 {
+    height: 32px;
+    line-height: 32px;
+  }
   .sidebar p {text-align: justify;}
 
 .middle {
@@ -121,9 +127,7 @@ h4 {text-decoration: underline;}
 }
   canvas {
     position: absolute;
-    top:0;
-    left:0;
-
+    top:0; left:0;
     cursor: url(../img/cursor-full.png) 16 16, crosshair;
   }
 
@@ -210,29 +214,22 @@ h4 {text-decoration: underline;}
 .p33 { width: 33.33%; }
 .p25 { width: 25%; }
 
-  .p50.float-left p, 
-  .p33.float-left p, 
-  .p66.float-left p, 
-  .p75.float-left p, 
-  .p25.float-left p {
+.float-left {}
+  .float-left.p50 p, 
+  .float-left.p33 p, 
+  .float-left.p66 p, 
+  .float-left.p75 p, 
+  .float-left.p25 p {
     margin-right: 9px;
   }
 
-.compress { font-size: 90%; }
-
-.grid {background-image:linear-gradient(0deg, transparent 98%, #0FF 99%, transparent 100%), linear-gradient(90deg, transparent 98%, #EEE 99%, transparent 100%);}
-
 /* Inputs */
 
-input, button, label {
-  cursor: pointer;
-  outline: none;
-}
+input, button, label { cursor: pointer; outline: none; }
 
 button {
   font-size: 12px;
-  padding: 0;
-  margin: 0;
+  padding: 0; margin: 0;
 
   background: #FFF;
   border-radius: 10px;
@@ -248,14 +245,6 @@ button {
     display: table;
     clear: both;
   }
-  .group.close {}
-    .group.close > *:not(:last-child) {
-      margin-bottom: -4.5px;
-    }
-  .group.extra-close {}
-    .group.extra-close > *:not(:last-child) {
-      margin-bottom: -9px; 
-    }
 
 .btnGroup {}
   .btnGroup:after {
@@ -264,15 +253,9 @@ button {
     clear: both;
   }
   .btnGroup button { border-radius: 0; }
-  .btnGroup button:first-child {
-    border-radius: 10px 0 0 10px;
-  }
-  .btnGroup button:last-child {
-    border-radius: 0 10px 10px 0;
-  }
-  .btnGroup button:not(:last-child) {
-    border-right: 0;
-  }
+  .btnGroup button:first-child { border-radius: 10px 0 0 10px; }
+  .btnGroup button:last-child { border-radius: 0 10px 10px 0; }
+  .btnGroup button:not(:last-child) { border-right: 0; }
 
 .outlinedGroup {
   border-radius: 10px;
@@ -306,13 +289,9 @@ input[type=checkbox] { display: none; }
     content: "";
   }
   input[type=checkbox] + label:before {
-    top: 2px;
-    left: 2px;
-    bottom: 2px;
-    right: 2px;
+    top: 2px; left: 2px; bottom: 2px; right: 2px;
     background-color: #FFF;
     border-radius: 60px;
-    transition: background .2s;
   }
   input[type=checkbox] + label:after {
     top: 2px;
@@ -322,7 +301,6 @@ input[type=checkbox] { display: none; }
     background-color: #FFF;
     border: 2px solid #333;
     border-radius: 12px;
-    transition: margin .1s linear, background .2s;
   }
   input[type=checkbox]:checked + label:before {
     background-color: #FF0;
@@ -335,22 +313,20 @@ input[type=checkbox] { display: none; }
 input[type=range] {
   -webkit-appearance: none;
 }
-  input[type=range]:focus { outline: none; }
   input[type=range]::-webkit-slider-runnable-track {
-    width: 100%;
-    margin-top: 2px;
-    height: 16px;
+    height: 18px;
     background: #FFF;
     border-radius: 18px;
   }
   input[type=range]::-webkit-slider-thumb {
-    height: 18px;
-    width: 18px;
-    border-radius: 18px;
+    height: 20px;
+    width: 13px;
+    border-radius: 10px;
     background: #FFF;
     margin-top: -3px;
     -webkit-appearance: none;
   }
+  input[type=range]:focus { outline: none; }
 
 /* common styles */
 

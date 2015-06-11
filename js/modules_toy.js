@@ -282,7 +282,13 @@ random_point_position : function() {
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,9001,true);
+    var _enabled = true;
+    if (WACOM) {
+        if (WACOM.nowacom === true) {
+            _enabled = false;
+        }
+    }
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,9001,_enabled);
     module.interval = 1;
     module.setConfiguration( {
         min_size : 5,
@@ -444,7 +450,7 @@ smooth_data : function() {
         function _smooth( stroke ) {
             stroke.eachPoint( function(cur,stk,i){
 
-                if (cur.binded) { return 0; }
+                if (cur.bound) { return 0; }
                 var prv = stk.getPoint(i - 1),
                     nxt = stk.getPoint(i + 1);
                 if (prv == 0 || nxt == 0) { return 0; }
@@ -461,11 +467,11 @@ smooth_data : function() {
 
                 cur.X += ( vprv[0] + vnxt[0] ) * factor_1;
                 cur.Y += ( vprv[1] + vnxt[1] ) * factor_1;
-                if (!prv.binded) {
+                if (!prv.bound) {
                     prv.X += - vprv[0] * factor_2;
                     prv.Y += - vprv[1] * factor_2;
                 }
-                if (!nxt.binded) {
+                if (!nxt.bound) {
                     nxt.X += - vnxt[0] * factor_2;
                     nxt.Y += - vnxt[1] * factor_2;
                 }
