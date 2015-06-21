@@ -202,16 +202,6 @@ window.onload = function() {
     cavMan.resize(500, 500);
 
     // Load Model
-    U3.createModelFromFile("models/newman.js", {
-        init: function() {
-            this.animation = new THREE.MorphAnimation(this.mesh);
-            this.mesh.scale.multiplyScalar(0.03);
-            this.mesh.position.y = -2.5;
-            this.focusPoint = {max: 2, min:-1.3}
-        },
-        onfocus: function() { this.animation.play(); },
-        onblur: function() { this.animation.pause(); }
-    });
     U3.createModelFromFile("models/mannequin.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh);
@@ -220,6 +210,16 @@ window.onload = function() {
             this.mesh.position.x = 0.5;
             this.mesh.rotation.y = -4.3149;
             this.focusPoint = {max:1.8,min:-2}
+        },
+        onfocus: function() { this.animation.play(); },
+        onblur: function() { this.animation.pause(); }
+    });
+    U3.createModelFromFile("models/newman.js", {
+        init: function() {
+            this.animation = new THREE.MorphAnimation(this.mesh);
+            this.mesh.scale.multiplyScalar(0.03);
+            this.mesh.position.y = -2.5;
+            this.focusPoint = {max: 2, min:-1.3}
         },
         onfocus: function() { this.animation.play(); },
         onblur: function() { this.animation.pause(); }
