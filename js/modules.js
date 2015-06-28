@@ -74,11 +74,11 @@ brush_size_down : function() {
 speed_up : function() {
     var module = new URNDR.Module("Speed Up",URNDR.COMMAND_MODULE,38)
     module.setFunction(function( evt ){
-        var step = 2.5;
+        var step = 1;
         if (evt.shiftKey) {
             step = 5;
         }
-        U3.speed = U3.speed <= 57.5 ? U3.speed + step : 60;
+        U3.speed = U3.speed <= (60 - step) ? U3.speed + step : 60;
         return U3.speed;
     })
     return module
@@ -87,12 +87,32 @@ speed_up : function() {
 speed_down : function() {
     var module = new URNDR.Module("Speed Down",URNDR.COMMAND_MODULE,40)
     module.setFunction(function( evt ){
-        var step = 2.5;
+        var step = 1;
         if (evt.shiftKey) {
             step = 5;
         }
         U3.speed = U3.speed >= step ? U3.speed - step : 0;
         return U3.speed;
+    })
+    return module
+},
+
+zoom_in : function() {
+    var module = new URNDR.Module("ZOOM IN",URNDR.COMMAND_MODULE,187)
+    module.setFunction(function( evt ){
+        var f = -0.3
+        if (evt.shiftKey) { f *= 5; }
+        return U3.rig.target_radius += f;
+    })
+    return module
+},
+
+zoom_out : function() {
+    var module = new URNDR.Module("ZOOM OUT",URNDR.COMMAND_MODULE,189)
+    module.setFunction(function( evt ){
+        var f = 0.3;
+        if (evt.shiftKey) { f *= 5; }
+        return U3.rig.target_radius += f;
     })
     return module
 },
@@ -273,7 +293,7 @@ random_point_position : function() {
 
 pressure_sensitivity : function() {
     var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
-    module.interval = 1;
+    module.interval = 5;
     module.setConfiguration( {
         min_size : 5,
         max_size : 80

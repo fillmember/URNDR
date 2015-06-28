@@ -30651,6 +30651,7 @@ THREE.MorphAnimation.prototype = {
 
 		var interpolation = this.duration / this.frames;
 		var frame = Math.floor( this.currentTime / interpolation );
+		frame = Math.min( frame, this.frames - 1);
 
 		var influences = this.mesh.morphTargetInfluences;
 
