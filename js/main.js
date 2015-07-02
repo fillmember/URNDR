@@ -227,32 +227,86 @@ function size_and_style() {
 }
 size_and_style();
 
-//
-// OSC : SOCKET
-//
+var midi = null;  // global MIDIAccess object
 
-var socket = io.connect('http://127.0.0.1', { port: 8081, rememberTransport: false});
-socket.on('connect', function() {
-    // sends to socket.io server the host/port of oscServer
-    // and oscClient
-    socket.emit('config',
-        {
-            server: {
-                port: 3333,
-                host: '127.0.0.1'
-            },
-            client: {
-                port: 3334,
-                host: '127.0.0.1'
-            }
+var OP_ONE = function(msg){
+    var msg = msg.data;
+    var pitch_bend = msg[0] === 224 ? true : false;
+    if (pitch_bend) { return; }
+    var ident = msg[1];
+    var value = msg[2];
+    if (ident == undefined || value == undefined) { return }
+    var control = msg[0] === 176 ? true : false;
+    var encoder = ident < 5 ? true : false;
+    if (encoder && control) {
+        value = value === 127 ? -1 : 1;
+    } else if (control) {
+        value = value === 127 ? 1 : 0;
+    }
+    // The control part
+    if (value === 0) {return;}
+    if (control) {
+        switch (ident) {
+            // ENCODERS
+            case 1:
+                U3.rig.target_theta += -value * 0.1;
+                return;
+            case 2:
+                U3.rig.target_pitch += value * 0.1;
+                return;
+            case 3:
+                U3.rig.target_radius += value * 0.1;
+                return;
+            case 4:
+                var n = U3.speed + value * 2.5;
+                U3.speed = THREE.Math.clamp( n , 0 , 1000)
+                return;
+            case 21:
+                var mod = MODULES.getModuleByName( "Random Stroke Color" );
+                mod.enabled = !mod.enabled;
+            // Dot Dot Dot
+            case 23:
+                var mod = MODULES.getModuleByName( "Fade Strokes" );
+                mod.enabled = !mod.enabled;
+                return;
+            // M1 M2
+            case 24:
+                MODULES.getModuleByName( "Color Change" ).func({shiftKey: true});
+                return;
+            case 25:
+                MODULES.getModuleByName( "B&W" ).func({});
+                return;
+            case 49:
+                MODULES.getModuleByName( "Toggle UI" ).func({})
+                return;
+            case 52:
+                var mod = MODULES.getModuleByName( "auto move" );
+                mod.enabled = !mod.enabled;
+                return;
         }
-    );
-});
-socket.on('message', function(obj) {
-    console.log(obj)
-    HUD.display(obj[0],obj[1])
-    U3.rig.target_theta = obj[1] / 50;
-});
+    }
+    // Model switcher : OCTAVE 0
+    if (! control && value > 99 ) {
+        var n = ident - 53;
+        n = n % U3.count;
+        U3.solo( n )
+        return;
+    }
+    console.log( control ? "CTRL" : "NOTE", ident , value )
+}
+
+function onMIDISuccess( midiAccess ) {
+  midi = midiAccess;  // store in the global (in real usage, would probably keep in an object instance)
+  var inputs = midi.inputs.values();
+  for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+    input.value.onmidimessage = OP_ONE;
+  }
+}
+function onMIDIFailure(msg) {
+    console.log( "Failed to get MIDI access - " + msg );
+}
+navigator.requestMIDIAccess().then( onMIDISuccess, onMIDIFailure );
+
 
 //
 // INIT
@@ -269,15 +323,15 @@ window.onload = function() {
             pitch: function(x) {
                 // X : 1/10
                 // THREE.Math.mapLinear( rig.pitch , -1 , 1 , -2 , 2 )
-                U3.rig.target_pitch = x * 0.1;
+                // U3.rig.target_pitch = x * 0.1;
             },
             theta: function(x) {
                 // X : 1 per 10 degree.
                 // 10 degress = 1/36 * 2 * Math.PI() in radian = 0.1744444
-                U3.rig.target_theta = x * 0.17444444;
+                // U3.rig.target_theta = x * 0.17444444;
             },
             add: function(property, x) {
-                U3.rig["target_" + property] += preset.rig[property]( x );
+                // U3.rig["target_" + property] += preset.rig[property]( x );
             }
         },
         man: {
@@ -360,74 +414,74 @@ window.onload = function() {
         });
 
     // // Man
-    // U3.createModelFromFile( "models/man_idle.js", {
-    //     init: function() {
-    //         preset.man.init(this)
-    //         this.mesh.morphTargetInfluences[ 0 ] = 1
-    //     },
-    //     onfocus: function(){
-    //         preset.man.focus()
-    //         preset.rig.pitch(1)
-    //         preset.rig.theta(1)
-    //     }
-    // });
-    // U3.createModelFromFile( "models/man_idle.js", {
-    //     init: function() {
-    //         preset.man.init(this)
-    //         this.animation = new THREE.MorphAnimation( this.mesh )
-    //         this.animation.loop = false;
-    //         this.animation.duration = 800;
-    //     },
-    //     onfocus: function(){
-    //         preset.man.focus()
-    //         this.animation.play();
-    //     },
-    //     onblur: function(){
-    //         this.animation.stop();
-    //     }
-    // });
-    // U3.createModelFromFile( "models/man_walk.js", {
-    //     init: function() {
-    //         preset.man.init(this);
-    //         this.animation = new THREE.MorphAnimation( this.mesh )
-    //     },
-    //     onfocus: function(){
-    //         preset.man.focus()
-    //         this.animation.play();
-    //     },
-    //     onblur: function(){
-    //         this.animation.pause();
-    //     }
-    // });
-    // U3.createModelFromFile( "models/man_run.js", {
-    //     init: function() {
-    //         preset.man.init(this);
-    //         this.animation = new THREE.MorphAnimation( this.mesh )
-    //         this.animation.duration = 1500;
-    //     },
-    //     onfocus: function(){
-    //         preset.man.focus()
-    //         this.animation.play();
-    //     },
-    //     onblur: function(){
-    //         this.animation.pause();
-    //     }
-    // });
-    // U3.createModelFromFile( "models/man_crazy.js", {
-    //     init: function() {
-    //         preset.man.init(this);
-    //         this.animation = new THREE.MorphAnimation( this.mesh );
-    //         this.animation.duration = 1200;
-    //         this.mesh.position.y += 0.6;
-    //     },
-    //     onfocus: function(){
-    //         preset.man.focus()
-    //         this.animation.play();
-    //     },
-    //     onblur: function(){
-    //         this.animation.pause();
-    //     }
-    // });
+    U3.createModelFromFile( "models/man_idle.js", {
+        init: function() {
+            preset.man.init(this)
+            this.mesh.morphTargetInfluences[ 0 ] = 1
+        },
+        onfocus: function(){
+            preset.man.focus()
+            preset.rig.pitch(1)
+            preset.rig.theta(1)
+        }
+    });
+    U3.createModelFromFile( "models/man_idle.js", {
+        init: function() {
+            preset.man.init(this)
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.loop = false;
+            this.animation.duration = 800;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.stop();
+        }
+    });
+    U3.createModelFromFile( "models/man_walk.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/man_run.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh )
+            this.animation.duration = 1500;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
+    U3.createModelFromFile( "models/man_crazy.js", {
+        init: function() {
+            preset.man.init(this);
+            this.animation = new THREE.MorphAnimation( this.mesh );
+            this.animation.duration = 1200;
+            this.mesh.position.y += 0.6;
+        },
+        onfocus: function(){
+            preset.man.focus()
+            this.animation.play();
+        },
+        onblur: function(){
+            this.animation.pause();
+        }
+    });
 
     // Pokemons
         U3.createModelFromFile( "models/pika.js", {
