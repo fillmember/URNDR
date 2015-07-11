@@ -293,7 +293,7 @@ random_point_position : function() {
 
 pressure_sensitivity : function() {
     var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
-    module.interval = 5;
+    module.interval = 1;
     module.setConfiguration( {
         min_size : 5,
         max_size : 80

@@ -8,8 +8,8 @@ var WACOM = document.getElementById('Wacom').penAPI || {pressure:3};
 var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
     material: new THREE.MeshBasicMaterial( {
-        color: 0xCCCCCC,
-        wireframe: true, 
+        color: 0xFFFFFF,
+        // wireframe: true, 
         wireframeLinewidth: 2,
         morphTargets: true
     } )
@@ -47,7 +47,9 @@ PEN.addTool(new URNDR.PenTool({
     },
     onmouseup: function(pen, evt){
         var astk = this.strokes.getActiveStroke()
-        astk.optimize();
+        if (astk) {
+            astk.optimize();
+        }
     },
     onmousemove: function(pen, evt){
 
@@ -261,9 +263,44 @@ var OP_ONE = function(msg){
                 var n = U3.speed + value * 2.5;
                 U3.speed = THREE.Math.clamp( n , 0 , 1000)
                 return;
+            // Speech Bubble
+            case 5:
+                var mod = MODULES.getModuleByName( "VANILLA DRAW" );
+                mod.settings.fillmember = ! mod.settings.fillmember;
+                return;
+            // Record , Play , Stop buttons
+            case 38:
+                PEN.selectToolByName("Draw");
+                return;
+            case 39:
+                PEN.selectToolByName("Stroke Selector");
+                return;
+            case 40:
+                PEN.selectToolByName("Eraser");
+                return;
+            // Metronome & Mixer
+            case 6:
+                MODULES.getModuleByName( "Previous Model" ).func({});
+                return;
+            case 10:
+                MODULES.getModuleByName( "Next Model" ).func({});
+                return;
+            // Drop / Take tape
+            case 17:
+                var mod = MODULES.getModuleByName( "Pressure Sensitivity" );
+                mod.enabled = !mod.enabled;
+                return;
+            case 16:
+                MODULES.getModuleByName( "Increase Brush Size" ).func({});
+                return;
+            case 15:
+                MODULES.getModuleByName( "Reduce Brush Size" ).func({});
+                return;
+            // 
             case 21:
                 var mod = MODULES.getModuleByName( "Random Stroke Color" );
                 mod.enabled = !mod.enabled;
+                return;
             // Dot Dot Dot
             case 23:
                 var mod = MODULES.getModuleByName( "Fade Strokes" );
@@ -276,12 +313,22 @@ var OP_ONE = function(msg){
             case 25:
                 MODULES.getModuleByName( "B&W" ).func({});
                 return;
+            case 48:
+                MODULES.getModuleByName( "Clear Canvas" ).func({})
+                return;
             case 49:
                 MODULES.getModuleByName( "Toggle UI" ).func({})
                 return;
-            case 52:
+            case 64:
                 var mod = MODULES.getModuleByName( "auto move" );
                 mod.enabled = !mod.enabled;
+                return;
+            case 65:
+                var mod = MODULES.getModuleByName( "auto move" );
+                mod.receive({shiftKey: true})
+                return;
+            case 67:
+                U3.speed = 15;
                 return;
         }
     }
@@ -297,9 +344,14 @@ var OP_ONE = function(msg){
 
 function onMIDISuccess( midiAccess ) {
   midi = midiAccess;  // store in the global (in real usage, would probably keep in an object instance)
+  console.log("MIDI engaged")
+
   var inputs = midi.inputs.values();
   for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-    input.value.onmidimessage = OP_ONE;
+    if (input.value.name === "OP-1 Midi Device") {
+        input.value.onmidimessage = OP_ONE;
+        console.log("OP-1 found")
+    }
   }
 }
 function onMIDIFailure(msg) {
@@ -338,22 +390,19 @@ window.onload = function() {
             init: function( model ) {
                 model.mesh.scale.multiplyScalar( 0.03 );
                 model.mesh.position.y = -3.6;
-            },
-            focus: function( model ) {}
+            }
         },
         dog: {
             init: function( model ) {
                 model.mesh.scale.multiplyScalar( 0.04 );
                 model.mesh.position.y = -1;
-            },
-            focus: function( model ) {}
+            }
         },
         building: {
             init: function( model ) {
                 model.mesh.scale.multiplyScalar( 0.8 );
                 // model.mesh.scale.y = -3
-            },
-            onfocus: function( model ) {}
+            }
         }
     }
 
@@ -364,7 +413,6 @@ window.onload = function() {
                 this.mesh.morphTargetInfluences[ 0 ] = 1
             },
             onfocus: function(){
-                preset.dog.focus(this)
                 preset.rig.pitch(1)
                 preset.rig.theta(-2)
             }
@@ -377,7 +425,6 @@ window.onload = function() {
                 this.animation.duration = 800;
             },
             onfocus: function(){
-                preset.dog.focus(this)
                 this.animation.play();
             },
             onblur: function(){
@@ -391,7 +438,6 @@ window.onload = function() {
                 this.mesh.position.y -= 0.75;
             },
             onfocus: function(){
-                preset.dog.focus(this)
                 this.animation.play();
             },
             onblur: function(){
@@ -405,7 +451,6 @@ window.onload = function() {
                 this.mesh.position.y -= 0.75;
             },
             onfocus: function(){
-                preset.dog.focus(this)
                 this.animation.play();
             },
             onblur: function(){
@@ -420,7 +465,6 @@ window.onload = function() {
             this.mesh.morphTargetInfluences[ 0 ] = 1
         },
         onfocus: function(){
-            preset.man.focus()
             preset.rig.pitch(1)
             preset.rig.theta(1)
         }
@@ -433,7 +477,6 @@ window.onload = function() {
             this.animation.duration = 800;
         },
         onfocus: function(){
-            preset.man.focus()
             this.animation.play();
         },
         onblur: function(){
@@ -446,7 +489,6 @@ window.onload = function() {
             this.animation = new THREE.MorphAnimation( this.mesh )
         },
         onfocus: function(){
-            preset.man.focus()
             this.animation.play();
         },
         onblur: function(){
@@ -460,7 +502,6 @@ window.onload = function() {
             this.animation.duration = 1500;
         },
         onfocus: function(){
-            preset.man.focus()
             this.animation.play();
         },
         onblur: function(){
@@ -475,7 +516,6 @@ window.onload = function() {
             this.mesh.position.y += 0.6;
         },
         onfocus: function(){
-            preset.man.focus()
             this.animation.play();
         },
         onblur: function(){
@@ -531,30 +571,18 @@ window.onload = function() {
         U3.createModelFromFile( "models/arch_0.js", {
             init: function() {
                 preset.building.init(this);
-            },
-            onfocus: function(){
-                U3.rig.target_pitch = 1.2;
-                U3.rig.target_theta = -0.785;
             }
         });
         U3.createModelFromFile( "models/arch_1.js", {
             init: function() {
                 preset.building.init(this);
                 this.mesh.position.y -= 0.125;
-            },
-            onfocus: function(){
-                U3.rig.target_pitch = 1.4;
-                U3.rig.target_theta = 0.785;
             }
         });
         U3.createModelFromFile( "models/arch_2.js", {
             init: function() {
                 preset.building.init(this);
                 this.mesh.position.y -= 0.25;
-            },
-            onfocus: function(){
-                U3.rig.target_pitch = 1.7;
-                U3.rig.target_theta = 0.785 + 0.3;
             }
         });
         U3.createModelFromFile( "models/arch_3.js", {
@@ -562,20 +590,12 @@ window.onload = function() {
                 preset.building.init(this);
                 this.mesh.position.y -= 0.5;
                 this.mesh.position.x -= 1;
-            },
-            onfocus: function(){
-                U3.rig.target_pitch = 2;
-                U3.rig.target_theta = -0.785;
             }
         });
         U3.createModelFromFile( "models/arch_4.js", {
             init: function() {
                 preset.building.init(this);
                 this.mesh.position.y -= 1.25;
-            },
-            onfocus: function(){
-                U3.rig.target_pitch = 1.5;
-                U3.rig.target_theta = -1.8;
             }
         });
 

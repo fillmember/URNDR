@@ -256,13 +256,15 @@ window.onload = function() {
         },
         onblur: function() { this.animation.pause(); }
     });
-    U3.createModelFromFile("models/waterfilter.js", {
+    U3.createModelFromFile("models/pika.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh)
-            this.animation.duration = 500;
-            this.mesh.scale.multiplyScalar(0.08);
-            this.mesh.rotation.y = 1;
-            this.focusPoint = 0.25;
+            this.animation.duration = 1000;
+            this.mesh.scale.multiplyScalar( 2 );
+            this.mesh.position.y = -2;
+            // this.mesh.scale.multiplyScalar(0.08);
+            // this.mesh.rotation.y = 1;
+            // this.focusPoint = 0.25;
         },
         onfocus: function() {
             this.animation.play();
