@@ -1,4 +1,4 @@
-var URNDR = {revision:'2'};
+var URNDR = {revision:'3'};
 
 URNDR.COMMAND_MODULE = "COMMAND_MODULES"
 URNDR.STYLE_MODULE = "STYLE_MODULES"
@@ -457,7 +457,8 @@ URNDR.Strokes = function( _canvas ){
     // Data
     this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
     this.strokesHistory = []; // Store stroke ID. Record order of creation.
-    this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
+    this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen. 
+    this.age = 0;
 
     // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
     this.active_stroke = 0;
@@ -620,7 +621,8 @@ URNDR.Strokes.prototype = {
             // NOTE: if everything works right. They should also be present in these arrays...
             if (in_history >= 0) { this.strokesHistory.splice( in_history , 1) }
             if (in_z_depth >= 0) { this.strokesZDepth.splice( in_z_depth , 1) }
-            if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) } // auto check consistency, something might be wrong :(
+            // auto check consistency, something might be wrong :(
+            if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) }
 
             delete this.strokes[id]
 
@@ -1182,6 +1184,7 @@ URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
     this.onmousedown = function( pen, evt ) {
         pen.isDown = 1;
         if (pen.active_tool instanceof URNDR.PenTool) {
+            STROKES.rebuildQuadTree();
             pen.active_tool.onmousedown( pen, evt );
         }
     };
@@ -1192,6 +1195,9 @@ URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
         }
     };
     this.onmousemove = function( pen, evt ) {
+
+        // update quad tree
+        STROKES.rebuildQuadTree();
 
         // update data
         var rect = this.canvas.getBoundingClientRect();
@@ -1607,7 +1613,7 @@ URNDR.ThreeManager.prototype = {
         if (rig.theta >= circle) {
              rig.theta -= circle;
              rig.target_theta -= circle;
-        } else if (rig.theta < -circle) {
+        } else if (rig.theta < 0) {
              rig.theta += circle;
              rig.target_theta += circle;
         }

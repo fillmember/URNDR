@@ -652,8 +652,6 @@ window.onload = function() {
             strokes:STROKES, 
             canvasManager: cavMan
         } );
-
-        STROKES.rebuildQuadTree();
         
         requestAnimationFrame( display );
 

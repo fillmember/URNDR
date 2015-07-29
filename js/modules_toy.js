@@ -1,4 +1,6 @@
-var RENDER_INTERVAL = 16.666666;
+var RENDER_INTERVAL = 20;
+
+// INTERFACE UPDATE FUNCTIONS
 
 var $showcase = $(".showcase");
 $showcase.putGeneratedImage = function( url ){
@@ -21,18 +23,22 @@ $showcase.putGeneratedImage = function( url ){
 
 }
 
+// INTERFACE SHORTHANDS FUNCTIONS
+
 var trig = function() {
     var module = MODULES.getModuleByName( arguments[0] ),
         _arguments = [].slice.call( arguments );
         _arguments.shift();
     module.func.apply( module , _arguments )
 }
+
 var mreceive = function() {
     var module = MODULES.getModuleByName( arguments[0] ),
         _arguments = [].slice.call( arguments );
         _arguments.shift();
     module.listener.apply( module , _arguments )
 }
+
 var mtogg = function( mod_name , value ) {
     var module = MODULES.getModuleByName( arguments[0] );
     if (value != undefined) {
@@ -42,10 +48,17 @@ var mtogg = function( mod_name , value ) {
     }
 }
 
+// Watches
+
 watch( STYLE , "brush_size" , function(){
     $("input#brush_size").get(0).value = STYLE.brush_size;
 })
-
+watch( U3.rig , "target_theta" , function(){
+    $("#target_theta").get(0).value = U3.rig.target_theta;
+})
+watch( U3.rig , "target_radius" , function(){
+    $("#target_radius").get(0).value = U3.rig.target_radius;
+})
 
 // URNDR Modules
 
@@ -65,7 +78,8 @@ draw : function() {
 eraser : function() {
     var module = new URNDR.Module("Eraser",URNDR.COMMAND_MODULE,69) // e
     module.setFunction(function() {
-        PEN.selectToolByName("Eraser"); return "Make Invisible"
+        PEN.selectToolByName("Eraser");
+        return "Make Invisible"
     })
     return module
 },
@@ -82,6 +96,15 @@ clear_canvas : function() {
     var module = new URNDR.Module("Clear",URNDR.COMMAND_MODULE)
     module.setFunction(function( evt ){
         STROKES.reset();
+        return "";
+    })
+    return module
+},
+
+camera_mover : function() {
+    var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE)
+    module.setFunction(function( evt ){
+        PEN.selectToolByName("Mover"); return "Move Camera"
         return "";
     })
     return module
@@ -197,6 +220,7 @@ random_color_scheme : function() {
         STYLE.color[2] = contrast[2]
         U3.material.color = new THREE.Color( _rgb(pale) )
         U3.renderer.setClearColor( _rgb(primary) )
+        $(".canvas_bg").css("background-color", _rgb(primary) );
 
         return _msg;
     })
@@ -210,6 +234,7 @@ camera_work : function() {
             _arguments.shift();
         var directives = {}
         directives["Y"] = function( v ){
+            $("#view_offset_y").get(0).value = v;
             var am = U3.getModel(U3.activeModel),
                 amf = am.focusPoint;
             if (amf != undefined) {
@@ -351,7 +376,7 @@ delete_flagged_strokes : function(){
 },
 
 move_drawing_with_3d_model : function() {
-    var module = new URNDR.Module("3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
+    var module = new URNDR.Module("3D MAGIC",URNDR.STROKE_MODULE,true); //u
     module.interval = RENDER_INTERVAL;
     module.setConfiguration({
         delayFactor : 0.8
@@ -582,6 +607,7 @@ default_draw_style : function() {
         // Styles
         fillmember: false,
         // GIF Maker
+        showModel: true,
         encoder: null,
         exporting: false,
         renderedFrames: 0,
@@ -685,8 +711,15 @@ default_draw_style : function() {
         if (settings.exporting) {
 
             if ( frame_this ) {
-                // RENDER : COPY 3D image
-                ctx.drawImage( U3.renderer.domElement , 0 , 0 )
+
+                if (settings.showModel) {
+                    // RENDER : COPY 3D image
+                    ctx.drawImage( U3.renderer.domElement , 0 , 0 )
+                } else {
+                    // RENDER : FILL CLEAR COLOR
+                    ctx.fillStyle = $(".canvas_bg").first().css("background-color");
+                    ctx.fillRect( 0 , 0 , canvases.width , canvases.height )
+                }
             }
 
         }
@@ -813,3 +846,15 @@ default_draw_style : function() {
 }
 
 } );
+
+// Watches for Modules
+
+watch( MODULES.getModuleByName("Fade Strokes") , "enabled" , function() {
+    $("#fade").get(0).checked = MODULES.getModuleByName("Fade Strokes").enabled;
+})
+watch( MODULES.getModuleByName("Wiggle") , "enabled" , function() {
+    $("#wiggle").get(0).checked = MODULES.getModuleByName("Wiggle").enabled;
+})
+watch( MODULES.getModuleByName("Random Stroke Color") , "enabled" , function() {
+    $("#random_stroke_color").get(0).checked = MODULES.getModuleByName("Random Stroke Color").enabled;
+})

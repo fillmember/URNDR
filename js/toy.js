@@ -186,6 +186,37 @@ PEN.addTool(new URNDR.PenTool({
             this.strokes.active_stroke = nearest.stroke.id;
         }
 
+    },
+    disengage: function(pen, evt) {
+        this.strokes.eachStroke(function(stk) {
+            stk.selected = false;
+        })
+    }
+
+}));
+PEN.addTool( new URNDR.PenTool({
+
+    name: "Mover",
+    timer: null,
+    threeManager: U3,
+    onmousedown: function(pen, evt){
+
+        var tool = this;
+
+        clearInterval(this.timer)
+
+        this.timer = setInterval( function(){
+
+            U3.rig.target_theta += pen.ndc_x * 0.2
+            trig('Camera Work','Y',THREE.Math.mapLinear( pen.ndc_y, 1, -1, -3, 3 ));
+
+        } , 20)
+
+    },
+    onmouseup: function(pen, evt){
+
+        clearInterval( this.timer )
+
     }
 
 }));
@@ -248,6 +279,7 @@ window.onload = function() {
             this.mesh.position.x = (b.max.x + b.min.x) * -0.5 * f;
             this.mesh.position.y = (b.max.y + b.min.y) * -0.5 * f;
             this.mesh.position.z = (b.max.z + b.min.z) * -0.5 * f;
+            this.mesh.rotation.y = Math.PI;
             this.focusPoint = 0;
         },
         onfocus: function() {
@@ -262,9 +294,6 @@ window.onload = function() {
             this.animation.duration = 1000;
             this.mesh.scale.multiplyScalar( 2 );
             this.mesh.position.y = -2;
-            // this.mesh.scale.multiplyScalar(0.08);
-            // this.mesh.rotation.y = 1;
-            // this.focusPoint = 0.25;
         },
         onfocus: function() {
             this.animation.play();
@@ -294,12 +323,12 @@ window.onload = function() {
     // requestAnimationFrame
     var display = function() {
         U3.update();
+
         MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE, STROKES);
         MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE, {
             strokes: STROKES,
             canvasManager: cavMan
         })
-        STROKES.rebuildQuadTree();
 
         requestAnimationFrame(display);
     }
