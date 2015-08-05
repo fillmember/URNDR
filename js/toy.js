@@ -1,5 +1,27 @@
 "use strict";
 
+function toggleTutorial( state ) {
+    var $tu = $("#tutorial"),
+        $cn = $(".canvas_container canvas");
+    switch (state) {
+        case 0:
+            $tu.fadeOut();
+            $cn.fadeIn();
+            break;
+        case 1:
+            $tu.fadeIn();
+            $cn.fadeOut();
+            break;
+        default:
+            var v = $tu.is(":visible");
+            if (v) {
+                toggleTutorial(0);
+            } else {
+                toggleTutorial(1);
+            }
+    }
+}
+
 var WACOM = document.getElementById('Wacom').penAPI || { pressure: 1, nowacom: true };
 var U3 = new URNDR.ThreeManager({
     canvas: document.getElementById('canvas_three'),

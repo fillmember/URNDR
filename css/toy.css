@@ -125,11 +125,19 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
   position: relative;
   margin-left: 125px;
 }
-  canvas {
+  #tutorial, canvas {
     position: absolute;
     top:0; left:0;
     cursor: url(../img/cursor-full.png) 16 16, crosshair;
   }
+
+#tutorial {
+  width: 500px;
+  height: 500px;
+  background: rgba(0,0,255,1);
+  color: #FFF;
+  cursor: help;
+}
 
 .showcase {}
   .showcase:after {

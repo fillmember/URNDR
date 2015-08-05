@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8">
   <title>URNDR</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
   <link href='http://fonts.googleapis.com/css?family=Raleway:500,300' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="css/toy.css">
 </head>
@@ -18,7 +18,7 @@
         <p style="letter-spacing:-0.1px;">URNDR provides an environment where users decide how should a 3d model looks like, by their drawings. Take back the control over the look of 3D graphic, to our own hands. </p>
         <br>
         <br>
-        <li><a href="manual.html">Tutorial</a></li>
+        <li><a href="#" onclick="toggleTutorial()">Quickstart</a></li>
         <li><a href="manual.html">More Info</a></li>
         <li><a href="http://urndr.tumblr.com/">Gallery</a></li>
         <li><a href="manual.html#credits">Credits</a></li>
@@ -32,14 +32,78 @@
         <canvas id="canvas_three" class="unselectable"></canvas>
         <canvas id="canvas_urndr" class="unselectable"></canvas>
         <canvas id="canvas_hud" class="unselectable"></canvas>
+        <div id="tutorial" style="display:none;">
+          <style>
+            #tutorial a {color: #FFF;}
+            #tutorial a:hover {color: #000;}
+            #tutorial .h1 {
+              position: absolute;
+              left: 15.625px;
+              top: 15.625px;
+            }
+            #tutorial ul {
+              position: absolute;
+              top: 0; right: 0;
+              margin: 0;
+            }
+            #tutorial ul li {
+              position: relative;
+              height: 21.25px;
+              margin: 10px 15.625px 0 15.625px;
+              text-align: right;
+            }
+            #tutorial ul li:after {
+              content: "";
+              display: block;
+              position: absolute;
+              top: 7px;
+              right: -25px;
+              width: 20px;
+              height: 0;
+              border-bottom: 1px solid #FFF;
+            }
+            #tutorial li.title {
+              font-weight: bold;
+              height: 15.625px;
+              margin-top: 15.625px;
+              text-align: left;
+            }
+          </style>
+          <div class="h1">
+            QUICKSTART <br /><br />
+            <a href="#" onclick="toggleTutorial(0)"> close </a>
+            <br /><br /><br /><br /><br /><br /><br /><br />
+            <br /><br /><br /><br /><br /><br /><br /><br />
+            <-- Gallery: for inspirations! <br>
+            <span style="opacity: 0;">\--</span> upload your creations!
+          </div>
+          <ul>
+            <li class="title">Section 1 : Draw</li>
+            <li>Draw / Erase / Modify / Move</li>
+            <li>New colour scheme / Rainbow stroke mode</li>
+            <li>Brush size</li>
+            <li class="title">Section 2 : 3D</li>
+            <li>Slider for selecting model</li>
+            <li>Animation control</li>
+            <li>Camera controls, for camera height, </li>
+            <li>rotation,</li>
+            <li>and distance</li>
+            <li class="title">Section 3 : Effectors</li>
+            <li>Fade & Wiggle effector</li>
+            <li>Auto-Rotate function (bi-directional)</li>
+            <li class="title">Section 4 : Export</li>
+            <li>Export a GIF file</li>
+            <li>Clear all & toggle model visibility</li>
+          </ul>
+        </div>
       </div>
       <div class="sidebar right">
-        <h3><img src="img/icons/draw_header.png" alt="fade"></h3>
+        <h3><img src="img/icons/draw_header.png"></h3>
         <div class="btnGroup p100">
           <button onclick="trig('Draw')" id="draw" class="p25"><i class="fa fa-pencil"></i></button>
           <button onclick="trig('Eraser')" id="eraser" class="p25"><i class="fa fa-eraser"></i></button>
           <button onclick="trig('Selector')" id="selector" class="p25"><i class="fa fa-crosshairs"></i></button>
-          <button onclick="trig('Mover')" id="mover" class="p25"><i class="fa fa-arrows"></i></button>
+          <button onclick="trig('Mover')" id="mover" class="p25"><i class="fa fa-hand-paper-o"></i></button>
         </div>
         <button onclick="trig('Color Change','random')" class="p50"><i class="fa fa-tint"></i></button>
         <span class="p25"><i class="fa fa-random"></i></span>
