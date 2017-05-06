@@ -1,7 +1,9 @@
-random/
-design/
-reference/
+assets.src
 
 *.mov
 
 *.gif
+
+.DS_Store
+
+node_modules
