@@ -1,0 +1,23 @@
+{
+  "name": "urndr",
+  "version": "0.2.0",
+  "description": "yee!",
+  "main": "index.js",
+  "scripts": {
+    "webpack": "",
+    "browser-sync": "browser-sync start --server --files='*.html, css/*.css, js/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fillmember/URNDR.git"
+  },
+  "keywords": [
+    "yee"
+  ],
+  "author": "ten",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fillmember/URNDR/issues"
+  },
+  "homepage": "https://github.com/fillmember/URNDR#readme"
+}

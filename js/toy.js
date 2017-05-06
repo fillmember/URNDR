@@ -255,11 +255,12 @@ window.onload = function() {
     cavMan.resize(500, 500);
 
     // Load Model
-    U3.createModelFromFile("models/mannequin.js", {
+    U3.createModelFromFile("models/p.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh);
-            this.mesh.scale.multiplyScalar(0.04);
-            this.mesh.position.y = -3.1;
+            this.animation.duration = 1000;
+            this.mesh.scale.multiplyScalar(0.015);
+            this.mesh.position.y = 0;
             this.mesh.position.x = 0.5;
             this.mesh.rotation.y = -4.3149;
             this.focusPoint = {max:1.8,min:-2}
@@ -267,11 +268,13 @@ window.onload = function() {
         onfocus: function() { this.animation.play(); },
         onblur: function() { this.animation.pause(); }
     });
-    U3.createModelFromFile("models/newman.js", {
+    U3.createModelFromFile("models/man_run.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh);
+            this.animation.duration = 1500;
             this.mesh.scale.multiplyScalar(0.03);
             this.mesh.position.y = -2.5;
+            this.mesh.rotation.y = -1.7;
             this.focusPoint = {max: 2, min:-1.3}
         },
         onfocus: function() { this.animation.play(); },
@@ -313,9 +316,10 @@ window.onload = function() {
     U3.createModelFromFile("models/pika.js", {
         init: function() {
             this.animation = new THREE.MorphAnimation(this.mesh)
-            this.animation.duration = 1000;
+            this.animation.duration = 1500;
             this.mesh.scale.multiplyScalar( 2 );
             this.mesh.position.y = -2;
+            this.mesh.rotation.y = -1.7 / 2;
         },
         onfocus: function() {
             this.animation.play();

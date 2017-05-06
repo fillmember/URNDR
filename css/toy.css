@@ -102,7 +102,7 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
     height: 30px;
 
     padding: 0; margin: 0 0 1px 0;
-    
+
     line-height: 30px;
 
     font-weight: 500;
@@ -183,7 +183,7 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
           width: 25px; height: 25px;
           padding: 2.5px;
           overflow: hidden;
-          
+
           text-decoration: none;
           text-align: center;
           color: #333;
@@ -223,10 +223,10 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
 .p25 { width: 25%; }
 
 .float-left {}
-  .float-left.p50 p, 
-  .float-left.p33 p, 
-  .float-left.p66 p, 
-  .float-left.p75 p, 
+  .float-left.p50 p,
+  .float-left.p33 p,
+  .float-left.p66 p,
+  .float-left.p75 p,
   .float-left.p25 p {
     margin-right: 9px;
   }
@@ -352,3 +352,5 @@ input[type=range]:active::-webkit-slider-thumb
 {
   background: #FF0;
 }
+
+#Wacom {display:none;}
