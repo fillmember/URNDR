@@ -3,7 +3,7 @@ MODULES.loadModules( {
 // COMMANDS
 
 draw : function() {
-    var module = new URNDR.Module("Draw",URNDR.COMMAND_MODULE,82) // r
+    var module = new URNDR.Module("Draw",URNDR.Module.COMMAND_MODULE,82) // r
     module.setFunction(function() {
         PEN.selectToolByName("Draw");
         return "";
@@ -12,7 +12,7 @@ draw : function() {
 },
 
 hideModels : function() {
-    var module = new URNDR.Module("Toggle UI",URNDR.COMMAND_MODULE,72) // h = 72
+    var module = new URNDR.Module("Toggle UI",URNDR.Module.COMMAND_MODULE,72) // h = 72
     module.setFunction(function() {
         $("#canvas_three,#HUD").fadeToggle();
         return "";
@@ -21,7 +21,7 @@ hideModels : function() {
 },
 
 eraser : function() {
-    var module = new URNDR.Module("Eraser",URNDR.COMMAND_MODULE,69) // e
+    var module = new URNDR.Module("Eraser",URNDR.Module.COMMAND_MODULE,69) // e
     module.setFunction(function() {
         PEN.selectToolByName("Eraser"); return "Make Invisible"
     })
@@ -29,7 +29,7 @@ eraser : function() {
 },
 
 mover : function() {
-    var module = new URNDR.Module("Mover",URNDR.COMMAND_MODULE,81) // q
+    var module = new URNDR.Module("Mover",URNDR.Module.COMMAND_MODULE,81) // q
     module.setFunction(function() {
         PEN.selectToolByName("Mover"); return "Transform Objects"
     })
@@ -37,7 +37,7 @@ mover : function() {
 },
 
 selector : function() {
-    var module = new URNDR.Module("Selector",URNDR.COMMAND_MODULE,83) // s
+    var module = new URNDR.Module("Selector",URNDR.Module.COMMAND_MODULE,83) // s
     module.setFunction(function() {
         PEN.selectToolByName("Stroke Selector"); return "Select Point"
     })
@@ -45,7 +45,7 @@ selector : function() {
 },
 
 clear_canvas : function() {
-    var module = new URNDR.Module("Clear Canvas",URNDR.COMMAND_MODULE,32)
+    var module = new URNDR.Module("Clear Canvas",URNDR.Module.COMMAND_MODULE,32)
     module.setFunction(function( evt ) {
         STROKES.reset();
         return "";
@@ -54,7 +54,7 @@ clear_canvas : function() {
 },
 
 brush_size_up : function() {
-    var module = new URNDR.Module("Increase Brush Size",URNDR.COMMAND_MODULE,221)
+    var module = new URNDR.Module("Increase Brush Size",URNDR.Module.COMMAND_MODULE,221)
     module.setFunction(function(){
         STYLE.brush_size += 5;
         return STYLE.brush_size;
@@ -63,7 +63,7 @@ brush_size_up : function() {
 },
 
 brush_size_down : function() {
-    var module = new URNDR.Module("Reduce Brush Size",URNDR.COMMAND_MODULE,219)
+    var module = new URNDR.Module("Reduce Brush Size",URNDR.Module.COMMAND_MODULE,219)
     module.setFunction(function(){
         STYLE.brush_size = STYLE.brush_size > 5 ? STYLE.brush_size - 5 : 5;
         return STYLE.brush_size;
@@ -72,7 +72,7 @@ brush_size_down : function() {
 },
 
 speed_up : function() {
-    var module = new URNDR.Module("Speed Up",URNDR.COMMAND_MODULE,38)
+    var module = new URNDR.Module("Speed Up",URNDR.Module.COMMAND_MODULE,38)
     module.setFunction(function( evt ){
         var step = 1;
         if (evt.shiftKey) {
@@ -85,7 +85,7 @@ speed_up : function() {
 },
 
 speed_down : function() {
-    var module = new URNDR.Module("Speed Down",URNDR.COMMAND_MODULE,40)
+    var module = new URNDR.Module("Speed Down",URNDR.Module.COMMAND_MODULE,40)
     module.setFunction(function( evt ){
         var step = 1;
         if (evt.shiftKey) {
@@ -98,7 +98,7 @@ speed_down : function() {
 },
 
 zoom_in : function() {
-    var module = new URNDR.Module("ZOOM IN",URNDR.COMMAND_MODULE,187)
+    var module = new URNDR.Module("ZOOM IN",URNDR.Module.COMMAND_MODULE,187)
     module.setFunction(function( evt ){
         var f = -0.3
         if (evt.shiftKey) { f *= 5; }
@@ -108,7 +108,7 @@ zoom_in : function() {
 },
 
 zoom_out : function() {
-    var module = new URNDR.Module("ZOOM OUT",URNDR.COMMAND_MODULE,189)
+    var module = new URNDR.Module("ZOOM OUT",URNDR.Module.COMMAND_MODULE,189)
     module.setFunction(function( evt ){
         var f = 0.3;
         if (evt.shiftKey) { f *= 5; }
@@ -118,7 +118,7 @@ zoom_out : function() {
 },
 
 prev_model : function() {
-    var module = new URNDR.Module("Previous Model",URNDR.COMMAND_MODULE,37)
+    var module = new URNDR.Module("Previous Model",URNDR.Module.COMMAND_MODULE,37)
     module.setFunction(function(){
         U3.activeModel -= 1;
         if (U3.activeModel < 0) {
@@ -131,7 +131,7 @@ prev_model : function() {
 },
 
 next_model : function() {
-    var module = new URNDR.Module("Next Model",URNDR.COMMAND_MODULE,39)
+    var module = new URNDR.Module("Next Model",URNDR.Module.COMMAND_MODULE,39)
     module.setFunction(function(){
         U3.activeModel += 1;
         if (U3.activeModel === U3.count) {
@@ -144,7 +144,7 @@ next_model : function() {
 },
 
 random_color_scheme : function() {
-    var module = new URNDR.Module("Color Change",URNDR.COMMAND_MODULE,222)
+    var module = new URNDR.Module("Color Change",URNDR.Module.COMMAND_MODULE,222)
     module.setFunction(function( evt ){
 
         var round = Math.round, random = Math.random;
@@ -214,7 +214,7 @@ random_color_scheme : function() {
 },
 
 color_b_und_w : function() {
-    var module = new URNDR.Module("B&W",URNDR.COMMAND_MODULE,186)
+    var module = new URNDR.Module("B&W",URNDR.Module.COMMAND_MODULE,186)
     module.setConfiguration({bool:false})
     module.setFunction(function( evt ){
 
@@ -256,10 +256,10 @@ color_b_und_w : function() {
 },
 
 // STYLE MODULES
-// When user's drawing and you want to do something realtime. 
+// When user's drawing and you want to do something realtime.
 
 random_stroke_color : function() {
-    var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
+    var module = new URNDR.Module("Random Stroke Color",URNDR.Module.STYLE_MODULE,65);
     module.interval = 70;
     module.setFunction(function(STYLE) {
         STYLE.color[0] = URNDR.Math.random(255,{round: true});
@@ -272,8 +272,8 @@ random_stroke_color : function() {
 // POINT DATA MODULES
 
 random_point_position : function() {
-    var module = new URNDR.Module("Random Point",URNDR.POINT_MODULE,68);
-    // 
+    var module = new URNDR.Module("Random Point",URNDR.Module.POINT_MODULE,68);
+    //
     module.interval = 10;
     module.setConfiguration({amp : 60})
     module.setFunction(function( point ) {
@@ -292,7 +292,7 @@ random_point_position : function() {
 },
 
 pressure_sensitivity : function() {
-    var module = new URNDR.Module("Pressure Sensitivity",URNDR.POINT_MODULE,99999,true);
+    var module = new URNDR.Module("Pressure Sensitivity",URNDR.Module.POINT_MODULE,99999,true);
     module.interval = 1;
     module.setConfiguration( {
         min_size : 5,
@@ -310,7 +310,7 @@ pressure_sensitivity : function() {
 // STROKE DATA MODULES
 
 auto_rotation : function(){
-    var module = new URNDR.Module("auto move",URNDR.STROKE_MODULE,190,false);
+    var module = new URNDR.Module("auto move",URNDR.Module.STROKE_MODULE,190,false);
     module.interval = 16;
     module.setConfiguration({
         rotate_speed: 0.005,
@@ -359,7 +359,7 @@ auto_rotation : function(){
 },
 
 delete_flagged_strokes : function(){
-    var module = new URNDR.Module("Garbage Collection",URNDR.STROKE_MODULE,99,true);
+    var module = new URNDR.Module("Garbage Collection",URNDR.Module.STROKE_MODULE,99,true);
     module.interval = 1000;
     module.setFunction( function(strokes){
         var strokes_to_delete = [];
@@ -379,7 +379,7 @@ delete_flagged_strokes : function(){
 },
 
 move_drawing_with_3d_model : function() {
-    var module = new URNDR.Module("3D MAGIC",URNDR.STROKE_MODULE,85,true); //u
+    var module = new URNDR.Module("3D MAGIC",URNDR.Module.STROKE_MODULE,85,true); //u
     module.interval = 35;
     module.setConfiguration({
         delayFactor : 0.8
@@ -406,7 +406,7 @@ move_drawing_with_3d_model : function() {
                     b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project(U3.camera)
                     c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project(U3.camera)
                     p = URNDR.Math.coordinateToPixel(
-                        a.x * point.BU + b.x * point.BV + c.x * point.BW, 
+                        a.x * point.BU + b.x * point.BV + c.x * point.BW,
                         a.y * point.BU + b.y * point.BV + c.y * point.BW,
                         cavMan.width,
                         cavMan.height
@@ -452,7 +452,7 @@ move_drawing_with_3d_model : function() {
                         }
 
                     }
-                    
+
                 }
 
             }
@@ -465,7 +465,7 @@ move_drawing_with_3d_model : function() {
 },
 
 expand : function() {
-    var module = new URNDR.Module("Expand",URNDR.STROKE_MODULE,71,false); // g
+    var module = new URNDR.Module("Expand",URNDR.Module.STROKE_MODULE,71,false); // g
     module.setConfiguration({ speed : 2 });
     module.setFunction(function(strokes){
         var s = this.getConfiguration();
@@ -495,9 +495,9 @@ expand : function() {
 },
 
 smooth_data : function() {
-    var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
+    var module = new URNDR.Module("Smooth",URNDR.Module.STROKE_MODULE,87,false); // w
     module.interval = 85;
-    // 
+    //
     module.setConfiguration({ length: 60, factor: 13 })
     module.setFunction(function(strokes) {
 
@@ -512,7 +512,7 @@ smooth_data : function() {
                 var prv = stk.getPoint(i - 1),
                     nxt = stk.getPoint(i + 1);
                 if (prv == 0 || nxt == 0) { return 0; }
-                
+
                 var vprv = [prv.X - cur.X,prv.Y - cur.Y],
                     vnxt = [nxt.X - cur.X,nxt.Y - cur.Y],
                     dprv = prv.distanceTo( cur ),
@@ -542,7 +542,7 @@ smooth_data : function() {
 },
 
 fade_strokes : function() {
-    var module = new URNDR.Module("Fade Strokes",URNDR.STROKE_MODULE,70,false);
+    var module = new URNDR.Module("Fade Strokes",URNDR.Module.STROKE_MODULE,70,false);
     module.interval = 40;
     module.setConfiguration({
         all : true,
@@ -603,7 +603,7 @@ fade_strokes : function() {
 },
 
 wiggle : function() {
-    var module = new URNDR.Module("Wiggle",URNDR.STROKE_MODULE,90) // z
+    var module = new URNDR.Module("Wiggle",URNDR.Module.STROKE_MODULE,90) // z
     module.interval = 65;
     module.setConfiguration({ amp : 0, all : true })
     module.setFunction(function(strokes) {
@@ -634,7 +634,7 @@ wiggle : function() {
 // DRAW MODULES
 
 default_draw_style : function() {
-    var module = new URNDR.Module("VANILLA DRAW",URNDR.DRAW_MODULE,48,true);
+    var module = new URNDR.Module("VANILLA DRAW",URNDR.Module.DRAW_MODULE,48,true);
     module.interval = 20;
     module.setConfiguration( {
         fillmember: false,
@@ -658,7 +658,7 @@ default_draw_style : function() {
         function getAlphaFactor( pnt, stk, i ){
 
             if (pnt.OBJECT && pnt.FACE) {
-                            
+
                 return U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
 
             } else {
@@ -689,18 +689,18 @@ default_draw_style : function() {
 
             }
 
-            // The rest of the cases: stroke is totally without any binding. 
+            // The rest of the cases: stroke is totally without any binding.
 
             return 1
 
         }
 
         var settings = this.getConfiguration();
-        var strokes = params.strokes, 
+        var strokes = params.strokes,
             canvases = params.canvasManager,
-            ctx = canvases.get("draw").context, 
+            ctx = canvases.get("draw").context,
             hudCtx = canvases.get("hud").context;
-        
+
         canvases.clear(1);
 
         function _fillmember( ctx, prv, pnt, factor ){
@@ -742,16 +742,16 @@ default_draw_style : function() {
                 hudCtx.stroke();
 
             } else if ( stk.hovered ) {
-                
+
                 hudCtx.strokeStyle = "#FFF"
                 stk.eachPoint( function(pnt) {
                     hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
                 } )
-            
+
             }
 
             if (stk.closed) {
-                
+
                 var prv = stk.points[ 0 ],
                     pnt = stk.points[ stk.length - 1 ],
                     factor = getAlphaFactor(pnt,stk,0);
@@ -770,7 +770,7 @@ default_draw_style : function() {
 
                 // If this is the first time
                 if (settings.renderedFrames === 0) {
-                    
+
                     // START
                     settings.encoder = new GIFEncoder();
                     settings.encoder.setRepeat( 0 );

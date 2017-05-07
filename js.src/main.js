@@ -9,7 +9,7 @@ var U3 = new URNDR.ThreeManager( {
     canvas: document.getElementById('canvas_three'),
     material: new THREE.MeshBasicMaterial( {
         color: 0xFFFFFF,
-        // wireframe: true, 
+        // wireframe: true,
         wireframeLinewidth: 2,
         morphTargets: true
     } )
@@ -55,7 +55,7 @@ PEN.addTool(new URNDR.PenTool({
 
         if (pen.isDown !== 1) { return; }
 
-        this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE )
+        this.modules.runEnabledModulesInList(URNDR.Module.STYLE_MODULE, STYLE )
 
         var pnt = new URNDR.Point({
             X : pen.x,
@@ -70,7 +70,7 @@ PEN.addTool(new URNDR.PenTool({
         if (stk !== 0) { stk.addPoint( pnt ) }
 
         // Run modules that changes the pnt.
-        this.modules.runEnabledModulesInList( URNDR.POINT_MODULE , pnt )
+        this.modules.runEnabledModulesInList( URNDR.Module.POINT_MODULE , pnt )
 
         pnt.refreshBinding( U3 )
 
@@ -144,7 +144,7 @@ PEN.addTool( new URNDR.PenTool({
     limit: 400,
     selectedPoint: 0,
     sqr_dist: function( p, q ) {
-        var dX = p.x - q.x, 
+        var dX = p.x - q.x,
             dY = p.y - q.y;
         return dX * dX + dY * dY
     },
@@ -296,7 +296,7 @@ var OP_ONE = function(msg){
             case 15:
                 MODULES.getModuleByName( "Reduce Brush Size" ).func({});
                 return;
-            // 
+            //
             case 21:
                 var mod = MODULES.getModuleByName( "Random Stroke Color" );
                 mod.enabled = !mod.enabled;
@@ -566,7 +566,7 @@ window.onload = function() {
                 this.animation.pause();
             }
         });
-    
+
     // // Architecture
         U3.createModelFromFile( "models/arch_0.js", {
             init: function() {
@@ -647,12 +647,12 @@ window.onload = function() {
 
         U3.update();
 
-        MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE , STROKES );
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE , {
-            strokes:STROKES, 
+        MODULES.runEnabledModulesInList(URNDR.Module.STROKE_MODULE , STROKES );
+        MODULES.runEnabledModulesInList(URNDR.Module.DRAW_MODULE , {
+            strokes:STROKES,
             canvasManager: cavMan
         } );
-        
+
         requestAnimationFrame( display );
 
     }

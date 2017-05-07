@@ -42,7 +42,7 @@ PEN.addTool(new URNDR.PenTool({
 
         if (pen.isDown !== 1) { return; }
 
-        this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE)
+        this.modules.runEnabledModulesInList(URNDR.Module.STYLE_MODULE, STYLE)
 
         var pnt = new URNDR.Point({
             X: pen.x,
@@ -61,7 +61,7 @@ PEN.addTool(new URNDR.PenTool({
         }
 
         // Run modules that changes the pnt.
-        this.modules.runEnabledModulesInList(URNDR.POINT_MODULE, pnt)
+        this.modules.runEnabledModulesInList(URNDR.Module.POINT_MODULE, pnt)
 
         pnt.refreshBinding(U3)
 
@@ -247,8 +247,8 @@ window.onload = function() {
     // requestAnimationFrame
     var display = function() {
         U3.update();
-        MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE, STROKES);
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE, {
+        MODULES.runEnabledModulesInList(URNDR.Module.STROKE_MODULE, STROKES);
+        MODULES.runEnabledModulesInList(URNDR.Module.DRAW_MODULE, {
             strokes: STROKES,
             canvasManager: cavMan
         })

@@ -1,0 +1,81 @@
+class BaseModule {
+    constructor (n,t,k,e) {
+
+        // Parameter Control
+        var _name, _type, _keycode, _enabled;
+        if (e == undefined) {
+            _enabled = false
+            if (typeof k == "number") {
+                _keycode = k
+            } else {
+                // don't assign keycode
+                _enabled = k
+                _keycode = false;
+            }
+        } else {
+            _enabled = e
+            _keycode = k
+        }
+        _type = t
+        _name = n
+
+        // Properties that will always be
+        this.id = "MOD-"+THREE.Math.generateUUID()
+        this.priority = 1
+        this.enabled = _enabled;
+        this.type = _type
+        this.name = _name
+        this.timeControlObject = {
+            then: Date.now(),
+            interval: 25
+        }
+        this.func = function(){};
+
+        // Properties that could be
+        if (_type != BaseModule.COMMAND_MODULE) {
+            this.listener = function(){};
+        }
+        if (_keycode) {
+            this.keyCode = _keycode;
+        }
+
+    }
+
+    get timeControl () {
+        var obj = this.timeControlObject,
+            now = Date.now(),
+            delta = now - obj.then;
+        if (delta < obj.interval) {
+            return false;
+        } else {
+            obj.then = now - (delta % obj.interval);
+            return true;
+        }
+    }
+    set interval (v) {
+        this.timeControlObject.interval = v;
+    }
+    set settings ( s ) {
+        this.configuration = s;
+        this.initialConfiguration = Object.create(s);
+    }
+    get settings () {
+        return this.configuration;
+    }
+    setFunction ( f ) { this.func = f }
+    getFunction () { return this.func }
+    setConfiguration ( s ) {
+        this.configuration = s;
+        this.initialConfiguration = Object.create( this.configuration )
+    }
+    getConfiguration () { return this.configuration }
+    receive () { return this.listener.apply( this, arguments ); }
+}
+
+BaseModule.COMMAND_MODULE = "COMMAND_MODULES"
+BaseModule.STYLE_MODULE = "STYLE_MODULES"
+BaseModule.POINT_MODULE = "POINT_MODULES"
+BaseModule.STROKE_MODULE = "STROKE_MODULES"
+BaseModule.DRAW_MODULE = "DRAW_MODULES"
+
+export default BaseModule

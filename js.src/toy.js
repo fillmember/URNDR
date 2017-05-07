@@ -1,8 +1,21 @@
 "use strict";
 
-function toggleTutorial( state ) {
-    var $tu = $("#tutorial"),
-        $cn = $(".canvas_container canvas");
+import {
+    ThreeManager,
+    ModuleManager,
+    CanvasManager,
+    StrokeStyle,
+    Strokes,
+    Point,
+    Hud,
+    Pen,
+    PenTool,
+    Module
+} from 'urndr'
+
+const $tu = $("#tutorial")
+const $cn = $(".canvas_container canvas")
+window.toggleTutorial = function ( state ) {
     switch (state) {
         case 0:
             $tu.fadeOut();
@@ -14,16 +27,12 @@ function toggleTutorial( state ) {
             break;
         default:
             var v = $tu.is(":visible");
-            if (v) {
-                toggleTutorial(0);
-            } else {
-                toggleTutorial(1);
-            }
+            toggleTutorial( v ? 0 : 1 )
     }
 }
 
-const WACOM = document.getElementById('Wacom').penAPI || { pressure: 1, nowacom: true };
 const U3 = new URNDR.ThreeManager({
+    fog: new THREE.FogExp2(0xFFFFFF,0.33),
     canvas: document.getElementById('canvas_three'),
     material: new THREE.MeshBasicMaterial({
         color: 0xCCCCCC,
@@ -32,225 +41,65 @@ const U3 = new URNDR.ThreeManager({
         morphTargets: true
     })
 })
-    U3.renderer.setClearColor("#FFFFFF");
+U3.renderer.setClearColor("#FFFFFF");
+window.U3 = U3
 
 const HUD = new URNDR.Hud(document.getElementById('HUD'));
+window.HUD = HUD
 
 const MODULES = new URNDR.ModuleManager();
+window.MODULES = MODULES
 const STYLE = new URNDR.StrokeStyle();
+window.STYLE = STYLE
 
 const cavMan = new URNDR.CanvasManager();
 cavMan.add(document.getElementById('canvas_urndr'), "draw", "2d")
 cavMan.add(document.getElementById('canvas_hud'), "hud", "2d")
+console.log( cavMan.get('draw').context.scale(1,1) )
 cavMan.lineCap = STYLE.cap;
 cavMan.lineJoin = STYLE.join;
-
-const PEN = new URNDR.Pen(cavMan.get("draw").element, cavMan.get("hud").element, WACOM);
-const STROKES = new URNDR.Strokes(cavMan.get("draw").element);
-
-window.WACOM = WACOM
-window.U3 = U3
-window.HUD = HUD
-window.MODULES = MODULES
-window.STYLE = STYLE
 window.cavMan = cavMan
-window.PEN = PEN
+
+const STROKES = new URNDR.Strokes(cavMan.get("draw").element);
 window.STROKES = STROKES
 
-PEN.addTool(new URNDR.PenTool({
+const PEN = new URNDR.Pen({
+    canvas_draw : cavMan.get("draw").element,
+    canvas_hud : cavMan.get("hud").element,
+    strokes : STROKES
+});
+window.PEN = PEN
 
-    name: "Draw",
-    strokes: STROKES,
-    modules: MODULES,
-    u3: U3,
-    onmousedown: function(pen, evt) { this.strokes.beginNewStroke(); },
-    onmouseup: function(pen, evt) {
-        var astk = this.strokes.getActiveStroke()
-        astk.optimize();
-    },
-    onmousemove: function(pen, evt) {
-
-        if (pen.isDown !== 1) { return; }
-
-        this.modules.runEnabledModulesInList(URNDR.STYLE_MODULE, STYLE)
-
-        var pnt = new URNDR.Point({
-            X: pen.x,
-            Y: pen.y,
-            S: STYLE.brush_size,
-            R: STYLE.color[0],
-            G: STYLE.color[1],
-            B: STYLE.color[2],
-            A: STYLE.color[3]
-        });
-
-        // WRITE POINT INTO STROKE
-        var stk = this.strokes.getActiveStroke();
-        if (stk !== 0) {
-            stk.addPoint(pnt)
-        }
-
-        // Run modules that changes the pnt.
-        this.modules.runEnabledModulesInList(URNDR.POINT_MODULE, pnt)
-
-        pnt.refreshBinding(U3)
-
-    }
-
+import {
+    PanTool,
+    DrawTool,
+    EraseTool,
+    ModifyTool
+} from 'urndr/presets/pentools.js'
+PEN.addTool(new DrawTool({
+    strokes : STROKES,
+    modules : MODULES,
+    threeManager : U3,
+    style : STYLE
 }), true)
-PEN.addTool(new URNDR.PenTool({
-
-    name: "Eraser",
-    style: STYLE,
-    strokes: STROKES,
-    delMod: undefined,
-    init: function() {},
-    onmousedown: function(pen, evt) {},
-    onmouseup: function(pen, evt) {},
-    onmousemove: function(pen, evt) {
-
-        if (pen.isDown !== 1) {
-            return;
-        }
-        var s = pen.pressure;
-        if (s < 0.1) {
-            s = 0.1
-        };
-
-        var query = this.strokes.getFromQuadTree(pen.x, pen.y, s, s),
-            pnt, dx, dy, dist_sq,
-            size_sq = s * this.style.brush_size * this.style.brush_size,
-            power = 1 - s;
-
-        power = power > 0.75 ? 0.75 : power;
-
-        for (var q in query) {
-            pnt = query[q].reference.point;
-            dx = pen.x - pnt.X;
-            dy = pen.y - pnt.Y;
-            dist_sq = dx * dx + dy * dy;
-            if (dist_sq < size_sq) {
-                pnt.A = pnt.A > 0.2 ? pnt.A * power : 0;
-            }
-        }
-
-    }
-
+PEN.addTool(new EraseTool({
+    strokes : STROKES,
+    modules : MODULES,
+    threeManager : U3,
+    style : STYLE
 }));
-PEN.addTool(new URNDR.PenTool({
-
-    name: "Stroke Selector",
-    strokes: STROKES,
-    limit: 400,
-    selectedPoint: 0,
-    sqr_dist: function(p, q) {
-        var dX = p.x - q.x,
-            dY = p.y - q.y;
-        return dX * dX + dY * dY
-    },
-    pick: function(q, str) {
-        if (q.hasOwnProperty("reference")) {
-            if (q.reference.hasOwnProperty(str)) {
-                return true;
-            }
-        }
-        return false;
-    },
-    nearest: function(p, arr, str) {
-
-        var len = arr.length,
-            candidate = false,
-            nearest_so_far = this.limit,
-            dist;
-
-        for (var i = 0; i < len; i++) {
-            if (this.pick(arr[i], str)) {
-                dist = this.sqr_dist(p, arr[i])
-                if (dist < nearest_so_far) {
-                    candidate = i;
-                    nearest_so_far = dist;
-                }
-            }
-        }
-
-        return candidate
-    },
-    onmousemove: function(pen, evt) {
-
-        this.strokes.eachStroke(function(stk) {
-            stk.hovered = false;
-        })
-
-        var query = this.strokes.getFromQuadTree(pen.x, pen.y, 0, 0)
-        var nearest = this.nearest(pen, query, "point");
-        if (nearest !== false) {
-            nearest = query[nearest].reference
-            nearest.stroke.hovered = true;
-            if (pen.isDown) {
-                if (this.selectedPoint === 0) {
-                    this.selectedPoint = nearest.point;
-                }
-            }
-        }
-        if (this.selectedPoint !== 0) {
-            this.selectedPoint.X = pen.x;
-            this.selectedPoint.Y = pen.y;
-            this.selectedPoint.refreshBinding(U3)
-        }
-
-    },
-    onmouseup: function(pen, evt) {
-
-        if (this.selectedPoint !== 0) {}
-
-        this.selectedPoint = 0;
-
-        this.strokes.eachStroke(function(stk) {
-            stk.selected = false;
-        })
-
-        var query = this.strokes.getFromQuadTree(pen.x, pen.y, 5, 5);
-        var nearest = this.nearest(pen, query, "point");
-        if (nearest !== false) {
-            nearest = query[nearest].reference
-            nearest.stroke.selected = true;
-            this.strokes.active_stroke = nearest.stroke.id;
-        }
-
-    },
-    disengage: function(pen, evt) {
-        this.strokes.eachStroke(function(stk) {
-            stk.selected = false;
-        })
-    }
-
+PEN.addTool(new ModifyTool({
+    strokes : STROKES,
+    modules : MODULES,
+    threeManager : U3,
+    style : STYLE
 }));
-PEN.addTool( new URNDR.PenTool({
-
-    name: "Mover",
-    timer: null,
-    threeManager: U3,
-    onmousedown: function(pen, evt){
-
-        var tool = this;
-
-        clearInterval(this.timer)
-
-        this.timer = setInterval( function(){
-
-            U3.rig.target_theta += pen.ndc_x * 0.2
-            trig('Camera Work','Y',THREE.Math.mapLinear( pen.ndc_y, 1, -1, -3, 3 ));
-
-        } , 20)
-
-    },
-    onmouseup: function(pen, evt){
-
-        clearInterval( this.timer )
-
-    }
-
-}));
+PEN.addTool(new PanTool({
+    strokes : STROKES,
+    modules : MODULES,
+    threeManager : U3,
+    style : STYLE
+}))
 
 window.onload = function() {
 
@@ -342,7 +191,7 @@ window.onload = function() {
     // EVENTS
     //
 
-    document.addEventListener("keydown", function(event) {
+    document.addEventListener("keydown", (event) => {
         var response = MODULES.trigger(event);
         if (response === 0) {
             // HUD.display( event.charCode || event.keyCode )
@@ -356,15 +205,13 @@ window.onload = function() {
     });
 
     // requestAnimationFrame
-    var display = function() {
+    const display = () => {
         U3.update();
-
-        MODULES.runEnabledModulesInList(URNDR.STROKE_MODULE, STROKES);
-        MODULES.runEnabledModulesInList(URNDR.DRAW_MODULE, {
+        MODULES.runEnabledModulesInList(URNDR.Module.STROKE_MODULE, STROKES);
+        MODULES.runEnabledModulesInList(URNDR.Module.DRAW_MODULE, {
             strokes: STROKES,
             canvasManager: cavMan
         })
-
         requestAnimationFrame(display);
     }
     display();

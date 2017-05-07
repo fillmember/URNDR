@@ -1,7 +1,15 @@
-function encode64(input) {
-	var output = "", i = 0, l = input.length,
-	key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", 
-	chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+export default function (input) {
+	const l = input.length
+	const key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+	let output = ""
+	let chr1
+	let chr2
+	let chr3
+	let enc1
+	let enc2
+	let enc3
+	let enc4
+	let i = 0
 	while (i < l) {
 		chr1 = input.charCodeAt(i++);
 		chr2 = input.charCodeAt(i++);
