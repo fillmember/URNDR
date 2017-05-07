@@ -85,7 +85,7 @@ URNDR.CanvasManager.prototype = {
 // QuadTree
 // source: http://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374
 URNDR.QuadTree = function( pLevel , pBounds) {
-    
+
     // Statics
     this.MAX_OBJECTS = 20
     this.MAX_LEVELS = 5
@@ -98,7 +98,7 @@ URNDR.QuadTree = function( pLevel , pBounds) {
 }
 URNDR.QuadTree.prototype = {
     clear : function() {
-        
+
         this.objects = []
         for (var i = 0, max = this.nodes.length; i < max; i++) {
             if (this.nodes[i] !== null) {
@@ -111,7 +111,7 @@ URNDR.QuadTree.prototype = {
     split : function() {
 
         var w,h,x,y,lvl;
-        
+
         lvl = this.level + 1;
         w = this.bounds.width / 2;
         h = this.bounds.height / 2;
@@ -136,29 +136,29 @@ URNDR.QuadTree.prototype = {
 
             // object can completely fit within the top quadrants
             topQuadrant = rect.y < horizontalMidPoint && rect.y + rect.height < horizontalMidPoint
-            
+
             // object can completely fit within the bottom quadrants
             bottomQuadrant = rect.y > horizontalMidPoint
 
         // object can completely fit within the left quadrant
         if (rect.x < verticalMidPoint && rect.x + rect.width < verticalMidPoint) {
-        
+
             if (topQuadrant) {
                 index = 1
             } else if (bottomQuadrant) {
                 index = 2
             }
-        
+
         }
         // object can completely fit within the left quadrant
         else if (rect.x > verticalMidPoint) {
-        
+
             if (topQuadrant) {
                 index = 0
             } else if (bottomQuadrant) {
                 index = 3
             }
-        
+
         }
 
         return index
@@ -191,9 +191,9 @@ URNDR.QuadTree.prototype = {
             var i = 0
 
             while (i < this.objects.length) {
-                
+
                 var index = this.getIndex(this.objects[i])
-                
+
                 if (index !== -1) {
                     this.nodes[index].insert( this.objects.splice(i,1)[0] )
                 } else {
@@ -272,7 +272,7 @@ URNDR.Module = function(n,t,k,e) {
 URNDR.Module.prototype = {
     get timeControl () {
         var obj = this.timeControlObject,
-            now = Date.now(), 
+            now = Date.now(),
             delta = now - obj.then;
         if (delta < obj.interval) {
             return false;
@@ -309,12 +309,12 @@ URNDR.ModuleManager = function() {
     this[ URNDR.POINT_MODULE ] = {};
     this[ URNDR.STROKE_MODULE ] = {};
     this[ URNDR.DRAW_MODULE ] = {};
-    
+
     this.KEY_PREFIX = "key";
     this.key_map = {};
 
     this.counter = 0;
-    
+
     // functions
     this.setKeyMap = function( keyCode , id ) {
 
@@ -355,9 +355,9 @@ URNDR.ModuleManager = function() {
     }
 
     this.loadModules = function ( list ) {
-    
+
         for ( var l in list ) { this.loadModule( list[l] ); }
-    
+
     }
 
     this.getModule = function(id){
@@ -379,17 +379,17 @@ URNDR.ModuleManager = function() {
             module = this.getModuleIDbyKey(keyCode);
 
         if ( module ) {
-            
+
             module = this.getModule( module );
-            
+
             var response = {module: module};
-            
+
             switch( module.type ) {
-            
+
                 case URNDR.COMMAND_MODULE:
                     response.message = module.func( evt );
                     break;
-            
+
                 case URNDR.DRAW_MODULE:
                     this.soloModule( module )
                     response.message = "Activated";
@@ -404,11 +404,11 @@ URNDR.ModuleManager = function() {
                         response.message += " : " + _msg;
                     }
                     break;
-            
+
             }
 
             return response
-            
+
         } else {
 
             return 0;
@@ -453,14 +453,14 @@ URNDR.ModuleManager = function() {
 
 // Strokes
 URNDR.Strokes = function( _canvas ){
-    
+
     // Data
     this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
     this.strokesHistory = []; // Store stroke ID. Record order of creation.
-    this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen. 
+    this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
     this.age = 0;
 
-    // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke. 
+    // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke.
     this.active_stroke = 0;
     this.canvas = _canvas;
 
@@ -474,7 +474,7 @@ URNDR.Strokes.prototype = {
         this.strokes = {};
         this.strokesHistory = [];
         this.strokesZDepth = [];
-        
+
         this.active_stroke = 0;
 
         this.quadTree.clear();
@@ -483,7 +483,7 @@ URNDR.Strokes.prototype = {
     rebuildQuadTree: function() {
 
         // Create QuadTree
-        var _qtw = this.canvas.canvasWidth || window.innerWidth, 
+        var _qtw = this.canvas.canvasWidth || window.innerWidth,
             _qth = this.canvas.canvasHeight || window.innerWidth;
 
         this.quadTree = new URNDR.QuadTree( 1, new URNDR.Rectangle( 0, 0, _qtw, _qth ) )
@@ -491,7 +491,7 @@ URNDR.Strokes.prototype = {
         this.eachStroke( function(stk,strokes){
 
             strokes.addToQuadTree( stk )
-        
+
         }, this)
 
     },
@@ -503,9 +503,9 @@ URNDR.Strokes.prototype = {
         if (obj instanceof URNDR.Stroke) {
 
             obj.eachPoint( function(pnt,stk,i){
-                
+
                 qt.insert( new URNDR.Rectangle(
-                    pnt.X, pnt.Y, 1, 1, 
+                    pnt.X, pnt.Y, 1, 1,
                     { stroke: stk, pointIndex: i, point: pnt }
                 ) );
 
@@ -575,7 +575,7 @@ URNDR.Strokes.prototype = {
 
         } else if (alen > 1) {
 
-            // Several Strokes. 
+            // Several Strokes.
             for ( var j = 0; j < alen; j++) {
 
                 this.addStroke( arguments[j] )
@@ -589,12 +589,12 @@ URNDR.Strokes.prototype = {
             if (stk instanceof URNDR.Stroke ) {
 
                 stk.parent = this;
-                
+
                 this.strokes[stk.id] = stk;
                 this.strokesHistory.push( stk.id );
                 this.strokesZDepth.push( stk.id );
 
-                return stk.id; // return the id so people can identify it. 
+                return stk.id; // return the id so people can identify it.
 
             }
 
@@ -612,7 +612,7 @@ URNDR.Strokes.prototype = {
 
     },
     deleteStrokeByID: function( id ) {
-        
+
         if (this.strokes.hasOwnProperty(id)) {
 
             var in_history = this.strokesHistory.indexOf(id)
@@ -704,7 +704,7 @@ URNDR.Stroke.prototype = {
 
         if (this.length < 1) { return false; }
         if (this._flag_to_delete === true) { return true; }
-        
+
         // sum up A and check
         var sum_A = 0;
         this.eachPoint(function(pnt) {sum_A+=pnt.A;})
@@ -730,7 +730,7 @@ URNDR.Stroke.prototype = {
 
         // Pass all test...
         return false;
-        
+
     },
     deleteStroke: function(){ this._flag_to_delete = true; },
     addPoint: function( arg ) {
@@ -794,13 +794,13 @@ URNDR.Stroke.prototype = {
     simplify: function( t ) {
 
         /*
-         
+
          (c) 2013, Vladimir Agafonkin
          Simplify.js, a high-performance JS polyline simplification library
          mourner.github.io/simplify-js
-        
+
         */
-        
+
         // square distance between 2 points
         function getSqDist(p1, p2) {
 
@@ -930,11 +930,11 @@ URNDR.Stroke.prototype = {
     },
     optimize: function( a ) {
 
-        // Check if is a closed path. 
+        // Check if is a closed path.
 
         if (this.length > 3) {
 
-            var pnt = this.points[ this.length - 1 ], 
+            var pnt = this.points[ this.length - 1 ],
                 pnt0 = this.points[ 0 ];
 
             if ( pnt.distanceToSquared(pnt0) < 360 ) { this.closed = true; }
@@ -997,21 +997,21 @@ URNDR.Stroke.prototype = {
             before_me, after_me, result;
 
         before_me = after_me = false;
-        
+
         result = {
-            before: 0, 
-            before_distance: Infinity, 
-            after: 0, 
+            before: 0,
+            before_distance: Infinity,
+            after: 0,
             after_distance: Infinity
         }
-        
+
         for (var b = n; b >= 0; b--) {
             if ( track[b] != null ) {
                 before_me = b;
                 break;
             }
         }
-        
+
         for (var a = n, len = track.length; a < len; a++) {
             if ( track[a] != null ) {
                 after_me = a;
@@ -1050,7 +1050,7 @@ URNDR.Point = function( input ) {
     this.X = -100;
     this.Y = -100;
     this.S = 0;
-    
+
     // Color
     this.R = 0;
     this.G = 0;
@@ -1156,7 +1156,7 @@ URNDR.Point.prototype = {
         } else {
 
             this.bound = false;
-            
+
         }
 
     }
@@ -1164,12 +1164,12 @@ URNDR.Point.prototype = {
 
 // Pen
 URNDR.Pen = function( canvas_draw , canvas_hud , wacom ) {
-    
+
     // spatial data
     this.x = 0
     this.y = 0
     this.pressure = 0
-    
+
     // state data
     this.isDown = 0
     this.active_tool = 0
@@ -1248,11 +1248,11 @@ URNDR.Pen.prototype = {
     selectToolByID: function( id ) {
 
         if (this.tools.hasOwnProperty(id)) {
-            
+
             if (this.active_tool instanceof URNDR.PenTool) {
                 this.active_tool.disengage();
             }
-            
+
             this.active_tool = this.tools[id]
             this.active_tool.engage();
 
@@ -1267,11 +1267,11 @@ URNDR.Pen.prototype = {
                 if (this.active_tool instanceof URNDR.PenTool) {
                     this.active_tool.disengage();
                 }
-                
+
                 this.active_tool = this.tools[l]
                 this.active_tool.engage();
                 return true;
-            
+
             }
         }
 
@@ -1339,7 +1339,7 @@ URNDR.Hud.prototype = {
     appendToDisplay: function() {
 
         if (this.muted) { return; }
-        
+
         for (var i=0;i<arguments.length;i++) {
             this.box.innerHTML += this.style.space + this.wrap( arguments[i] );
         }
@@ -1356,7 +1356,7 @@ URNDR.Hud.prototype = {
 
     },
     position: function(left,top) {
-        
+
         var style = this.box.style
         style.left = left || style.left;
         style.top = top || style.top;
@@ -1453,7 +1453,7 @@ URNDR.Model.prototype = {
             }
 
             model.init( model );
-            
+
             model.onfocus();
 
             // CALLBACK
@@ -1480,7 +1480,7 @@ URNDR.ThreeManager = function( arg ) {
     this.models = {}
     this.models_array = []
     this.activeModel = 0;
-    
+
     // THREE
     this.renderer = new THREE.WebGLRenderer({
         canvas: arg.canvas,
@@ -1491,12 +1491,12 @@ URNDR.ThreeManager = function( arg ) {
     this.scene = new THREE.Scene();
     if (arg.fog) { this.scene.fog = arg.fog; }
     this.raycaster = new THREE.Raycaster();
-    
+
     this.material = arg.material || new THREE.MeshBasicMaterial({
         morphTargets: true,color: 0x0000CC
     })
     this.material.index0AttributeName = "position";
-    
+
     // controls
     this.rig = {
         radius: 5,
@@ -1523,7 +1523,7 @@ URNDR.ThreeManager.prototype = {
 
         // Arguments
         args.material = args.material || this.material;
-        
+
         var model = new URNDR.Model( args );
         this.addModel( model )
         // Load
@@ -1608,7 +1608,7 @@ URNDR.ThreeManager.prototype = {
         // Camera
 
         var rig = this.rig;
-        
+
         var circle = 6.283185247;
         if (rig.theta >= circle) {
              rig.theta -= circle;
@@ -1617,7 +1617,7 @@ URNDR.ThreeManager.prototype = {
              rig.theta += circle;
              rig.target_theta += circle;
         }
-        
+
         rig.theta += ( rig.target_theta - rig.theta ) * rig.speed;
         rig.pitch += ( rig.target_pitch - rig.pitch ) * rig.speed;
         rig.radius += ( rig.target_radius - rig.radius ) * rig.speed;
@@ -1629,7 +1629,7 @@ URNDR.ThreeManager.prototype = {
         U3.camera.lookAt(rig._focus)
 
         // Renderer
-        
+
         manager.renderer.render( this.scene , this.camera )
 
     }
@@ -1644,10 +1644,10 @@ URNDR.Math = {
             y : THREE.Math.mapLinear( y , 0 , h , 1 ,-1 )
         };
     },
-    
+
     coordinateToPixel : function( x , y , w , h ) {
         return {
-            x :  ( x / 2 + 0.5) * w, 
+            x :  ( x / 2 + 0.5) * w,
             y : -( y / 2 - 0.5) * h
         };
     },
@@ -1673,15 +1673,15 @@ URNDR.Math = {
     random : function(number,params) {
 
         if (!number) { number = 1; }
-        
+
         var result = number * Math.random();
-        
+
         if (params) {
             if (params.round) result = Math.round(result);
         }
 
         return result
-    
+
     }
 
 }
@@ -1707,12 +1707,12 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
         flu = this.morphTargetInfluences;
 
     if ( flu && geo.morphTargets ) {
-        
+
         if (geo.morphTargets.length > 0) {
-            
+
             var result = new THREE.Vector3(),
                 sum = 0;
-            
+
             for ( var i = 0, max = geo.morphTargets.length; i < max; i ++ ) {
                 var vert = geo.morphTargets[ i ].vertices[ vertex_index ];
                 result.x += vert.x * flu[ i ]
@@ -1720,7 +1720,7 @@ THREE.Object3D.prototype.getMorphedVertex = function( vertex_index ) {
                 result.z += vert.z * flu[ i ]
                 sum += flu[ i ]
             }
-            
+
             if ( sum != 0 ) {
                 return result
             }
@@ -1739,7 +1739,7 @@ THREE.Camera.prototype.checkVisibility = function( obj, face ) {
     var map = THREE.Math.mapLinear, clamp = THREE.Math.clamp;
 
     var normalMatrix = new THREE.Matrix3().getNormalMatrix( obj.matrixWorld ),
-        N = face.normal.clone().applyMatrix3( normalMatrix ).negate(), 
+        N = face.normal.clone().applyMatrix3( normalMatrix ).negate(),
         lookAtVector = new THREE.Vector3(0,0,-1).applyQuaternion(this.quaternion);
 
     return clamp( map( lookAtVector.angleTo(N), 1.2, 1.4, 1, 0 ), 0, 1 );
@@ -1754,4 +1754,8 @@ THREE.MorphAnimation.prototype.stop = function() {
         this.mesh.morphTargetInfluences[a] = 0;
     }
     this.mesh.morphTargetInfluences[0] = 1;
+}
+
+if (typeof exports === 'object') {
+    module.exports = URNDR
 }

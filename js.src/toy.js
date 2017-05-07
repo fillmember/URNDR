@@ -22,8 +22,8 @@ function toggleTutorial( state ) {
     }
 }
 
-var WACOM = document.getElementById('Wacom').penAPI || { pressure: 1, nowacom: true };
-var U3 = new URNDR.ThreeManager({
+const WACOM = document.getElementById('Wacom').penAPI || { pressure: 1, nowacom: true };
+const U3 = new URNDR.ThreeManager({
     canvas: document.getElementById('canvas_three'),
     material: new THREE.MeshBasicMaterial({
         color: 0xCCCCCC,
@@ -34,19 +34,28 @@ var U3 = new URNDR.ThreeManager({
 })
     U3.renderer.setClearColor("#FFFFFF");
 
-var HUD = new URNDR.Hud(document.getElementById('HUD'));
+const HUD = new URNDR.Hud(document.getElementById('HUD'));
 
-var MODULES = new URNDR.ModuleManager();
-var STYLE = new URNDR.StrokeStyle();
+const MODULES = new URNDR.ModuleManager();
+const STYLE = new URNDR.StrokeStyle();
 
-var cavMan = new URNDR.CanvasManager();
+const cavMan = new URNDR.CanvasManager();
 cavMan.add(document.getElementById('canvas_urndr'), "draw", "2d")
 cavMan.add(document.getElementById('canvas_hud'), "hud", "2d")
 cavMan.lineCap = STYLE.cap;
 cavMan.lineJoin = STYLE.join;
 
-var PEN = new URNDR.Pen(cavMan.get("draw").element, cavMan.get("hud").element, WACOM);
-var STROKES = new URNDR.Strokes(cavMan.get("draw").element);
+const PEN = new URNDR.Pen(cavMan.get("draw").element, cavMan.get("hud").element, WACOM);
+const STROKES = new URNDR.Strokes(cavMan.get("draw").element);
+
+window.WACOM = WACOM
+window.U3 = U3
+window.HUD = HUD
+window.MODULES = MODULES
+window.STYLE = STYLE
+window.cavMan = cavMan
+window.PEN = PEN
+window.STROKES = STROKES
 
 PEN.addTool(new URNDR.PenTool({
 

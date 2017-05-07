@@ -1,8 +1,8 @@
-var RENDER_INTERVAL = 20;
+const RENDER_INTERVAL = 20;
 
 // INTERFACE UPDATE FUNCTIONS
 
-var $showcase = $(".showcase");
+const $showcase = $(".showcase");
 $showcase.putGeneratedImage = function( url ){
 
     var $new = $("<div>",{class:"exported item"}),
@@ -25,21 +25,21 @@ $showcase.putGeneratedImage = function( url ){
 
 // INTERFACE SHORTHANDS FUNCTIONS
 
-var trig = function() {
+const trig = function() {
     var module = MODULES.getModuleByName( arguments[0] ),
         _arguments = [].slice.call( arguments );
         _arguments.shift();
     module.func.apply( module , _arguments )
 }
 
-var mreceive = function() {
+const mreceive = function() {
     var module = MODULES.getModuleByName( arguments[0] ),
         _arguments = [].slice.call( arguments );
         _arguments.shift();
     module.listener.apply( module , _arguments )
 }
 
-var mtogg = function( mod_name , value ) {
+const mtogg = function( mod_name , value ) {
     var module = MODULES.getModuleByName( arguments[0] );
     if (value != undefined) {
         module.enabled = value;
@@ -48,16 +48,27 @@ var mtogg = function( mod_name , value ) {
     }
 }
 
+// Global
+
+window.RENDER_INTERVAL = RENDER_INTERVAL
+window.$showcase = $showcase
+window.trig = trig
+window.mreceive = mreceive
+window.mtogg = mtogg
+
 // Watches
 
+const $input_brush_size = $("input#brush_size").get(0)
+const $target_theta = $("#target_theta").get(0)
+const $target_radius = $("#target_radius").get(0)
 watch( STYLE , "brush_size" , function(){
-    $("input#brush_size").get(0).value = STYLE.brush_size;
+    $input_brush_size.value = STYLE.brush_size;
 })
 watch( U3.rig , "target_theta" , function(){
-    $("#target_theta").get(0).value = U3.rig.target_theta;
+    $target_theta.value = U3.rig.target_theta;
 })
 watch( U3.rig , "target_radius" , function(){
-    $("#target_radius").get(0).value = U3.rig.target_radius;
+    $target_radius.value = U3.rig.target_radius;
 })
 
 // URNDR Modules
@@ -214,7 +225,7 @@ random_color_scheme : function() {
             }, stk)
             stk.tags = {};
         } )
-        
+
         STYLE.color[0] = contrast[0]
         STYLE.color[1] = contrast[1]
         STYLE.color[2] = contrast[2]
@@ -254,7 +265,7 @@ camera_work : function() {
 },
 
 // STYLE MODULES
-// When user's drawing and you want to do something realtime. 
+// When user's drawing and you want to do something realtime.
 
 random_stroke_color : function() {
     var module = new URNDR.Module("Random Stroke Color",URNDR.STYLE_MODULE,65);
@@ -288,7 +299,7 @@ subtle_pen_variation : function() {
 
 random_point_position : function() {
     var module = new URNDR.Module("Random Point",URNDR.POINT_MODULE,68);
-    // 
+    //
     module.interval = 30;
     module.setConfiguration({amp : 60})
     module.setFunction(function( point ) {
@@ -355,7 +366,7 @@ delete_flagged_strokes : function(){
     module.interval = 1000;
     module.setFunction( function(strokes){
         var strokes_to_delete = [];
-        
+
         strokes.eachStroke(function(stk){
 
             if (stk.flag_to_delete) {
@@ -366,11 +377,11 @@ delete_flagged_strokes : function(){
             }
 
         })
-        
+
         for ( var i = 0, max = strokes_to_delete.length; i < max; i++) {
             strokes.deleteStrokeByID( strokes_to_delete[i] );
         }
-        
+
     })
     return module;
 },
@@ -403,7 +414,7 @@ move_drawing_with_3d_model : function() {
                     b = obj.localToWorld( obj.getMorphedVertex( face.b ) ).project(U3.camera)
                     c = obj.localToWorld( obj.getMorphedVertex( face.c ) ).project(U3.camera)
                     p = URNDR.Math.coordinateToPixel(
-                        a.x * point.BU + b.x * point.BV + c.x * point.BW, 
+                        a.x * point.BU + b.x * point.BV + c.x * point.BW,
                         a.y * point.BU + b.y * point.BV + c.y * point.BW,
                         cavMan.width,
                         cavMan.height
@@ -449,7 +460,7 @@ move_drawing_with_3d_model : function() {
                         }
 
                     }
-                    
+
                 }
 
             }
@@ -464,7 +475,7 @@ move_drawing_with_3d_model : function() {
 smooth_data : function() {
     var module = new URNDR.Module("Smooth",URNDR.STROKE_MODULE,87,false); // w
     module.interval = 85;
-    // 
+    //
     module.setConfiguration({ length: 60, factor: 13 })
     module.setFunction(function(strokes) {
 
@@ -479,7 +490,7 @@ smooth_data : function() {
                 var prv = stk.getPoint(i - 1),
                     nxt = stk.getPoint(i + 1);
                 if (prv == 0 || nxt == 0) { return 0; }
-                
+
                 var vprv = [prv.X - cur.X,prv.Y - cur.Y],
                     vnxt = [nxt.X - cur.X,nxt.Y - cur.Y],
                     dprv = prv.distanceTo( cur ),
@@ -627,7 +638,7 @@ default_draw_style : function() {
         getAlphaFactor: function( pnt, stk, i ){
 
             if (pnt.OBJECT && pnt.FACE) {
-                            
+
                 return U3.camera.checkVisibility( pnt.OBJECT , pnt.FACE );
 
             } else {
@@ -658,7 +669,7 @@ default_draw_style : function() {
 
             }
 
-            // The rest of the cases: stroke is totally without any binding. 
+            // The rest of the cases: stroke is totally without any binding.
 
             return 1
         },
@@ -680,7 +691,7 @@ default_draw_style : function() {
 
             // Response
             HUD.display("GIF Made.","100%")
-            
+
             // Reset
             mod.encoder = null;
             mod.exporting = false;
@@ -697,11 +708,11 @@ default_draw_style : function() {
             getAlphaFactor = this.helpers.getAlphaFactor,
             _fillmember = this.helpers.stroke_outline;
 
-        var strokes = params.strokes, 
+        var strokes = params.strokes,
             canvases = params.canvasManager,
-            ctx = canvases.get("draw").context, 
+            ctx = canvases.get("draw").context,
             hudCtx = canvases.get("hud").context;
-        
+
         canvases.clear(1);
 
         var frame_this = settings.renderedFrames % settings.frameEvery === 0;
@@ -757,16 +768,16 @@ default_draw_style : function() {
                     hudCtx.stroke();
 
                 } else if ( stk.hovered ) {
-                    
+
                     hudCtx.strokeStyle = "#FFF"
                     stk.eachPoint( function(pnt) {
                         hudCtx.strokeRect( pnt.X - 5 , pnt.Y - 5 , 10, 10);
                     } )
-                
+
                 }
 
                 if (stk.closed) {
-                    
+
                     var prv = stk.points[ 0 ],
                         pnt = stk.points[ stk.length - 1 ],
                         factor = getAlphaFactor(pnt,stk,0);
@@ -785,15 +796,15 @@ default_draw_style : function() {
 
             // RENDER
             if (settings.renderedFrames < settings.totalFrames) {
-                
+
                 // SKIP FRAME DETECTION
                 if ( frame_this ) {
                     settings.encoder.addFrame( ctx )
                 }
 
-                var p = settings.renderedFrames / settings.totalFrames;
+                const p = settings.renderedFrames / settings.totalFrames;
                 p = Math.round( p * 100 )
-                
+
                 HUD.display( "Making GIF..." , p + "%" );
                 settings.renderedFrames += 1;
 
@@ -810,13 +821,13 @@ default_draw_style : function() {
     module.listener = function( evt , frames ) {
         if (evt === "GIF") {
             // INIT GIF EXPORT PROCESS
-            var ss = this.settings;
-            
+            const ss = this.settings;
+
             if (ss.exporting === false) {
                 // post-render action
                 ss.postExportAction = function( encoder ){
-                    var binary = encoder.stream().getData();
-                    var data_url = 'data:image/gif;base64,' + encode64(binary);
+                    const binary = encoder.stream().getData();
+                    const data_url = 'data:image/gif;base64,' + encode64(binary);
                     $showcase.putGeneratedImage( data_url )
                 }
                 $showcase.fadeOut(300,function(){
@@ -848,13 +859,16 @@ default_draw_style : function() {
 } );
 
 // Watches for Modules
+const $fade = $("#fade").get(0)
+const $wiggle = $("#wiggle").get(0)
+const $random_stroke_color = $("#random_stroke_color").get(0)
 
 watch( MODULES.getModuleByName("Fade Strokes") , "enabled" , function() {
-    $("#fade").get(0).checked = MODULES.getModuleByName("Fade Strokes").enabled;
+    $fade.checked = MODULES.getModuleByName("Fade Strokes").enabled;
 })
 watch( MODULES.getModuleByName("Wiggle") , "enabled" , function() {
-    $("#wiggle").get(0).checked = MODULES.getModuleByName("Wiggle").enabled;
+    $wiggle.checked = MODULES.getModuleByName("Wiggle").enabled;
 })
 watch( MODULES.getModuleByName("Random Stroke Color") , "enabled" , function() {
-    $("#random_stroke_color").get(0).checked = MODULES.getModuleByName("Random Stroke Color").enabled;
+    $random_stroke_color.checked = MODULES.getModuleByName("Random Stroke Color").enabled;
 })

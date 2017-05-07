@@ -4,7 +4,9 @@
   "description": "yee!",
   "main": "index.js",
   "scripts": {
-    "webpack": "",
+    "dev": "npm run browser-sync | npm run watch",
+    "watch": "webpack --progress --colors --watch",
+    "build": "webpack --optimize-minimize",
     "browser-sync": "browser-sync start --server --files='*.html, css/*.css, js/*.js'"
   },
   "repository": {
@@ -19,5 +21,18 @@
   "bugs": {
     "url": "https://github.com/fillmember/URNDR/issues"
   },
-  "homepage": "https://github.com/fillmember/URNDR#readme"
+  "homepage": "https://github.com/fillmember/URNDR#readme",
+  "devDependencies": {
+    "babel": "^6.23.0",
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babili-webpack-plugin": "0.0.11",
+    "script-loader": "^0.6.1",
+    "webpack": "^2.5.1"
+  },
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "three": "^0.85.2"
+  }
 }
