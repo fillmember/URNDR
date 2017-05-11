@@ -162,7 +162,7 @@ export const SmoothStroke = () => {
 
 export const Stroke3DMapping = ({canvasManager,threeManager}) => {
   var module = new BaseModule("3D MAGIC",BaseModule.STROKE_MODULE,true); //u
-  module.interval = RENDER_INTERVAL;
+  module.interval = 20
   module.setConfiguration({
     delayFactor : 0.8
   })

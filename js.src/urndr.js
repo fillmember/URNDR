@@ -2,6 +2,9 @@ import THREE from './three.js'
 
 const URNDR = {}
 
+import UIMessage from './urndr/ui/UIMessage'
+export {UIMessage}
+
 import CanvasManager from './urndr/CanvasManager.js'
 export {CanvasManager}
 URNDR.CanvasManager = CanvasManager
