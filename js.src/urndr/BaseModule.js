@@ -1,3 +1,5 @@
+import {EventEmitter} from 'events'
+
 class BaseModule {
     constructor (n,t,k,e) {
 
@@ -29,12 +31,10 @@ class BaseModule {
             then: Date.now(),
             interval: 25
         }
+        this.emitter = new EventEmitter()
         this.func = function(){};
 
         // Properties that could be
-        if (_type != BaseModule.COMMAND_MODULE) {
-            this.listener = function(){};
-        }
         if (_keycode) {
             this.keyCode = _keycode;
         }
@@ -69,7 +69,6 @@ class BaseModule {
         this.initialConfiguration = Object.create( this.configuration )
     }
     getConfiguration () { return this.configuration }
-    receive () { return this.listener.apply( this, arguments ); }
 }
 
 BaseModule.COMMAND_MODULE = "COMMAND_MODULES"
@@ -77,5 +76,7 @@ BaseModule.STYLE_MODULE = "STYLE_MODULES"
 BaseModule.POINT_MODULE = "POINT_MODULES"
 BaseModule.STROKE_MODULE = "STROKE_MODULES"
 BaseModule.DRAW_MODULE = "DRAW_MODULES"
+
+BaseModule.UI_MESSAGE = 'uimessage'
 
 export default BaseModule

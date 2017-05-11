@@ -34,8 +34,6 @@ export default class ModuleManager {
 
             if (typeof module === "function") {
                 module = module();
-            } else if (typeof module === "object") {
-                return 0;
             }
 
         }
