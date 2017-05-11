@@ -54,9 +54,8 @@ export default class ThreeManager {
         var model = new URNDR.Model( args );
         this.addModel( model )
         // Load
-        var manager = this;
-        model.loadModel( file_path , function(){
-            manager.scene.add( model.mesh );
+        model.loadModel( file_path , () => {
+            this.scene.add( model.mesh );
         } );
 
     }
@@ -120,7 +119,7 @@ export default class ThreeManager {
 
         // Model
 
-        manager.eachModel( function( model , manager ){
+        this.eachModel( function( model , manager ){
 
             if (model.active) {
 
@@ -128,7 +127,7 @@ export default class ThreeManager {
 
             }
 
-        }, manager )
+        }, this )
 
         // Camera
 
@@ -152,7 +151,7 @@ export default class ThreeManager {
 
         // Renderer
 
-        manager.renderer.render( this.scene , this.camera )
+        this.renderer.render( this.scene , this.camera )
 
     }
 }
