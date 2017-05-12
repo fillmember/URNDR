@@ -22,6 +22,7 @@ class BaseModule {
         _name = n
 
         // Properties that will always be
+        this.manager = null
         this.id = "MOD-"+THREE.Math.generateUUID()
         this.priority = 1
         this.enabled = _enabled;
@@ -55,20 +56,30 @@ class BaseModule {
     set interval (v) {
         this.timeControlObject.interval = v;
     }
-    set settings ( s ) {
-        this.configuration = s;
-        this.initialConfiguration = Object.create(s);
-    }
-    get settings () {
-        return this.configuration;
-    }
     setFunction ( f ) { this.func = f }
     getFunction () { return this.func }
+
+    //
+    // Configurations
+    //
+
     setConfiguration ( s ) {
         this.configuration = s;
         this.initialConfiguration = Object.create( this.configuration )
     }
     getConfiguration () { return this.configuration }
+    // Setting = a short hand for this.configuration
+    set settings ( s ) { this.setConfiguration( s ) }
+    get settings () { return this.configuration; }
+
+    //
+    // UI System
+    //
+
+    makeUI (uiManager) {
+
+    }
+
 }
 
 BaseModule.COMMAND_MODULE = "COMMAND_MODULES"

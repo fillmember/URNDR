@@ -49,6 +49,8 @@ export default class ModuleManager {
             this.setKeyMap( module.keyCode , module.id )
         }
 
+        module.manager = this
+
     }
 
     loadModules ( list ) {
