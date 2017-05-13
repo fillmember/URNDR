@@ -106,14 +106,6 @@ MODULES.loadModule(function(){
 	module.setFunction( function(){
 		U3.rig.target_theta += 0.1047 * this.settings.direction
 	})
-	module.listener = function (v) {
-		if (v === 0) {
-			this.enabled = false;
-		} else {
-			this.enabled = true;
-			this.settings.direction = v;
-		}
-	}
 	return module;
 })
 

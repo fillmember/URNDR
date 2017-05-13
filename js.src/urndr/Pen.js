@@ -1,4 +1,5 @@
 import PenTool from './PenTool'
+import MathUtil from './math/math'
 
 export default class Pen {
 
@@ -27,16 +28,17 @@ export default class Pen {
     }
 
     get ndc_x() {
-        return THREE.Math.mapLinear( this.x , 0 , this.canvas.width , -1 , 1 );
+        console.log(MathUtil.map( this.x , 0 , this.canvas.width , -1 , 1 ))
+        return MathUtil.map( this.x , 0 , this.canvas.width , -1 , 1 );
     }
     get ndc_y() {
-        return THREE.Math.mapLinear( this.y , 0 , this.canvas.height , 1 , -1 );
+        return MathUtil.map( this.y , 0 , this.canvas.height , 1 , -1 );
     }
     get ndc() {
         return [ this.ndc_x, this.ndc_y ];
     }
     set ndc( input ) {
-        var o = URNDR.Math.coordinateToPixel( input[0], input[1] , this.canvas.width , this.canvas.height )
+        var o = MathUtil.coordinateToPixel( input[0], input[1] , this.canvas.width , this.canvas.height )
         this.x = o.x; this.y = o.y;
     }
     selectToolByID ( id ) {

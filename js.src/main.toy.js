@@ -8,4 +8,3 @@ window.THREE = THREE
 require('./toy.js')
 
 require('./modules_toy.js')
-

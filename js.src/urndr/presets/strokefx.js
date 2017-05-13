@@ -57,12 +57,12 @@ export const StrokeFade = () => {
       if (n > 0 === false) { n = 0; }
 
       var len = stroke.length,
-        step = THREE.Math.mapLinear( settings.speed , 1 , 5 , 0 , 3 );
+        step = _Math.map( settings.speed , 1 , 5 , 0 , 3 );
       for ( var i = 0; i < len; i++ ) {
 
         if ( i < n ) {
           var pnt = stroke.points[ i ];
-          pnt.A = pnt.A < 0.05 ? 0 : pnt.A * THREE.Math.mapLinear( settings.speed , 1 , 5 , 1 , 0.6)
+          pnt.A = pnt.A < 0.05 ? 0 : pnt.A * _Math.map( settings.speed , 1 , 5 , 1 , 0.6)
         } else {
           break;
         }
@@ -120,8 +120,6 @@ export const SmoothStroke = () => {
   module.setConfiguration({ length: 60, factor: 13 })
   module.setFunction(function(strokes) {
 
-    var mapLinear = THREE.Math.mapLinear, clamp = THREE.Math.clamp;
-
     strokes.eachStroke( ( stroke ) => { _smooth( stroke ) } )
     function _smooth( stroke ) {
       stroke.eachPoint( function(cur,stk,i) {
@@ -139,7 +137,7 @@ export const SmoothStroke = () => {
         // 180 > -1 & 0 > 1
 
         // Smooth: agle less than 120 deg = PI * 0.75
-        const factor_1 = clamp( mapLinear( cosa , -0.5 , 1 , 0 , 0.1 ) , 0.01 , 0.1 )
+        const factor_1 = _Math.clamp( _Math.map( cosa , -0.5 , 1 , 0 , 0.1 ) , 0.01 , 0.1 )
         const factor_2 = factor_1 * 0.3;
 
         cur.X += ( vprv[0] + vnxt[0] ) * factor_1;
