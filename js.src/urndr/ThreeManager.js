@@ -54,7 +54,7 @@ export default class ThreeManager {
         // Arguments
         args.material = args.material || this.material;
 
-        var model = new Model( args );
+        var model = new Model( args )
         this.addModel( model )
         // Load
         model.loadModel( file_path , () => {

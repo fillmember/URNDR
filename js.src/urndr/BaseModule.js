@@ -2,31 +2,10 @@ import {EventEmitter} from 'events'
 import MathUtil from './math/math'
 
 class BaseModule {
-    constructor (n,t,k,e) {
-
-        // Parameter Control
-        var _name, _type, _keycode, _enabled;
-        if (e == undefined) {
-            _enabled = false
-            if (typeof k == "number") {
-                _keycode = k
-            } else {
-                // don't assign keycode
-                _enabled = k
-                _keycode = false;
-            }
-        } else {
-            _enabled = e
-            _keycode = k
-        }
-        _type = t
-        _name = n
-
+    constructor (_name,_type) {
         // Properties that will always be
         this.manager = null
-        this.id = "MOD-"+MathUtil.uuid()
-        this.priority = 1
-        this.enabled = _enabled;
+        this.enabled = true;
         this.type = _type
         this.name = _name
         this.timeControlObject = {
@@ -36,14 +15,20 @@ class BaseModule {
         this.emitter = new EventEmitter()
         this.func = function(){};
 
-        // Properties that could be
-        if (_keycode) {
-            this.keyCode = _keycode;
-        }
-
     }
+    setFunction ( f ) { this.func = f }
 
-    get timeControl () {
+    //
+    // Interval Control
+    //
+
+    set interval (v) {
+        this.timeControlObject.interval = v;
+    }
+    get interval () {
+        return this.timeControlObject.interval
+    }
+    get cool () {
         var obj = this.timeControlObject,
             now = Date.now(),
             delta = now - obj.then;
@@ -54,11 +39,13 @@ class BaseModule {
             return true;
         }
     }
-    set interval (v) {
-        this.timeControlObject.interval = v;
+
+
+    execute (args) {
+        if (this.enabled && this.cool) {
+            this.func(args)
+        }
     }
-    setFunction ( f ) { this.func = f }
-    getFunction () { return this.func }
 
     //
     // Configurations
@@ -69,7 +56,6 @@ class BaseModule {
         this.initialConfiguration = Object.create( this.configuration )
     }
     getConfiguration () { return this.configuration }
-    // Setting = a short hand for this.configuration
     set settings ( s ) { this.setConfiguration( s ) }
     get settings () { return this.configuration; }
 
@@ -88,6 +74,7 @@ BaseModule.STYLE_MODULE = "STYLE_MODULES"
 BaseModule.POINT_MODULE = "POINT_MODULES"
 BaseModule.STROKE_MODULE = "STROKE_MODULES"
 BaseModule.DRAW_MODULE = "DRAW_MODULES"
+BaseModule.ALL_MODULES = "ALL_MODULES"
 
 BaseModule.UI_MESSAGE = 'uimessage'
 

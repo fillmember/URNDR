@@ -12,10 +12,10 @@ export default class Pen {
 
         // state data
         this.isDown = 0
-        this.active_tool = 0
+        this.currentTool = 0
 
         // tool data
-        this.tools = {}
+        this.tools = []
         this.canvas = canvas_draw
         this.canvas_hud = canvas_hud
         this.strokes = strokes // strokeManager to draw to
@@ -41,57 +41,24 @@ export default class Pen {
         var o = MathUtil.coordinateToPixel( input[0], input[1] , this.canvas.width , this.canvas.height )
         this.x = o.x; this.y = o.y;
     }
-    selectToolByID ( id ) {
-
-        if (this.tools.hasOwnProperty(id)) {
-
-            if (this.active_tool instanceof PenTool) {
-                this.active_tool.disengage();
-            }
-
-            this.active_tool = this.tools[id]
-            this.active_tool.engage();
-
-        }
-
+    select (index) {
+        this.currentTool = this.tools[index]
     }
-    selectToolByName ( name ) {
-
-        for ( var l in this.tools ) {
-            if ( this.tools[l].name === name ) {
-
-                if (this.active_tool instanceof PenTool) {
-                    this.active_tool.disengage();
-                }
-
-                this.active_tool = this.tools[l]
-                this.active_tool.engage();
-                return true;
-
-            }
-        }
-
-        return false;
-
-    }
-    addTool ( tool , activate ) {
-
-        this.tools[tool.id] = tool
-        if (activate) { this.selectToolByID( tool.id ) }
-
+    add (tool) {
+        this.tools.push(tool)
     }
 
     onmousedown ( pen, evt ) {
         pen.isDown = 1;
-        if (pen.active_tool instanceof PenTool) {
+        if (pen.currentTool instanceof PenTool) {
             this.strokes.rebuildQuadTree();
-            pen.active_tool.onmousedown( pen, evt );
+            pen.currentTool.onmousedown( pen, evt );
         }
     }
     onmouseup ( pen, evt ) {
         pen.isDown = 0;
-        if (pen.active_tool instanceof PenTool) {
-            pen.active_tool.onmouseup( pen, evt );
+        if (pen.currentTool instanceof PenTool) {
+            pen.currentTool.onmouseup( pen, evt );
         }
     }
     onmousemove ( pen, evt ) {
@@ -105,13 +72,13 @@ export default class Pen {
         this.y = evt.clientY - rect.top;
 
         // call tool
-        if (this.active_tool instanceof PenTool) {
-            this.active_tool.onmousemove( this, evt );
+        if (this.currentTool instanceof PenTool) {
+            this.currentTool.onmousemove( this, evt );
         }
 
     }
     onmouseout ( pen, evt ) {
         pen.isDown = 0;
-        pen.active_tool.onmouseout( pen, evt );
+        pen.currentTool.onmouseout( pen, evt );
     }
 }

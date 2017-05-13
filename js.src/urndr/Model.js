@@ -45,39 +45,37 @@ export default class Model {
         }
         if (original !== null && original !== value) {
             if (value) {
-                this.onfocus();
+                this.onfocus(this);
             } else {
-                this.onblur();
+                this.onblur(this);
             }
         }
     }
     loadModel ( file_path, callback ){
 
         this.file_path = file_path
-
-        var model = this;
-        this.loader.load( this.file_path, function( _geometry, _material ) {
+        this.loader.load( this.file_path, ( _geometry, _material ) => {
 
             // Loaded
-            model.geometry = _geometry;
-            if (_material) { model.material = _material; }
+            this.geometry = _geometry;
+            if (_material) { this.material = _material; }
 
-            model.mesh = new THREE.Mesh( model.geometry, model.material )
+            this.mesh = new THREE.Mesh( this.geometry, this.material )
 
             // UNLOCK
-            if (model._active !== undefined) {
-                model.active = model._active;
-                delete model._active;
+            if (this._active !== undefined) {
+                this.active = this._active;
+                delete this._active;
             } else {
-                model.active = true;
+                this.active = true;
             }
 
-            model.init( model );
+            this.init( this );
 
-            model.onfocus();
+            this.onfocus( this );
 
             // CALLBACK
-            callback( model );
+            callback( this );
 
         });
 

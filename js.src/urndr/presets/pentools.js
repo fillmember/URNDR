@@ -29,7 +29,7 @@ const DrawTool = ({strokes, modules, threeManager, style}) => {
     },
     onmousemove: function(pen, evt) {
       if (pen.isDown !== 1) { return; }
-      modules.runEnabledModulesInList(BaseModule.STYLE_MODULE, style)
+      modules.runModules(BaseModule.STYLE_MODULE, style)
       const pnt = new Point({
         X: pen.x,
         Y: pen.y,
@@ -45,7 +45,7 @@ const DrawTool = ({strokes, modules, threeManager, style}) => {
         stk.addPoint(pnt)
       }
       // Run modules that changes the pnt.
-      modules.runEnabledModulesInList(BaseModule.POINT_MODULE, pnt)
+      modules.runModules(BaseModule.POINT_MODULE, pnt)
       pnt.refreshBinding(threeManager)
     }
   })
