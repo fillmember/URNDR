@@ -1,5 +1,17 @@
 export default {
 
+    map: (x,x0,x1,y0,y1) => {
+
+        return x0 + (y1-y0) * (x - x0) / (x1 - x0)
+
+    },
+
+    clamp: (x,min,max) => {
+
+        return Math.max( min, Math.min( max, x ) )
+
+    },
+
     uuid: () => {
 
         const s4 = () => {
