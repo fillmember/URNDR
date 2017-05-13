@@ -1,6 +1,7 @@
-const PI2 = Math.PI * 2
-
+import THREE from 'three.js'
 import Model from './Model.js'
+
+const PI2 = Math.PI * 2
 
 export default class ThreeManager {
     constructor ( arg ) {

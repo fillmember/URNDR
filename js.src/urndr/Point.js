@@ -1,3 +1,4 @@
+import THREE from 'three.js'
 import _Math from './math/math'
 
 export default class Point {

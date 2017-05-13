@@ -2,7 +2,7 @@ import {
   BaseModule , _Math , Helpers
 } from 'urndr.js'
 
-export const SetRandomColorScheme = ({strokes,style,threeManager,callback}) => {
+export const SetRandomColorScheme = ({strokes,style,threeManager}) => {
 	var module = new BaseModule("Color Change",BaseModule.COMMAND_MODULE,191)
 	const _rgb = ( input ) => { return "rgb("+input.join(',')+")" }
 	const _subtleVariation = (v) => {
@@ -41,8 +41,6 @@ export const SetRandomColorScheme = ({strokes,style,threeManager,callback}) => {
 		threeManager.material.color = new THREE.Color(_rgb(pale))
 		threeManager.renderer.setClearColor(primaryRGB)
 		threeManager.scene.fog.color.set(primaryRGB)
-
-		callback( primary , contrast , primaryRGB , contrastRGB )
 
 		return _msg;
 	})

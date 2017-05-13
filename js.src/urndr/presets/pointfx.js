@@ -21,7 +21,7 @@ export const RandomPointPosition = () => {
 	return module
 }
 
-export const PointPressureSensitivity = () => {
+export const PointPressureSensitivity = ({pen}) => {
 	const module = new BaseModule("Point Pressure Sensitivity",BaseModule.POINT_MODULE,9001,true)
 	module.interval = 1;
   module.setConfiguration({
@@ -30,7 +30,7 @@ export const PointPressureSensitivity = () => {
   })
   module.setFunction(function(point) {
     const settings = this.getConfiguration()
-    point.S *= PEN.pressure;
+    point.S *= pen.pressure;
     if (point.S < settings.min_size) point.S = settings.min_size;
     if (point.s > settings.max_size) point.S = settings.max_size;
   })

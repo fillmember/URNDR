@@ -1,14 +1,16 @@
+import THREE from 'three.js'
+
 export default {
 
-    map: (x,x0,x1,y0,y1) => {
+    map: function ( x, a1, a2, b1, b2 ) {
 
-        return x0 + (y1-y0) * (x - x0) / (x1 - x0)
+        return b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 );
 
     },
 
-    clamp: (x,min,max) => {
+    clamp: function ( value, min, max ) {
 
-        return Math.max( min, Math.min( max, x ) )
+        return Math.max( min, Math.min( max, value ) );
 
     },
 
