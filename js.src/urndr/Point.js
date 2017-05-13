@@ -35,9 +35,10 @@ export default class Point {
     get ndc() {
 
         var w, h;
+        //  Stroke         Strokes
         if (this.parent && this.parent.parent) {
-            w = this.parent.parent.canvas.width;
-            h = this.parent.parent.canvas.height;
+            w = this.parent.parent.bound.width;
+            h = this.parent.parent.bound.height;
         } else {
             w = window.innerWidth;
             h = window.innerHeight;

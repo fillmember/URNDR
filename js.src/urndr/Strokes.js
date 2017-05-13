@@ -3,7 +3,7 @@ import Rectangle from './math/Rectangle'
 import Stroke from './Stroke'
 
 export default class Strokes {
-    constructor ( _canvas ){
+    constructor (options = {}){
 
         // Data
         this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
@@ -13,7 +13,11 @@ export default class Strokes {
 
         // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke.
         this.active_stroke = 0;
-        this.canvas = _canvas;
+
+        this.bound = new Rectangle(0,0,
+            (options.width ? options.width : window.innerWidth),
+            (options.height ? options.height : window.innerHeight)
+        );
 
         // Options
         this.deleteOutOfRangeStroke = false
@@ -36,11 +40,7 @@ export default class Strokes {
     }
     rebuildQuadTree () {
 
-        // Create QuadTree
-        var _qtw = this.canvas.canvasWidth || window.innerWidth,
-            _qth = this.canvas.canvasHeight || window.innerWidth;
-
-        this.quadTree = new QuadTree( 1, new Rectangle( 0, 0, _qtw, _qth ) )
+        this.quadTree = new QuadTree( 1, new Rectangle( 0, 0, this.bound.width, this.bound.height ) )
 
         this.eachStroke( function(stk,strokes){
 
