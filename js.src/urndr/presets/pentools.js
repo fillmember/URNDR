@@ -1,5 +1,5 @@
 import {
-  BaseModule , Point , PenTool
+  Point , PenTool , BaseModule
 } from 'urndr.js'
 
 const PanTool = ({strokes, modules, threeManager, style}) => {
@@ -10,7 +10,7 @@ const PanTool = ({strokes, modules, threeManager, style}) => {
       clearInterval(timer)
       timer = setInterval( function(){
         threeManager.rig.target_theta += pen.ndc_x * 0.2
-        trig('Camera Work','Y',THREE.Math.mapLinear( pen.ndc_y, 1, -1, -3, 3 ));
+        threeManager.rig.pitch = ndc_y * -3
       },20)
     },
     onmouseup: function(pen, evt){
@@ -52,7 +52,7 @@ const DrawTool = ({strokes, modules, threeManager, style}) => {
 }
 
 const EraseTool = ({strokes, modules, threeManager, style}) => {
-  return new URNDR.PenTool({
+  return new PenTool({
     name: "Eraser",
     init: function() {},
     onmousedown: function(pen, evt) {},
@@ -117,7 +117,7 @@ const ModifyTool = ({strokes, modules, threeManager, style}) => {
       }
       return false;
   }
-  return new URNDR.PenTool({
+  return new PenTool({
     name: "Stroke Selector",
     data: {
       limit : 400,
