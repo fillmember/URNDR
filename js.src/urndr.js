@@ -77,5 +77,3 @@ THREE.MorphAnimation.prototype.stop = function() {
     return THREEHelper.stopMorphAnimation(this)
 
 }
-
-export default URNDR

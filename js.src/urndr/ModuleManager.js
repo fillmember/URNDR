@@ -17,12 +17,6 @@ export default class ModuleManager {
         this.modules.push(module)
         this[module.type].push(module)
         module.manager = this
-        //
-        module.emitter.add(@onModuleMessage)
-    }
-
-    onModuleMessage (msgType,msgBody) {
-        this.emitter.emit(msgType,msgBody)
     }
 
     runModules (type='all',args) {
