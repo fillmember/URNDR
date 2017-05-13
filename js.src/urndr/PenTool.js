@@ -1,6 +1,8 @@
+import MathUtil from './math/math'
+
 export default class PenTool {
     constructor (parameters) {
-        this.id = "T-" + THREE.Math.generateUUID();
+        this.id = "T-" + MathUtil.uuid();
         this.name = parameters.name || "Untitled Tool";
         this.onmousedown = parameters.onmousedown || function(){};
         this.onmouseup = parameters.onmouseup || function(){};

@@ -1,4 +1,5 @@
 import {EventEmitter} from 'events'
+import MathUtil from './math/math'
 
 class BaseModule {
     constructor (n,t,k,e) {
@@ -23,7 +24,7 @@ class BaseModule {
 
         // Properties that will always be
         this.manager = null
-        this.id = "MOD-"+THREE.Math.generateUUID()
+        this.id = "MOD-"+MathUtil.uuid()
         this.priority = 1
         this.enabled = _enabled;
         this.type = _type

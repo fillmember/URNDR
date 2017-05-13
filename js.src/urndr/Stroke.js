@@ -1,10 +1,11 @@
+import MathUtil from './math/math'
 import Point from './Point'
 
 export default class Stroke {
 
     constructor (tags) {
 
-        this.id = "S-"+THREE.Math.generateUUID();
+        this.id = "S-"+MathUtil.uuid();
         this.tags = tags || {}; // for future stroke-specific effect.
         this.points = []; // must be sequential. From 0 to this.length.
         this.parent = undefined;

@@ -1,7 +1,9 @@
+import MathUtil from './math/math'
+
 export default class Model {
     constructor ( args ) {
 
-        this.id = "MODEL-" + THREE.Math.generateUUID();
+        this.id = "MODEL-" + MathUtil.uuid();
         this.name = "";
 
         // Animation Attributes

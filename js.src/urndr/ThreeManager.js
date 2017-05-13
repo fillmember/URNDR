@@ -1,5 +1,7 @@
 const PI2 = Math.PI * 2
 
+import Model from './Model.js'
+
 export default class ThreeManager {
     constructor ( arg ) {
 
@@ -51,7 +53,7 @@ export default class ThreeManager {
         // Arguments
         args.material = args.material || this.material;
 
-        var model = new URNDR.Model( args );
+        var model = new Model( args );
         this.addModel( model )
         // Load
         model.loadModel( file_path , () => {
@@ -111,7 +113,7 @@ export default class ThreeManager {
             if (pos !== -1) {
                 this.solo( pos );
             }
-        } else if (n instanceof URNDR.Model) {
+        } else if (n instanceof Model) {
             this.solo( n.id )
         }
     }

@@ -1,68 +1,13 @@
-import encode64 from './gifencoder/b64.js'
-
-// INTERFACE UPDATE FUNCTIONS
-
-const $showcase = $(".showcase");
-$showcase.putGeneratedImage = ( url ) => {
-
-	var $new = $("<div>",{class:"exported item"}),
-		$img = $("<img>",{src: url}),
-		$btns= $('<div class="bar"><a href="#" class="del fa fa-trash-o"></a><a href="'+url+'" target="_blank" class="dw fa fa-download" download="urndr"></a></div>');
-
-	$btns.find(".del").on("click",function(evt){
-		evt.preventDefault();
-		var $tar = $(this).parents(".exported.item");
-		$tar.hide(300,() => {
-			$tar.remove();
-		})
-	})
-
-	$showcase.prepend($new.append($img).append($btns));
-
-	if (!$showcase.is(":visible")) { $showcase.fadeIn(200); }
-
-}
-
-// INTERFACE SHORTHANDS FUNCTIONS
-
-const trig = function() {
-	const module = MODULES.getModuleByName( arguments[0] );
-	let _arguments = [].slice.call( arguments );
-	_arguments.shift();
-	module.func.apply( module , _arguments )
-}
-
-const mreceive = function() {
-	var module = MODULES.getModuleByName( arguments[0] ),
-		_arguments = [].slice.call( arguments );
-		_arguments.shift();
-	module.listener.apply( module , _arguments )
-}
-
-const mtogg = function( mod_name , value ) {
-	var module = MODULES.getModuleByName( arguments[0] );
-	if (value != undefined) {
-		module.enabled = value;
-	} else {
-		module.enabled = ! module.enabled;
-	}
-}
-
-// Global
-
-window.$showcase = $showcase
-window.trig = trig
-window.mreceive = mreceive
-window.mtogg = mtogg
-
 //
 // COMMANDS & ETC
 //
 
+import {BaseModule} from 'urndr'
+
 MODULES.loadModules( {
 
 draw : function() {
-	var module = new URNDR.Module("Draw",URNDR.Module.COMMAND_MODULE,66) // b
+	var module = new BaseModule("Draw",BaseModule.COMMAND_MODULE,66) // b
 	module.setFunction(function() {
 		PEN.selectToolByName("Draw");
 		return "";
@@ -71,7 +16,7 @@ draw : function() {
 },
 
 eraser : function() {
-	var module = new URNDR.Module("Eraser",URNDR.Module.COMMAND_MODULE,69) // e
+	var module = new BaseModule("Eraser",BaseModule.COMMAND_MODULE,69) // e
 	module.setFunction(function() {
 		PEN.selectToolByName("Eraser");
 		return "Make Invisible"
@@ -80,7 +25,7 @@ eraser : function() {
 },
 
 selector : function() {
-	var module = new URNDR.Module("Selector",URNDR.Module.COMMAND_MODULE,83) // s
+	var module = new BaseModule("Selector",BaseModule.COMMAND_MODULE,83) // s
 	module.setFunction(function() {
 		PEN.selectToolByName("Stroke Selector"); return "Select Point"
 	})
@@ -88,7 +33,7 @@ selector : function() {
 },
 
 clear_canvas : function() {
-	var module = new URNDR.Module("Clear",URNDR.Module.COMMAND_MODULE)
+	var module = new BaseModule("Clear",BaseModule.COMMAND_MODULE)
 	module.setFunction(function( evt ){
 		STROKES.reset();
 		return "";
@@ -97,7 +42,7 @@ clear_canvas : function() {
 },
 
 camera_mover : function() {
-	var module = new URNDR.Module("Mover",URNDR.Module.COMMAND_MODULE)
+	var module = new BaseModule("Mover",BaseModule.COMMAND_MODULE)
 	module.setFunction(function( evt ){
 		PEN.selectToolByName("Mover"); return "Move Camera"
 		return "";
@@ -106,7 +51,7 @@ camera_mover : function() {
 },
 
 brush_size_up : function() {
-	var module = new URNDR.Module("Increase Brush Size",URNDR.Module.COMMAND_MODULE,221)
+	var module = new BaseModule("Increase Brush Size",BaseModule.COMMAND_MODULE,221)
 	module.setFunction(function(){
 		STYLE.brush_size += 5;
 		return STYLE.brush_size;
@@ -115,7 +60,7 @@ brush_size_up : function() {
 },
 
 brush_size_down : function() {
-	var module = new URNDR.Module("Reduce Brush Size",URNDR.Module.COMMAND_MODULE,219)
+	var module = new BaseModule("Reduce Brush Size",BaseModule.COMMAND_MODULE,219)
 	module.setFunction(function(){
 		STYLE.brush_size = STYLE.brush_size > 5 ? STYLE.brush_size - 5 : 5;
 		return STYLE.brush_size;
@@ -124,7 +69,7 @@ brush_size_down : function() {
 },
 
 play_pause : function() {
-	var module = new URNDR.Module("Play Pause",URNDR.Module.COMMAND_MODULE)
+	var module = new BaseModule("Play Pause",BaseModule.COMMAND_MODULE)
 	module.setFunction( ( arg , btn ) => {
 		U3.eachModel( (model) => {
 			if (!model.animation) { return }
@@ -153,7 +98,7 @@ play_pause : function() {
 });
 
 MODULES.loadModule(function(){
-	var module = new URNDR.Module("Auto Rotate",URNDR.Module.STROKE_MODULE,9999,false);
+	var module = new BaseModule("Auto Rotate",BaseModule.STROKE_MODULE,9999,false);
 	module.interval = 20;
 	module.setConfiguration({
 		direction: 1
@@ -173,7 +118,7 @@ MODULES.loadModule(function(){
 })
 
 MODULES.loadModule(function() {
-	var module = new URNDR.Module("Camera Work",URNDR.Module.COMMAND_MODULE,901)
+	var module = new BaseModule("Camera Work",BaseModule.COMMAND_MODULE,901)
 	module.setFunction( function( directive ){
 		var _arguments = [].slice.call( arguments );
 			_arguments.shift();
@@ -247,36 +192,3 @@ MODULES.loadModule(new LegacyRenderer({
 	threeManager : U3,
 	style : STYLE
 }))
-
-
-// Watches
-
-const watchJS = require('./watch.js')
-const watch = watchJS.watch
-
-const $input_brush_size = $("input#brush_size").get(0)
-const $target_theta = $("#target_theta").get(0)
-const $target_radius = $("#target_radius").get(0)
-watch( STYLE , "brush_size" , function(){
-	$input_brush_size.value = STYLE.brush_size;
-})
-watch( U3.rig , "target_theta" , function(){
-	$target_theta.value = U3.rig.target_theta;
-})
-watch( U3.rig , "target_radius" , function(){
-	$target_radius.value = U3.rig.target_radius;
-})
-
-const $fade = $("#fade").get(0)
-const $wiggle = $("#wiggle").get(0)
-const $random_stroke_color = $("#random_stroke_color").get(0)
-
-watch( MODULES.getModuleByName("Fade Strokes") , "enabled" , function() {
-	$fade.checked = MODULES.getModuleByName("Fade Strokes").enabled;
-})
-watch( MODULES.getModuleByName("Wiggle") , "enabled" , function() {
-	$wiggle.checked = MODULES.getModuleByName("Wiggle").enabled;
-})
-watch( MODULES.getModuleByName("Random Stroke Color") , "enabled" , function() {
-	$random_stroke_color.checked = MODULES.getModuleByName("Random Stroke Color").enabled;
-})

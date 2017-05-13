@@ -1,6 +1,8 @@
 // QuadTree
 // source: http://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374
 
+import Rectangle from './Rectangle'
+
 export default class QuadTree {
 
     constructor ( pLevel , pBounds) {
@@ -36,12 +38,10 @@ export default class QuadTree {
         x = this.bounds.x;
         y = this.bounds.y;
 
-        var qt = URNDR.QuadTree, rect = URNDR.Rectangle;
-
-        this.nodes[0] = new qt( lvl, new rect(x + w, y    , w, h) )
-        this.nodes[1] = new qt( lvl, new rect(x    , y    , w, h) )
-        this.nodes[2] = new qt( lvl, new rect(x    , y + h, w, h) )
-        this.nodes[3] = new qt( lvl, new rect(x + w, y + h, w, h) )
+        this.nodes[0] = new QuadTree( lvl, new Rectangle(x + w, y    , w, h) )
+        this.nodes[1] = new QuadTree( lvl, new Rectangle(x    , y    , w, h) )
+        this.nodes[2] = new QuadTree( lvl, new Rectangle(x    , y + h, w, h) )
+        this.nodes[3] = new QuadTree( lvl, new Rectangle(x + w, y + h, w, h) )
 
     }
     getIndex (rect){
