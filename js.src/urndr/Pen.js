@@ -1,3 +1,4 @@
+import Pressure from 'pressure'
 import PenTool from './PenTool'
 import MathUtil from './math/math'
 
@@ -25,6 +26,11 @@ export default class Pen {
         canvas_hud.addEventListener("mouseup"  , (evt) => this.onmouseup(this, evt) )
         canvas_hud.addEventListener("mousemove", (evt) => this.onmousemove(this, evt) )
         canvas_hud.addEventListener("mouseout" , (evt) => this.onmouseout(this, evt) )
+
+        Pressure.set( canvas_hud , {
+            change : (force,event) => { this.pressure = force}
+        } )
+
     }
 
     get ndc_x() {
@@ -86,7 +92,7 @@ export default class Pen {
     createUI (ui) {
 
         ui.build.startSection({title:`pen`})
-
+        ui.build.header({title:`Pen`})
         ui.build.startSection({title:`pentool select`,class:`btnGroup`})
         const buttons = this.tools.map( (tool) => {
             const btn = ui.build.button({
@@ -101,12 +107,11 @@ export default class Pen {
             tool._activateButton = btn
             return btn
         })
-
         ui.build.endSection()
 
-        this.tools.forEach((pen)=>{
-            pen.createUI(ui)
-        })
+        // this.tools.forEach((pen)=>{
+        //     pen.createUI(ui)
+        // })
 
         ui.build.endSection()
 
