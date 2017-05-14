@@ -16,7 +16,7 @@ export default class PenTool {
 
     createUI (ui) {
 
-        ui.build.startSection()
+        ui.build.startSection({title:`pentool detail`})
 
         ui.build.endSection()
 

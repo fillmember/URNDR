@@ -58,12 +58,11 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
   margin-bottom: 9px;
   position: relative;
 }
-  .section:after {
-    /*CLEAR*/
-    content: "";
-    display: table;
-    clear: both;
-  }
+.section:after {
+  content: "";
+  display: table;
+  clear: both;
+}
 
 .header { margin-bottom: 22.5px; }
 
@@ -90,14 +89,14 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
     margin-top: 4px;
     line-height: 28px;
   }
-  .sidebar button,
+  /*.sidebar button,
   .sidebar span,
   .sidebar input,
   .sidebar label,
   .sidebar .btnGroup {
     display: block;
     position: relative;
-    float: left;
+    /*float: left;*/
 
     height: 30px;
 
@@ -112,7 +111,7 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
     height: 32px;
     line-height: 32px;
   }
-  .sidebar p {text-align: justify;}
+  .sidebar p {text-align: justify;}*/
 
 .middle {
   margin-left: 125px;
@@ -230,127 +229,3 @@ h1,h2,h3,h4 {margin: 0; padding: 0;}
   .float-left.p25 p {
     margin-right: 9px;
   }
-
-/* Inputs */
-
-input, button, label { cursor: pointer; outline: none; }
-
-button {
-  font-size: 12px;
-  padding: 0; margin: 0;
-
-  background: #FFF;
-  border-radius: 6px;
-}
-  button i {
-    position: relative;
-    top: -2px;
-  }
-
-.group {}
-  .group:after{
-    content: "";
-    display: table;
-    clear: both;
-  }
-
-.btnGroup {}
-  .btnGroup:after {
-    content: "";
-    display: table;
-    clear: both;
-  }
-  .btnGroup button { border-radius: 0; }
-  .btnGroup button:first-child { border-radius: 6px 0 0 6px; }
-  .btnGroup button:last-child { border-radius: 0 6px 6px 0; }
-  .btnGroup button:not(:last-child) { border-right: 0; }
-
-.outlinedGroup {
-  border-radius: 6px;
-  padding: 4.5px;
-}
-  .outlinedGroup h3 { padding-top: 0; }
-
-input[type=checkbox] { display: none; }
-  input[type=checkbox] + label {
-    cursor: pointer;
-    outline: none;
-
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-
-    /*STYLE*/
-
-    height: 20px;
-    width: 29px;
-    margin: 5.625px 0;
-    background-color: #333;
-    border-radius: 30px;
-
-    transition: background .2s;
-  }
-  input[type=checkbox] + label:before,
-  input[type=checkbox] + label:after {
-    display: block;
-    position: absolute;
-    content: "";
-  }
-  input[type=checkbox] + label:before {
-    top: 2px; left: 2px; bottom: 2px; right: 2px;
-    background-color: #FFF;
-    border-radius: 60px;
-  }
-  input[type=checkbox] + label:after {
-    top: 2px;
-    left: 2px;
-    bottom: 2px;
-    width: 12px;
-    background-color: #FFF;
-    border: 2px solid #333;
-    border-radius: 12px;
-  }
-  input[type=checkbox]:checked + label:before {
-    background-color: #FF0;
-  }
-  input[type=checkbox]:checked + label:after {
-    margin-left: 9px;
-    /*label width - 20px*/
-  }
-
-input[type=range] {
-  -webkit-appearance: none;
-}
-  input[type=range]::-webkit-slider-runnable-track {
-    height: 18px;
-    background: #FFF;
-    border-radius: 18px;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    height: 20px;
-    width: 13px;
-    border-radius: 10px;
-    background: #FFF;
-    margin-top: -3px;
-    -webkit-appearance: none;
-  }
-  input[type=range]:focus { outline: none; }
-
-/* common styles */
-
-button,
-.outlinedGroup,
-input[type=range]::-webkit-slider-runnable-track,
-input[type=range]::-webkit-slider-thumb
-{
-  border: 2px solid #333;
-}
-
-button:active,
-input[type=checkbox]:checked + label i.on:after,
-input[type=range]:active::-webkit-slider-thumb
-{
-  background: #FF0;
-}
-
-#Wacom {display:none;}

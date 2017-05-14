@@ -23,10 +23,10 @@ export const StrokeWiggle = () => {
       const stroke_k = strokes.getStrokeByID( target_strokes[st] )
       stroke_k.setTrack( "X" , Helpers.randomizeArray( stroke_k.getTrack("X") , settings.amp ) )
       stroke_k.setTrack( "Y" , Helpers.randomizeArray( stroke_k.getTrack("Y") , settings.amp ) )
-      const bamp = settings.amp * 0.001;
-      stroke_k.setTrack( "BU" , Helpers.randomizeArray( stroke_k.getTrack("BU") , bamp ) )
-      stroke_k.setTrack( "BV" , Helpers.randomizeArray( stroke_k.getTrack("BV") , bamp ) )
-      stroke_k.setTrack( "BW" , Helpers.randomizeArray( stroke_k.getTrack("BW") , bamp ) )
+      // const bamp = settings.amp * 0.001;
+      // stroke_k.setTrack( "BU" , Helpers.randomizeArray( stroke_k.getTrack("BU") , bamp ) )
+      // stroke_k.setTrack( "BV" , Helpers.randomizeArray( stroke_k.getTrack("BV") , bamp ) )
+      // stroke_k.setTrack( "BW" , Helpers.randomizeArray( stroke_k.getTrack("BW") , bamp ) )
     }
   })
   return module
@@ -37,8 +37,7 @@ export const StrokeFade = () => {
   module.interval = 40;
   module.setConfiguration({
     all : true,
-    speed : 2,
-    toggle : 0
+    speed : 2
   })
   module.setFunction(function(strokes) {
 
@@ -76,20 +75,6 @@ export const StrokeFade = () => {
     }
 
   })
-  module.listener = function( evt ) {
-    var m = module.settings;
-    if (evt.shiftKey) {
-      m.toggle = (m.toggle + 1) % 5
-    } else {
-      m.toggle = m.toggle >= 1 ? 0 : 1;
-    }
-    m.speed = m.toggle + 1;
-    module.enabled = true;
-    if (m.speed === 1) {
-      module.enabled = false;
-    }
-    return "S" + m.toggle;
-  }
   return module
 }
 
@@ -110,6 +95,7 @@ export const DeleteFlaggedStroke = () => {
       strokes.deleteStrokeByID( strokes_to_delete[i] );
     }
   })
+  module.createUI = () => {}
   return module;
 }
 
@@ -161,9 +147,9 @@ export const SmoothStroke = () => {
 export const Stroke3DMapping = ({canvasManager,threeManager}) => {
   var module = new BaseModule("3D MAGIC",BaseModule.STROKE_MODULE,true); //u
   module.interval = 20
-  module.setConfiguration({
-    delayFactor : 0.8
-  })
+  // module.setConfiguration({
+  //   delayFactor : 0.8
+  // })
   const _ep = ( point , stroke , i ) => {
 
     if ( point.FACE && point.OBJECT ) {
@@ -185,12 +171,17 @@ export const Stroke3DMapping = ({canvasManager,threeManager}) => {
       )
 
       // record this point's potential movement.
-      point.PX = (p.x - point.X) * module.settings.delayFactor
-      point.PY = (p.y - point.Y) * module.settings.delayFactor
+      // point.PX = (p.x - point.X) * module.settings.delayFactor
+      // point.PY = (p.y - point.Y) * module.settings.delayFactor
+      // point.PX = p.x
+      // point.PY = p.y
 
       // set point X Y
-      point.X += point.PX
-      point.Y += point.PY
+      // point.X += point.PX
+      // point.Y += point.PY
+
+      point.X = p.x
+      point.Y = p.y
 
     } else {
 
@@ -233,5 +224,6 @@ export const Stroke3DMapping = ({canvasManager,threeManager}) => {
       stroke.eachPoint( _ep , stroke )
     } , strokes )
   })
+  module.createUI = () => {}
   return module
 }

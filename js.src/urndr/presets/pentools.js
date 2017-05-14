@@ -11,7 +11,7 @@ const PanTool = ({strokes, modules, threeManager, style}) => {
       clearInterval(timer)
       timer = setInterval( function(){
         threeManager.rig.target_theta += pen.ndc_x * 0.2
-        threeManager.rig.pitch = ndc_y * -3
+        threeManager.rig.target_pitch = pen.ndc_y * -6
       },20)
     },
     onmouseup: function(pen, evt){
@@ -121,7 +121,7 @@ const ModifyTool = ({strokes, modules, threeManager, style}) => {
       return false;
   }
   return new PenTool({
-    name: "Stroke Selector",
+    name: "Selector",
     icon: 'fa fa-crosshairs',
     data: {
       limit : 400,

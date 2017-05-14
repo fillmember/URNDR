@@ -30,9 +30,32 @@ export default class ModuleManager {
 
     createUI (ui) {
 
-        this.modules.forEach((module)=>{
-            module.createUI(ui)
-        })
+        ui.build.startSection()
+
+        const build = (m)=>{m.createUI(ui)}
+
+        ui.build.startSection()
+        ui.build.header({title:'Commands'})
+        this[ Module.COMMAND_MODULE ].forEach(build)
+        ui.build.endSection()
+        ui.build.startSection()
+        ui.build.header({title:'Style Modules'})
+        this[ Module.STYLE_MODULE ].forEach(build)
+        ui.build.endSection()
+        ui.build.startSection()
+        ui.build.header({title:'Point Modules'})
+        this[ Module.POINT_MODULE ].forEach(build)
+        ui.build.endSection()
+        ui.build.startSection()
+        ui.build.header({title:'Stroke Modules'})
+        this[ Module.STROKE_MODULE ].forEach(build)
+        ui.build.endSection()
+        ui.build.startSection()
+        ui.build.header({title:'Draw Modules'})
+        this[ Module.DRAW_MODULE ].forEach(build)
+        ui.build.endSection()
+
+        ui.build.endSection()
 
     }
 

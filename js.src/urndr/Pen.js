@@ -28,7 +28,6 @@ export default class Pen {
     }
 
     get ndc_x() {
-        console.log(MathUtil.map( this.x , 0 , this.canvas.width , -1 , 1 ))
         return MathUtil.map( this.x , 0 , this.canvas.width , -1 , 1 );
     }
     get ndc_y() {
@@ -86,12 +85,13 @@ export default class Pen {
     //
     createUI (ui) {
 
-        ui.build.startSection({class:`section pen`})
+        ui.build.startSection({title:`pen`})
 
-        ui.build.startSection({class:`btnGroup`})
+        ui.build.startSection({title:`pentool select`,class:`btnGroup`})
         const buttons = this.tools.map( (tool) => {
             const btn = ui.build.button({
                 icon : tool.icon,
+                title : tool.name,
                 click : () => {
                     this.currentTool = tool
                     buttons.forEach((_b)=>{_b.classList.remove('active')})

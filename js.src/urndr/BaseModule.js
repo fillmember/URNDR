@@ -56,7 +56,6 @@ class BaseModule {
         this.initialConfiguration = Object.create( this.configuration )
     }
     getConfiguration () { return this.configuration }
-    set settings ( s ) { this.setConfiguration( s ) }
     get settings () { return this.configuration; }
 
     //
@@ -64,6 +63,48 @@ class BaseModule {
     //
 
     createUI (ui) {
+
+        ui.build.startSection()
+
+        if (this.type === BaseModule.COMMAND_MODULE) {
+            ui.build.button({
+                title: this.name,
+                click: ()=>{this.func()}
+            })
+            return
+        }
+
+        ui.build.checkbox({
+            target : this,
+            property : 'enabled',
+            title : this.name,
+            class : 'header'
+        })
+
+        for (var item in this.settings) {
+            switch (typeof this.settings[item]) {
+                case 'number':
+                ui.build.slider({
+                    target : this.settings,
+                    property : item,
+                    title : item
+                })
+                break;
+                case 'boolean':
+                ui.build.checkbox({
+                    target : this.settings,
+                    property : item,
+                    title : item
+                })
+                // console.log( item , this.settings[item] , 'boolean')
+                break;
+                case 'string':
+                console.log( item , this.settings[item] , 'string (color or string)')
+                break;
+            }
+        }
+
+        ui.build.endSection()
 
     }
 

@@ -12,8 +12,6 @@ export const SetRandomColorScheme = ({strokes,style,threeManager}) => {
 	};
 	module.setFunction(function( evt ){
 
-		let _msg = "";
-
 		let _hue = Math.random();
 		let _sat = Math.random();
 		if (_sat < 0.2) { _sat = 0; }
@@ -38,11 +36,12 @@ export const SetRandomColorScheme = ({strokes,style,threeManager}) => {
 		const primaryRGB = _rgb(primary)
 		const contrastRGB = _rgb(contrast)
 
-		threeManager.material.color = new THREE.Color(_rgb(pale))
-		threeManager.renderer.setClearColor(primaryRGB)
-		threeManager.scene.fog.color.set(primaryRGB)
+		threeManager.setColor({
+			material : _rgb(pale),
+			renderer : primaryRGB,
+			fog : primaryRGB
+		})
 
-		return _msg;
 	})
 	return module;
 }

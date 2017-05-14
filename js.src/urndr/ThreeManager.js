@@ -49,6 +49,11 @@ export default class ThreeManager {
     get count() {
         return this.models_array.length;
     }
+    setColor({material,renderer,fog}) {
+        this.material.color.set(material)
+        this.renderer.setClearColor(renderer)
+        this.scene.fog.color.set(fog)
+    }
     createModelFromFile ( file_path, args ) {
 
         // Arguments
@@ -157,7 +162,52 @@ export default class ThreeManager {
         this.renderer.render( this.scene , this.camera )
 
     }
-    createUI (uiManager) {
+    createUI (ui) {
+
+        ui.build.startSection()
+
+        ui.build.slider({
+            icon : 'fa fa-car',
+            title : '',
+            target : this,
+            property : 'speed',
+            min : 0,
+            max : 30,
+            step : 0.5
+        })
+
+        ui.watch( ui.build.slider({
+            icon : 'fa fa-arrows-h',
+            title : '',
+            target : this.rig,
+            property : 'target_theta',
+            min : 0,
+            max : 6.2831,
+            step : 6.2831 / 100
+        }))
+
+        ui.watch( ui.build.slider({
+            icon : 'fa fa-search-plus',
+            title : '',
+            target : this.rig,
+            property : 'target_radius',
+            min : -6,
+            max : 6,
+            step : 0.1
+        }))
+
+        ui.watch( ui.build.slider({
+            icon : 'fa fa-arrows-v',
+            title : '',
+            target : this.rig,
+            property : 'target_pitch',
+            min : -6,
+            max : 6,
+            step : 0.1
+        }))
+
+        ui.build.endSection()
+
 
     }
 }

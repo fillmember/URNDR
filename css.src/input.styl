@@ -1,0 +1,93 @@
+
+active-color = #FF0
+main-color = #333
+
+transition-duration = .05s
+
+input
+button
+label
+	user-select none
+	cursor pointer
+	outline none
+	appearance none
+	padding 0
+	margin 0
+	text-align left
+
+button
+	font-weight 700
+	text-transform lowercase
+	background #FFF
+	border 2px solid main-color
+	border-radius 5px
+	padding 0 3px 2px 4px
+	display flex
+	align-items center
+	.fa
+		position relative
+		top 1px
+		font-size 1.3em
+		padding-right 3px
+	transition background-color transition-duration
+	&.active
+		background-color active-color
+
+toggle-w = 18px
+toggle-h = 9px
+t-border-width = 2px
+t-space = 26px
+t-offset-y = 1px
+input[type=checkbox]
+	display none
+input[type=checkbox] + label
+	margin-left t-space
+	position relative
+	&:before
+	&:after
+		display block
+		position absolute
+		content '\A'
+		top t-offset-y
+		left -1 * t-space
+		transition transform transition-duration, background-color transition-duration
+	&:before
+		border-radius toggle-h * 0.5
+		width toggle-w
+		height toggle-h
+		border t-border-width solid main-color
+	&:after
+		border-radius toggle-h * 0.5
+		top t-offset-y
+		width toggle-h
+		height toggle-h
+		background #FFF
+		border 2px solid main-color
+input[type=checkbox]:checked + label
+	&:before
+		background active-color
+	&:after
+		transform translateX(toggle-w - toggle-h)
+
+
+slider-height = 10px
+s-knob-h = 14px
+s-knob-w = 14px
+s-offset-y = 0px
+s-border-width = 2px
+input[type=range]
+	border-radius slider-height * 0.5
+input[type=range]::-webkit-slider-runnable-track
+input[type=range]::-webkit-slider-thumb
+	appearance none
+	border-radius slider-height * 0.5
+	background #FFF
+	border s-border-width solid main-color
+	position relative
+input[type=range]::-webkit-slider-runnable-track
+	top s-offset-y
+	height slider-height
+input[type=range]::-webkit-slider-thumb
+	height s-knob-h
+	width s-knob-w
+	top (slider-height - s-knob-h) * 0.5 - s-border-width

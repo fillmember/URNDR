@@ -8,7 +8,8 @@ class UIManager {
 
 		this.build = new UIBuilder( this , containerElement )
 
-
+		this.map = {}
+		this.uiElements = []
 		this.watchList = []
 
 	}
@@ -18,16 +19,11 @@ class UIManager {
 	//
 	// update ui when target's property has changed
 	//
-	// watch ( ui , target , property ) {
-	// 	this.watchList.push([ui,target,property])
-	// }
+	watch ( ui ) { this.watchList.push(ui) }
 
 	update () {
 
-		// watchList.forEach((item)=>{
-		// 	[ui,target,property] = item
-		// 	const value = target[property]
-		// })
+		this.watchList.forEach((item)=>{item.update()})
 
 	}
 

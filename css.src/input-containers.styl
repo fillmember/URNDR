@@ -1,0 +1,48 @@
+
+.btnGroup
+	display flex
+	button:first-child
+		border-top-right-radius 0
+		border-bottom-right-radius 0
+		border-right-width 0
+	button:last-child
+		border-top-left-radius 0
+		border-bottom-left-radius 0
+	button:not(:first-child):not(:last-child)
+		border-radius 0
+		border-right-width 0
+
+.header
+	label
+		@extends h4
+
+.slider-container
+.checkbox-container
+	margin 1px 0
+	// background rgba(black,0.15)
+	display flex
+	flex-flow row nowrap
+	align-items center
+	justify-content space-between
+	position relative
+
+.slider-container
+	output
+		position absolute
+		top 0
+		left 0
+	label
+	output
+		width 20%
+	input
+		width 80%
+
+// .sidebar
+// 	display flex
+// 	flex-flow column wrap
+// 	section
+// 		border 1px solid blue
+
+// .checkbox-container
+// 	border 1px solid red
+// 	width 50%

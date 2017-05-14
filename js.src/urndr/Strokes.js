@@ -9,7 +9,6 @@ export default class Strokes {
         this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
         this.strokesHistory = []; // Store stroke ID. Record order of creation.
         this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
-        this.age = 0;
 
         // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke.
         this.active_stroke = 0;
@@ -227,5 +226,20 @@ export default class Strokes {
         for( var i = 0; i < len; i++ ){
             my_function( this.getStrokeByID( arr[ i ] ) , parameters , i );
         }
+    }
+    createUI (ui) {
+
+        ui.watch(ui.build.display({
+            title : 'stroke count',
+            target : this.strokesHistory,
+            property : 'length'
+        }))
+
+        ui.watch(ui.build.display({
+            title : 'active_stroke',
+            target : this,
+            property : 'active_stroke'
+        }))
+
     }
 }

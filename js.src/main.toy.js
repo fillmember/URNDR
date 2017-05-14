@@ -40,6 +40,8 @@ cavMan.createUI(_ui)
 
 const _strokes = new Strokes();
 
+_strokes.createUI(_ui)
+
 const _pen = new Pen({
 	canvas_draw : cavMan.get("draw").element,
 	canvas_hud : cavMan.get("hud").element,
@@ -124,7 +126,7 @@ _threeManager.createModelFromFile("models/twister.js", {
 	onblur: function() { this.animation.pause(); }
 });
 _threeManager.solo(0)
-
+_threeManager.speed = 5
 _threeManager.createUI(_ui)
 
 _modules.add( SetRandomColorScheme({
@@ -149,7 +151,7 @@ _modules.add( LegacyRenderer({
 
 _modules.createUI(_ui)
 
-const display = () => {
+const _update = () => {
 	_threeManager.update();
 	_modules.runModules(BaseModule.STROKE_MODULE, _strokes);
 	_modules.runModules(BaseModule.DRAW_MODULE, {
@@ -157,6 +159,8 @@ const display = () => {
 		canvasManager: cavMan
 	})
 	_ui.update()
-	requestAnimationFrame(display);
+	requestAnimationFrame(_update);
 }
-display();
+_update();
+
+console.log(_ui)

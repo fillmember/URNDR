@@ -14,6 +14,8 @@ export default class StrokeStyle {
         ui.build.startSection()
 
         ui.build.slider({
+            icon : 'fa fa-paint-brush',
+            title : '',
             target : this,
             property : 'brush_size',
             min : this.brush_size_range[0],

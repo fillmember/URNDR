@@ -205,7 +205,7 @@ export const LegacyRenderer = ({strokes, threeManager, style}) => {
 					const factor = getAlphaFactor(pnt,stk,0)
 
 					_outline( ctx, prv, pnt, factor );
-					stroke_basic(ctx, pnt, prv, pnt.S, rgba(pnt.R,pnt.G,pnt.B,pnt.A * factor) );
+					stroke_basic(ctx, pnt, prv, pnt.S, module.helpers.rgba(pnt.R,pnt.G,pnt.B,pnt.A * factor) );
 
 				}
 			} )
