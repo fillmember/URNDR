@@ -1,7 +1,6 @@
 import THREE from './three.js'
 
-import UIManager from './urndr/ui/UIManager'
-export {UIManager}
+export {UIManager} from './urndr/ui/UIManager'
 
 import UIMessage from './urndr/ui/UIMessage'
 export {UIMessage}

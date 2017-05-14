@@ -28,4 +28,12 @@ export default class ModuleManager {
         }
     }
 
+    createUI (ui) {
+
+        this.modules.forEach((module)=>{
+            module.createUI(ui)
+        })
+
+    }
+
 }

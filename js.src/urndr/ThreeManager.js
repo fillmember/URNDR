@@ -157,4 +157,7 @@ export default class ThreeManager {
         this.renderer.render( this.scene , this.camera )
 
     }
+    createUI (uiManager) {
+
+    }
 }

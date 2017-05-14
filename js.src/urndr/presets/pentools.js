@@ -6,6 +6,7 @@ const PanTool = ({strokes, modules, threeManager, style}) => {
   let timer = null
   return new PenTool({
     name: "Mover",
+    icon: 'fa fa-hand-paper-o',
     onmousedown: function(pen, evt){
       clearInterval(timer)
       timer = setInterval( function(){
@@ -22,6 +23,7 @@ const PanTool = ({strokes, modules, threeManager, style}) => {
 const DrawTool = ({strokes, modules, threeManager, style}) => {
   return new PenTool({
     name: "Draw",
+    icon: 'fa fa-pencil',
     onmousedown: function(pen, evt) { strokes.beginNewStroke(); },
     onmouseup: function(pen, evt) {
       const astk = strokes.getActiveStroke()
@@ -54,6 +56,7 @@ const DrawTool = ({strokes, modules, threeManager, style}) => {
 const EraseTool = ({strokes, modules, threeManager, style}) => {
   return new PenTool({
     name: "Eraser",
+    icon: 'fa fa-eraser',
     init: function() {},
     onmousedown: function(pen, evt) {},
     onmouseup: function(pen, evt) {},
@@ -119,6 +122,7 @@ const ModifyTool = ({strokes, modules, threeManager, style}) => {
   }
   return new PenTool({
     name: "Stroke Selector",
+    icon: 'fa fa-crosshairs',
     data: {
       limit : 400,
       selectedPoint : 0
@@ -143,7 +147,7 @@ const ModifyTool = ({strokes, modules, threeManager, style}) => {
         if (this.data.selectedPoint !== 0) {
             this.data.selectedPoint.X = pen.x;
             this.data.selectedPoint.Y = pen.y;
-            this.data.selectedPoint.refreshBinding(U3)
+            this.data.selectedPoint.refreshBinding(threeManager)
         }
 
     },

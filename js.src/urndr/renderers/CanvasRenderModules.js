@@ -151,7 +151,7 @@ export const LegacyRenderer = ({strokes, threeManager, style}) => {
 					ctx.drawImage( threeManager.renderer.domElement , 0 , 0 )
 				} else {
 					// RENDER : FILL CLEAR COLOR
-					ctx.fillStyle = $(".canvas_bg").first().css("background-color");
+					ctx.fillStyle = '#00F'
 					ctx.fillRect( 0 , 0 , canvases.width , canvases.height )
 				}
 			}

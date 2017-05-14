@@ -63,7 +63,7 @@ class BaseModule {
     // UI System
     //
 
-    makeUI (uiManager) {
+    createUI (ui) {
 
     }
 

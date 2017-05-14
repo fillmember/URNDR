@@ -81,4 +81,34 @@ export default class Pen {
         pen.isDown = 0;
         pen.currentTool.onmouseout( pen, evt );
     }
+    //
+    //
+    //
+    createUI (ui) {
+
+        ui.build.startSection({class:`section pen`})
+
+        ui.build.startSection({class:`btnGroup`})
+        const buttons = this.tools.map( (tool) => {
+            const btn = ui.build.button({
+                icon : tool.icon,
+                click : () => {
+                    this.currentTool = tool
+                    buttons.forEach((_b)=>{_b.classList.remove('active')})
+                    tool._activateButton.classList.add('active')
+                }
+            })
+            tool._activateButton = btn
+            return btn
+        })
+
+        ui.build.endSection()
+
+        this.tools.forEach((pen)=>{
+            pen.createUI(ui)
+        })
+
+        ui.build.endSection()
+
+    }
 }

@@ -2,7 +2,7 @@ import THREE from './three.js'
 import {
 	BaseModule, ThreeManager, ModuleManager,
 	CanvasManager, StrokeStyle, Strokes,
-	Point, Hud, Pen, PenTool, Module
+	Point, Hud, Pen, PenTool, Module, UIManager
 } from 'urndr'
 import {PanTool,DrawTool,EraseTool,ModifyTool} from 'urndr/presets/pentools.js'
 import {SetRandomColorScheme} from 'urndr/presets/commands.js'
@@ -10,6 +10,8 @@ import {RandomStrokeColor, ColorVariation} from 'urndr/presets/styles.js'
 import {RandomPointPosition,PointPressureSensitivity} from 'urndr/presets/pointfx.js'
 import {StrokeFade,StrokeWiggle,DeleteFlaggedStroke,SmoothStroke,Stroke3DMapping} from 'urndr/presets/strokefx.js'
 import {LegacyRenderer} from 'urndr/renderers/CanvasRenderModules'
+
+const _ui = new UIManager(document.querySelector('.sidebar.right'))
 
 const _threeManager = new ThreeManager({
 	fog: new THREE.FogExp2(0xFFFFFF,0.33),
@@ -27,11 +29,14 @@ _threeManager.renderer.setClearColor(0xFFFFFF);
 const _urndrDisplay = new Hud(document.getElementById('HUD'));
 const _modules = new ModuleManager();
 const _style = new StrokeStyle();
+_style.createUI(_ui)
 const cavMan = new CanvasManager();
 cavMan.add(document.getElementById('canvas_urndr'), "draw", "2d")
 cavMan.add(document.getElementById('canvas_hud'), "hud", "2d")
 cavMan.lineCap = _style.cap;
 cavMan.lineJoin = _style.join;
+
+cavMan.createUI(_ui)
 
 const _strokes = new Strokes();
 
@@ -56,6 +61,8 @@ _pen.add(new EraseTool({strokes:_strokes,modules:_modules,threeManager:_threeMan
 _pen.add(new ModifyTool({strokes:_strokes,modules:_modules,threeManager:_threeManager,style:_style}))
 _pen.add(new PanTool({strokes:_strokes,modules:_modules,threeManager:_threeManager,style:_style}))
 _pen.select(0)
+
+_pen.createUI(_ui)
 
 // Load Model
 _threeManager.createModelFromFile("models/p.js", {
@@ -118,6 +125,8 @@ _threeManager.createModelFromFile("models/twister.js", {
 });
 _threeManager.solo(0)
 
+_threeManager.createUI(_ui)
+
 _modules.add( SetRandomColorScheme({
 	strokes : _strokes,
 	style : _style,
@@ -138,6 +147,8 @@ _modules.add( LegacyRenderer({
 	style : _style
 }) )
 
+_modules.createUI(_ui)
+
 const display = () => {
 	_threeManager.update();
 	_modules.runModules(BaseModule.STROKE_MODULE, _strokes);
@@ -145,6 +156,7 @@ const display = () => {
 		strokes: _strokes,
 		canvasManager: cavMan
 	})
+	_ui.update()
 	requestAnimationFrame(display);
 }
 display();
