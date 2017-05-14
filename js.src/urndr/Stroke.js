@@ -323,4 +323,18 @@ export default class Stroke {
         return result
 
     }
+    destroy () {
+        this.id = null
+        this.tags = null
+        this.points.forEach((p)=>{p.destroy()})
+        this.points = null
+        this.parent = null
+        this.closed = null
+        this.center = null
+        this.start = null
+        this.end = null
+        this.link = null
+        this.hovered = null
+        this.selected = null
+    }
 }

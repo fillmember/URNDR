@@ -121,4 +121,21 @@ export default class Point {
         }
 
     }
+    destroy() {
+        this.parent = null
+        this.X = null
+        this.Y = null
+        this.S = null
+        this.R = null
+        this.G = null
+        this.B = null
+        this.A = null
+        this.OBJECT = null
+        this.FACE = null
+        this.BU = null
+        this.BV = null
+        this.BW = null
+        this.PX = null
+        this.PY = null
+    }
 }

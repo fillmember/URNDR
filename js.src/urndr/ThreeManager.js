@@ -7,8 +7,7 @@ export default class ThreeManager {
     constructor ( arg ) {
 
         // Storage
-        this.models = {}
-        this.models_array = []
+        this.models = []
         this.activeModel = 0;
 
         // THREE
@@ -30,12 +29,9 @@ export default class ThreeManager {
 
         // controls
         this.rig = {
-            radius: 5,
-            target_radius: 5,
-            theta : 0,
-            target_theta : 0,
-            pitch : 0,
-            target_pitch : 0,
+            radius: 5, target_radius: 5,
+            theta : 0, target_theta : 0,
+            pitch : 0, target_pitch : 0,
             speed : 0.1,
             focus : new THREE.Vector3(0,0,0),
             _focus : new THREE.Vector3(0,0,0)
@@ -47,7 +43,7 @@ export default class ThreeManager {
     }
 
     get count() {
-        return this.models_array.length;
+        return this.models.length;
     }
     setColor({material,renderer,fog}) {
         this.material.color.set(material)
@@ -70,57 +66,29 @@ export default class ThreeManager {
     addModel ( model ) {
 
         model.parent = this;
-        this.models[ model.id ] = model;
-        this.models_array.push( model.id );
-
-    }
-    getModel ( input ) {
-
-        if (typeof input === "string") {
-            // search by id
-            if ( this.models.hasOwnProperty( input ) ) {
-                return this.models[ input ];
-            } else {
-                return -1;
-            }
-        } else if (typeof input === "number") {
-            // search by index
-            if (input >= 0 && input < this.models_array.length) {
-                return this.getModel( this.models_array[input] );
-            } else {
-                return -1;
-            }
-        } else {
-            // return latest one
-            return this.getModel( this.count - 1 );
-        }
+        this.models.push( model );
 
     }
     eachModel ( my_function , parameters ) {
 
-        for( var i in this.models ){
-            my_function( this.getModel(i) , parameters, i)
-        }
+        this.models.forEach((model, index) => {
+            my_function( model , parameters , index)
+        })
 
     }
-    solo ( n ){
+    solo ( input ){
         var manager = this;
-        if (typeof n === "number") {
-            manager.models_array.forEach( function(o,i){
-                if (i === n) {
-                    manager.activeModel = n;
-                    manager.models[o].active = true;
+        if (typeof input === "number") {
+            manager.models.forEach( function(model,index){
+                if (index === input) {
+                    manager.activeModel = index;
+                    model.active = true;
                 } else {
-                    manager.models[o].active = false;
+                    model.active = false;
                 }
-            } )
-        } else if (typeof n === "string") {
-            var pos = manager.models_array.indexOf(n);
-            if (pos !== -1) {
-                this.solo( pos );
-            }
-        } else if (n instanceof Model) {
-            this.solo( n.id )
+            })
+        } else if (input instanceof Model) {
+            this.solo( this.models.indexOf(input) )
         }
     }
     update () {
@@ -166,6 +134,20 @@ export default class ThreeManager {
 
         ui.build.startSection()
 
+        ui.build.header({title:`3D`})
+
+        ui.build.slider({
+            icon : 'fa fa-cube',
+            title : '',
+            target : this,
+            property : 'activeModel',
+            min : 0,
+            max : this.models.length - 1,
+            onInput : () => {
+                this.solo(this.activeModel)
+            }
+        })
+
         ui.build.slider({
             icon : 'fa fa-car',
             title : '',
@@ -183,7 +165,7 @@ export default class ThreeManager {
             property : 'target_theta',
             min : 0,
             max : 6.2831,
-            step : 6.2831 / 100
+            step : 6.2 / 100
         }))
 
         ui.watch( ui.build.slider({

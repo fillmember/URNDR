@@ -134,20 +134,20 @@ _modules.add( SetRandomColorScheme({
 	style : _style,
 	threeManager : _threeManager
 }) )
-_modules.add( RandomStrokeColor() )
+_modules.add( RandomStrokeColor().setActive(false) )
 _modules.add( ColorVariation() )
-_modules.add( RandomPointPosition() )
+_modules.add( RandomPointPosition().setActive(false) )
 _modules.add( PointPressureSensitivity({pen : _pen}))
 _modules.add( DeleteFlaggedStroke() )
-_modules.add( Stroke3DMapping({canvasManager:cavMan,threeManager:_threeManager}) )
-_modules.add( SmoothStroke() )
+_modules.add( SmoothStroke().setActive(false) )
 _modules.add( StrokeFade() )
-_modules.add( StrokeWiggle() )
+_modules.add( StrokeWiggle().setActive(false) )
 _modules.add( LegacyRenderer({
 	strokes : _strokes,
 	threeManager : _threeManager,
 	style : _style
 }) )
+_modules.add( Stroke3DMapping({canvasManager:cavMan,threeManager:_threeManager}) )
 
 _modules.createUI(_ui)
 
@@ -162,5 +162,3 @@ const _update = () => {
 	requestAnimationFrame(_update);
 }
 _update();
-
-console.log(_ui)

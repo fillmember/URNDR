@@ -12,10 +12,10 @@ export const RandomStrokeColor = () => {
 }
 
 export const ColorVariation = () => {
-	var module = new BaseModule("Subtle Pen Variation",BaseModule.STYLE_MODULE,9999,true);
+	var module = new BaseModule("Color Variation",BaseModule.STYLE_MODULE,9999,true);
 	module.interval = 80;
 	module.setConfiguration({
-		amount : 8
+		amount : 25
 	})
 	const _f = (v,b = 8,bh = b * 0.5) => {
 		return Math.round(v + Math.random() * b - bh)

@@ -114,11 +114,23 @@ export default class Strokes {
     }
     createUI (ui) {
 
+        ui.build.startSection()
+
+        ui.build.header({title:`Strokes`})
+
         ui.watch(ui.build.display({
             title : 'count',
             target : this,
             property : 'count'
         }))
+
+        ui.build.button({
+            icon : 'fa fa-trash-o',
+            title : 'clear',
+            click : () => {this.reset()}
+        })
+
+        ui.build.endSection()
 
     }
 }

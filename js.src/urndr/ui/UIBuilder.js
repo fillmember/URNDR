@@ -119,14 +119,11 @@ export default class UIBuilder {
 	}
 
 	slider ({
-		target,
-		property,
-		title = property,
-		icon,
-		min,
-		max,
-		step,
-		value = target[property]
+		target,property,
+		title = property,icon,
+		min,max,step,
+		value = target[property],
+		onInput, onChange
 	}) {
 
 		const wrapper = this.createElement('div',{class:`slider-container`})
@@ -170,6 +167,8 @@ export default class UIBuilder {
 		slider.addEventListener('input',() => {
 			output.innerHTML = parseFloat(slider.value)
 		})
+		if (onChange) slider.addEventListener('change',onChange)
+		if (onInput) slider.addEventListener('input',onInput)
 
 		wrapper.append(label)
 		wrapper.append(slider)

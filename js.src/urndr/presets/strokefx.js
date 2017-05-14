@@ -3,10 +3,10 @@ import {
 } from 'urndr.js'
 
 export const StrokeWiggle = () => {
-  const module = new BaseModule("Wiggle",BaseModule.STROKE_MODULE,90) // z
-  module.interval = 65;
+  const module = new BaseModule("Wiggle",BaseModule.STROKE_MODULE)
+  module.interval = 32;
   module.setConfiguration({
-    amp : 0,
+    amp : 5,
     all : true
   })
   module.setFunction( (strokes) => {
@@ -23,22 +23,43 @@ export const StrokeWiggle = () => {
       const stroke_k = target_strokes[st]
       stroke_k.setTrack( "X" , Helpers.randomizeArray( stroke_k.getTrack("X") , settings.amp ) )
       stroke_k.setTrack( "Y" , Helpers.randomizeArray( stroke_k.getTrack("Y") , settings.amp ) )
-      // const bamp = settings.amp * 0.001;
-      // stroke_k.setTrack( "BU" , Helpers.randomizeArray( stroke_k.getTrack("BU") , bamp ) )
-      // stroke_k.setTrack( "BV" , Helpers.randomizeArray( stroke_k.getTrack("BV") , bamp ) )
-      // stroke_k.setTrack( "BW" , Helpers.randomizeArray( stroke_k.getTrack("BW") , bamp ) )
+      const bamp = settings.amp * 0.001;
+      stroke_k.setTrack( "BU" , Helpers.randomizeArray( stroke_k.getTrack("BU") , bamp ) )
+      stroke_k.setTrack( "BV" , Helpers.randomizeArray( stroke_k.getTrack("BV") , bamp ) )
+      stroke_k.setTrack( "BW" , Helpers.randomizeArray( stroke_k.getTrack("BW") , bamp ) )
     }
   })
   return module
 }
 
 export const StrokeFade = () => {
-  var module = new BaseModule("Fade Strokes",BaseModule.STROKE_MODULE,70,false);
+  var module = new BaseModule("Fade Strokes",BaseModule.STROKE_MODULE)
   module.interval = 40;
   module.setConfiguration({
     all : true,
     speed : 2
   })
+  function fade( stroke , settings ){
+
+    const len = stroke.length
+    let n = stroke.getTag("fade_strokes") || 0
+
+    let pnt = null
+    for ( let i = 0; i < len; i++ ) {
+
+      if ( i < n ) {
+        pnt = stroke.points[ i ];
+        pnt.A = pnt.A < 0.05 ? 0 : pnt.A * _Math.map( settings.speed , 1 , 5 , 1 , 0.6)
+      } else {
+        break;
+      }
+
+    }
+
+    n = Math.min( n + settings.speed , len);
+    stroke.setTag("fade_strokes", n )
+
+  }
   module.setFunction(function(strokes) {
 
     var settings = module.getConfiguration()
@@ -50,43 +71,31 @@ export const StrokeFade = () => {
       fade( stroke , settings );
     }
 
-    function fade( stroke , settings ){
-
-      var n = stroke.getTag("fade_strokes");
-      if (n > 0 === false) { n = 0; }
-
-      var len = stroke.length,
-        step = _Math.map( settings.speed , 1 , 5 , 0 , 3 );
-      for ( var i = 0; i < len; i++ ) {
-
-        if ( i < n ) {
-          var pnt = stroke.points[ i ];
-          pnt.A = pnt.A < 0.05 ? 0 : pnt.A * _Math.map( settings.speed , 1 , 5 , 1 , 0.6)
-        } else {
-          break;
-        }
-
-      }
-
-      n = Math.min( n + step , len);
-
-      stroke.setTag("fade_strokes", n )
-
-    }
-
   })
   return module
 }
 
 export const DeleteFlaggedStroke = () => {
-  var module = new BaseModule("Garbage Collection",BaseModule.STROKE_MODULE,99,true);
+  var module = new BaseModule("Garbage Collection",BaseModule.STROKE_MODULE)
   module.interval = 1000;
+  const destroyStroke = (stroke,strokes) => {
+    if (strokes.activeStroke === stroke) {
+      strokes.activeStroke = 0
+    }
+    stroke.destroy()
+  }
   module.setFunction( function(strokes){
     strokes.list = strokes.list.filter((stroke)=>{
-      if (stroke.points.length === 1) {return false}
+      if (stroke.points.length === 1) {
+        destroyStroke(stroke,strokes)
+        return false
+      }
       if (stroke.points.reduce((acc, point)=>{
         return acc + point.A
-      },0) <= 0.1) {return false}
+      },0) <= 0.01) {
+        destroyStroke(stroke,strokes)
+        return false
+      }
       return true
     })
   })
@@ -95,7 +104,7 @@ export const DeleteFlaggedStroke = () => {
 }
 
 export const SmoothStroke = () => {
-  var module = new BaseModule("Smooth",BaseModule.STROKE_MODULE,87,false); // w
+  var module = new BaseModule("Smooth",BaseModule.STROKE_MODULE)
   module.interval = 85;
   //
   module.setConfiguration({ length: 60, factor: 13 })
@@ -140,11 +149,8 @@ export const SmoothStroke = () => {
 }
 
 export const Stroke3DMapping = ({canvasManager,threeManager}) => {
-  var module = new BaseModule("3D MAGIC",BaseModule.STROKE_MODULE,true); //u
+  var module = new BaseModule("3D MAGIC",BaseModule.STROKE_MODULE)
   module.interval = 20
-  // module.setConfiguration({
-  //   delayFactor : 0.8
-  // })
   const _ep = ( point , stroke , i ) => {
 
     if ( point.FACE && point.OBJECT ) {
@@ -164,16 +170,6 @@ export const Stroke3DMapping = ({canvasManager,threeManager}) => {
         canvasManager.width,
         canvasManager.height
       )
-
-      // record this point's potential movement.
-      // point.PX = (p.x - point.X) * module.settings.delayFactor
-      // point.PY = (p.y - point.Y) * module.settings.delayFactor
-      // point.PX = p.x
-      // point.PY = p.y
-
-      // set point X Y
-      // point.X += point.PX
-      // point.Y += point.PY
 
       point.X = p.x
       point.Y = p.y

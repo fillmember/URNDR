@@ -40,11 +40,15 @@ class BaseModule {
         }
     }
 
-
     execute (args) {
         if (this.enabled && this.cool) {
             this.func(args)
         }
+    }
+
+    setActive (input) {
+        this.enabled = input
+        return this
     }
 
     //
