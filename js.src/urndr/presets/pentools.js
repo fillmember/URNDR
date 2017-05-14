@@ -26,7 +26,7 @@ const DrawTool = ({strokes, modules, threeManager, style}) => {
     icon: 'fa fa-pencil',
     onmousedown: function(pen, evt) { strokes.beginNewStroke(); },
     onmouseup: function(pen, evt) {
-      const astk = strokes.getActiveStroke()
+      const astk = strokes.activeStroke
       if (astk) {astk.optimize();}
     },
     onmousemove: function(pen, evt) {
@@ -42,7 +42,7 @@ const DrawTool = ({strokes, modules, threeManager, style}) => {
         A: style.color[3]
       });
       // WRITE POINT INTO STROKE
-      const stk = strokes.getActiveStroke();
+      const stk = strokes.activeStroke;
       if (stk !== 0) {
         stk.addPoint(pnt)
       }
@@ -166,7 +166,7 @@ const ModifyTool = ({strokes, modules, threeManager, style}) => {
         if (_result !== false) {
             _result = query[_result].reference
             _result.stroke.selected = true;
-            strokes.active_stroke = _result.stroke.id;
+            strokes.activeStroke = _result.stroke.id;
         }
 
     },

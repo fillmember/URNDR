@@ -5,13 +5,10 @@ import Stroke from './Stroke'
 export default class Strokes {
     constructor (options = {}){
 
-        // Data
-        this.strokes = {}; // Store actual Stroke Objects. Key = Stroke ID.
-        this.strokesHistory = []; // Store stroke ID. Record order of creation.
-        this.strokesZDepth = []; // Store stroke ID. The later, the closer to screen.
+        this.list = []
 
         // Active Stroke is selector, ref by ID. When 0, means don't continue any existing stroke.
-        this.active_stroke = 0;
+        this.activeStroke = 0;
 
         this.bound = new Rectangle(0,0,
             (options.width ? options.width : window.innerWidth),
@@ -23,16 +20,13 @@ export default class Strokes {
 
     }
 
-    get strokeCount() {
-        return this.strokesHistory.length;
+    get count() {
+        return this.list.length;
     }
     reset () {
 
-        this.strokes = {};
-        this.strokesHistory = [];
-        this.strokesZDepth = [];
-
-        this.active_stroke = 0;
+        this.list = [];
+        this.activeStroke = 0;
 
         this.quadTree.clear();
 
@@ -40,12 +34,7 @@ export default class Strokes {
     rebuildQuadTree () {
 
         this.quadTree = new QuadTree( 1, new Rectangle( 0, 0, this.bound.width, this.bound.height ) )
-
-        this.eachStroke( function(stk,strokes){
-
-            strokes.addToQuadTree( stk )
-
-        }, this)
+        this.eachStroke( (stk) => {this.addToQuadTree(stk)})
 
     }
     addToQuadTree ( obj ) {
@@ -90,155 +79,45 @@ export default class Strokes {
     }
     getActiveStroke () {
 
-        if (this.active_stroke !== 0) {
-            return this.getStrokeByID( this.active_stroke );
-        } else {
-            return 0;
-        }
+        return this.activeStroke
 
     }
-    // Make one stroke active by storing its ID into active_stroke,
-    selectStrokeByID ( id ) {
+    // Make one stroke active by storing its ID into activeStroke,
+    selectStroke(stk) {
 
-        if ( this.strokes.hasOwnProperty(id) ) {
-            this.active_stroke = id
-        } else {
-            return false;
-        }
+        this.activeStroke = stk
 
     }
     getLatestStroke () {
 
-        return this.getStrokeByID( this.strokesHistory[ this.strokesHistory.length - 1 ] );
+        return this.list[ this.list.length - 1 ]
 
     }
     beginNewStroke () {
 
-        this.selectStrokeByID( this.addStroke() );
+        this.activeStroke = this.addStroke()
 
     }
-    addStroke () {
+    addStroke (stk) {
 
-        // Check argument first
-        var alen = arguments.length;
-        if (alen === 0) {
-
-            // Create an empty stroke for user.
-            return this.addStroke( new Stroke() )
-
-        } else if (alen > 1) {
-
-            // Several Strokes.
-            for ( var j = 0; j < alen; j++) {
-
-                this.addStroke( arguments[j] )
-
-            }
-
-        } else if (alen === 1) {
-
-            var stk = arguments[0]
-
-            if (stk instanceof Stroke ) {
-
-                stk.parent = this;
-
-                this.strokes[stk.id] = stk;
-                this.strokesHistory.push( stk.id );
-                this.strokesZDepth.push( stk.id );
-
-                return stk.id; // return the id so people can identify it.
-
-            }
-
-        }
-
-    }
-    // NOTE: To iterate through strokes when drawing & manipulating... just use strokes map or strokesArray. ,
-    getStrokeByID ( id ) {
-
-        if (this.strokes.hasOwnProperty(id)) {
-            return this.strokes[id]
-        } else {
-            return 0;
-        }
-
-    }
-    deleteStrokeByID ( id ) {
-
-        if (this.strokes.hasOwnProperty(id)) {
-
-            var in_history = this.strokesHistory.indexOf(id)
-            var in_z_depth = this.strokesZDepth.indexOf(id)
-
-            // NOTE: if everything works right. They should also be present in these arrays...
-            if (in_history >= 0) { this.strokesHistory.splice( in_history , 1) }
-            if (in_z_depth >= 0) { this.strokesZDepth.splice( in_z_depth , 1) }
-            // auto check consistency, something might be wrong :(
-            if (in_history === -1 || in_z_depth === -1) { this.checkConsistency(id) }
-
-            delete this.strokes[id]
-
-        }
-
-    }
-    checkConsistency (id) {
-
-        console.log("PART I : Start to check consistency in the data. ")
-
-        if (id) {
-
-            console.log("Check stroke by ID...")
-
-            if ( this.strokes.hasOwnProperty(id) ) {
-
-                var in_history = this.strokesHistory.indexOf(id);
-                var in_z_depth = this.strokesZDepth.indexOf(id);
-
-                console.log("Index in History Array: "+in_history,"Index in Z-Depth Array: "+in_z_depth);
-                console.log("Something wrong? ",in_history === in_z_depth ? "NO :)" : "YES :(");
-
-            } else {
-
-                console.log("no such stroke present. ");
-
-            }
-
-        }
-
-        console.log("PART II : Check Data Length");
-
-        var slen, hlen, zlen;
-        slen = Object.keys(strokes).length;
-        hlen = this.strokesHistory.length;
-        zlen = this.strokesZDepth.length;
-
-        if ( slen === hlen === zlen) {
-            console.log("")
-        } else {
-            console.log("Warning to developer : there's inconsistency between strokes and other two arrays! (slen,hlen,zlen) = (",slen,hlen,zlen,")");
-        }
+        stk = stk ? stk : new Stroke()
+        stk.parent = this
+        this.list.push(stk)
+        return stk
 
     }
     eachStroke ( my_function , parameters ) {
-        var len = this.strokeCount;
-        var arr = this.strokesHistory.slice(0)
+        const len = this.list.length
         for( var i = 0; i < len; i++ ){
-            my_function( this.getStrokeByID( arr[ i ] ) , parameters , i );
+            my_function( this.list[i] , parameters , i )
         }
     }
     createUI (ui) {
 
         ui.watch(ui.build.display({
-            title : 'stroke count',
-            target : this.strokesHistory,
-            property : 'length'
-        }))
-
-        ui.watch(ui.build.display({
-            title : 'active_stroke',
+            title : 'count',
             target : this,
-            property : 'active_stroke'
+            property : 'count'
         }))
 
     }

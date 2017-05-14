@@ -35,7 +35,7 @@ PEN.addTool(new URNDR.PenTool({
     u3: U3,
     onmousedown: function(pen, evt) { this.strokes.beginNewStroke(); },
     onmouseup: function(pen, evt) {
-        var astk = this.strokes.getActiveStroke()
+        var astk = this.strokes.activeStroke
         astk.optimize();
     },
     onmousemove: function(pen, evt) {
@@ -55,7 +55,7 @@ PEN.addTool(new URNDR.PenTool({
         });
 
         // WRITE POINT INTO STROKE
-        var stk = this.strokes.getActiveStroke();
+        var stk = this.strokes.activeStroke;
         if (stk !== 0) {
             stk.addPoint(pnt)
         }
@@ -184,7 +184,7 @@ PEN.addTool(new URNDR.PenTool({
         if (nearest !== false) {
             nearest = query[nearest].reference
             nearest.stroke.selected = true;
-            this.strokes.active_stroke = nearest.stroke.id;
+            this.strokes.activeStroke = nearest.stroke.id;
         }
 
     }

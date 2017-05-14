@@ -14,13 +14,13 @@ export const StrokeWiggle = () => {
     //
     let target_strokes;
     if (settings.all) {
-      target_strokes = strokes.strokesZDepth
+      target_strokes = strokes.list
     } else {
-      target_strokes = [ strokes.active_stroke ]
+      target_strokes = [ strokes.activeStroke ]
     }
     //
     for (var st = 0, max = target_strokes.length; st < max; st ++ ) {
-      const stroke_k = strokes.getStrokeByID( target_strokes[st] )
+      const stroke_k = target_strokes[st]
       stroke_k.setTrack( "X" , Helpers.randomizeArray( stroke_k.getTrack("X") , settings.amp ) )
       stroke_k.setTrack( "Y" , Helpers.randomizeArray( stroke_k.getTrack("Y") , settings.amp ) )
       // const bamp = settings.amp * 0.001;
@@ -45,7 +45,7 @@ export const StrokeFade = () => {
     if (settings.all) {
       strokes.eachStroke( fade , settings );
     } else {
-      var stroke = strokes.getActiveStroke()
+      var stroke = strokes.activeStroke
       if ( stroke === 0 ) {return 0;}
       fade( stroke , settings );
     }
@@ -82,18 +82,13 @@ export const DeleteFlaggedStroke = () => {
   var module = new BaseModule("Garbage Collection",BaseModule.STROKE_MODULE,99,true);
   module.interval = 1000;
   module.setFunction( function(strokes){
-    var strokes_to_delete = [];
-    strokes.eachStroke(function(stk){
-      if (stk.flag_to_delete) {
-        strokes_to_delete.push( stk.id )
-        if (stk.id === strokes.active_stroke) {
-          strokes.active_stroke = 0;
-        }
-      }
+    strokes.list = strokes.list.filter((stroke)=>{
+      if (stroke.points.length === 1) {return false}
+      if (stroke.points.reduce((acc, point)=>{
+        return acc + point.A
+      },0) <= 0.1) {return false}
+      return true
     })
-    for ( var i = 0, max = strokes_to_delete.length; i < max; i++) {
-      strokes.deleteStrokeByID( strokes_to_delete[i] );
-    }
   })
   module.createUI = () => {}
   return module;

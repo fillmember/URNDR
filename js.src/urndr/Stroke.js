@@ -19,46 +19,11 @@ export default class Stroke {
 
         this.hovered = false;
         this.selected = false;
-
-        this._flag_to_delete = false;
     }
 
     get length() {
         return this.points.length;
     }
-    get flag_to_delete() {
-
-        if (this.length < 1) { return false; }
-        if (this._flag_to_delete === true) { return true; }
-
-        // sum up A and check
-        var sum_A = 0;
-        this.eachPoint(function(pnt) {sum_A+=pnt.A;})
-        if (sum_A < 0.05) {
-            return true;
-        }
-
-        // check out of range stroke
-        if (this.parent.deleteOutOfRangeStroke) {
-
-            var flag_invisible = true;
-            this.eachPoint(function(pnt) {
-                if (flag_invisible) {
-                    var ndc = pnt.ndc
-                    if (ndc.x > -1 && ndc.x < 1 && ndc.y > -1 && ndc.y < 1) {
-                        flag_invisible = false;
-                    }
-                }
-            })
-            if (flag_invisible) { return true; }
-
-        }
-
-        // Pass all test...
-        return false;
-
-    }
-    deleteStroke () { this._flag_to_delete = true; }
     addPoint ( arg ) {
 
         if ( arg instanceof Point ) {
@@ -247,17 +212,14 @@ export default class Stroke {
         this.points = simplify( this.points , t , true );
 
     }
-    simplify_more ( n ) {
-
-        n = n < 0 || n === undefined ? 30 : n
+    simplify_more ( n = 30 ) {
 
         this.optimize( n )
 
     }
     optimize ( a ) {
 
-        // Check if is a closed path.
-
+        // Check if this is a closed path.
         if (this.length > 3) {
 
             var pnt = this.points[ this.length - 1 ],
@@ -268,11 +230,9 @@ export default class Stroke {
         }
 
         // Simplify
-
         this.simplify();
 
         // Calculate Center
-
         this.center = this.calculateCenterOfPoints();
 
     }
@@ -281,12 +241,12 @@ export default class Stroke {
         var result = {x:0,y:0},
             divider = 1 / this.length;
 
-        this.eachPoint( function( pnt, parameters, i) {
+        this.eachPoint( ( pnt, parameters, i) => {
 
             result.x += pnt.X;
             result.y += pnt.Y;
 
-        }, null )
+        })
 
         result.x *= divider;
         result.y *= divider;
@@ -300,13 +260,11 @@ export default class Stroke {
 
     }
     getTag ( tag ) {
-
         if (this.tags.hasOwnProperty(tag)) {
             return this.tags[tag];
         } else {
             return undefined;
         }
-
     }
     eachPoint ( my_function , parameters ) {
         var arr = this.points.slice(0)

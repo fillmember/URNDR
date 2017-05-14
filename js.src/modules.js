@@ -366,8 +366,8 @@ delete_flagged_strokes : function(){
         strokes.eachStroke(function(stk){
             if (stk.flag_to_delete) {
                 strokes_to_delete.push( stk.id )
-                if (stk.id === strokes.active_stroke) {
-                    strokes.active_stroke = 0;
+                if (stk.id === strokes.activeStroke) {
+                    strokes.activeStroke = 0;
                 }
             }
         })
@@ -555,7 +555,7 @@ fade_strokes : function() {
         if (settings.all) {
             strokes.eachStroke( fade , settings );
         } else {
-            var stroke = strokes.getActiveStroke()
+            var stroke = strokes.activeStroke
             if ( stroke === 0 ) {return 0;}
             fade( stroke , settings );
         }
@@ -612,7 +612,7 @@ wiggle : function() {
         if (settings.all) {
             target_strokes = strokes.strokesZDepth
         } else {
-            target_strokes = [ strokes.active_stroke ]
+            target_strokes = [ strokes.activeStroke ]
         }
         //
         settings.amp = THREE.Math.mapLinear( U3.speed , 0 , 60 , 2 , 12 )
