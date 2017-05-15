@@ -1,6 +1,6 @@
 import {
   BaseModule , _Math , Helpers
-} from 'urndr.js'
+} from './../urndr.js'
 
 export const SetRandomColorScheme = ({strokes,style,threeManager}) => {
 	var module = new BaseModule("Color Change",BaseModule.COMMAND_MODULE,191)

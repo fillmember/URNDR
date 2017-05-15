@@ -1,6 +1,6 @@
 import {
   Point , PenTool , BaseModule
-} from 'urndr.js'
+} from './../urndr.js'
 
 const PanTool = ({strokes, modules, threeManager, style}) => {
   let timer = null

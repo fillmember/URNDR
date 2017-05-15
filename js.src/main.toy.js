@@ -1,15 +1,28 @@
-import THREE from './three.js'
+import THREE from './urndr/three.js'
 import {
 	BaseModule, ThreeManager, ModuleManager,
 	CanvasManager, StrokeStyle, Strokes,
 	Point, Hud, Pen, PenTool, Module, UIManager
-} from 'urndr'
-import {PanTool,DrawTool,EraseTool,ModifyTool} from 'urndr/presets/pentools.js'
-import {SetRandomColorScheme} from 'urndr/presets/commands.js'
-import {RandomStrokeColor, ColorVariation} from 'urndr/presets/styles.js'
-import {RandomPointPosition,PointPressureSensitivity} from 'urndr/presets/pointfx.js'
-import {StrokeFade,StrokeWiggle,DeleteFlaggedStroke,SmoothStroke,Stroke3DMapping} from 'urndr/presets/strokefx.js'
-import {LegacyRenderer} from 'urndr/renderers/CanvasRenderModules'
+} from 'urndr/urndr'
+import {
+	PanTool,DrawTool,EraseTool,ModifyTool
+} from 'urndr/presets/pentools'
+import {
+	SetRandomColorScheme
+} from 'urndr/presets/commands'
+import {
+	RandomStrokeColor, ColorVariation
+} from 'urndr/presets/styles'
+import {
+	RandomPointPosition,PointPressureSensitivity
+} from 'urndr/presets/pointfx'
+import {
+	StrokeFade,StrokeWiggle,DeleteFlaggedStroke,
+	SmoothStroke,Stroke3DMapping
+} from 'urndr/presets/strokefx'
+import {
+	LegacyRenderer
+} from 'urndr/renderers/CanvasRenderModules'
 
 const _ui = new UIManager(document.querySelector('.sidebar.right'))
 

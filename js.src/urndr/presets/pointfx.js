@@ -1,6 +1,6 @@
 import {
   BaseModule , _Math
-} from 'urndr.js'
+} from './../urndr.js'
 
 export const RandomPointPosition = () => {
 	const module = new BaseModule("Random Point Position",BaseModule.POINT_MODULE,68);

@@ -1,4 +1,4 @@
-import THREE from 'three.js'
+import THREE from './three.js'
 import MathUtil from './math/math'
 
 export default class Model {

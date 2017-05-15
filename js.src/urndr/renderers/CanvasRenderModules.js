@@ -1,4 +1,4 @@
-import {BaseModule,UIMessage} from 'urndr'
+import {BaseModule,UIMessage} from './../urndr'
 
 export const LegacyRenderer = ({strokes, threeManager, style}) => {
 	var module = new BaseModule("Render",BaseModule.DRAW_MODULE,902,true);

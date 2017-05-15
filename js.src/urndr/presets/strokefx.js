@@ -1,6 +1,6 @@
 import {
   BaseModule , _Math , Helpers
-} from 'urndr.js'
+} from './../urndr.js'
 
 export const StrokeWiggle = () => {
   const module = new BaseModule("Wiggle",BaseModule.STROKE_MODULE)

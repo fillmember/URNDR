@@ -1,4 +1,4 @@
-import {BaseModule} from 'urndr'
+import BaseModule from './../BaseModule'
 
 export const RandomStrokeColor = () => {
 	const module = new BaseModule("Random Stroke Color",BaseModule.STYLE_MODULE,65);
