@@ -1,6 +1,6 @@
-# urndr
+# URNDR
 
-> vue+urndr
+3D+2D Drawing experiment with VUE
 
 ## Build Setup
 

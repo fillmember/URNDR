@@ -1,6 +1,6 @@
 {
   "name": "urndr",
-  "description": "vue+urndr",
+  "description": "3D+2D Drawing experiment",
   "version": "1.0.0",
   "author": "ten <ten@mutate.space>",
   "private": true,
