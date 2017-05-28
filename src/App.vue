@@ -6,13 +6,6 @@
       <canvas id="hud" ref="canvas_hud" :width="width" :height="height" />
     </section>
     <section id="control" class="sidebar right">
-      <urndr-slider
-        label="b"
-        :value.sync="style.brush_size"
-        :min="style.brush_size_range[0]"
-        :max="style.brush_size_range[1]"
-        :step="1"
-      />
     </section>
   </div>
 </template>
@@ -45,11 +38,13 @@ import {
 } from './urndr/renderers/CanvasRenderModules'
 
 import Slider from './Slider.vue'
+import Toggle from './Toggle.vue'
 
 export default {
   name: 'app',
   components: {
-    'urndr-slider' : Slider
+    'urndr-slider' : Slider,
+    'urndr-toggle' : Toggle
   },
   data () {
     const d = {
