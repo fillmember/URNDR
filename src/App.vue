@@ -11,7 +11,7 @@
         :value.sync="style.brush_size"
         :min="style.brush_size_range[0]"
         :max="style.brush_size_range[1]"
-        :step="0.5"
+        :step="1"
       />
     </section>
   </div>
@@ -53,7 +53,6 @@ export default {
   },
   data () {
     const d = {
-      dummy : {x:0},
       width : 500,
       height : 500,
       threeManager  : null,
