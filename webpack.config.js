@@ -1,6 +1,5 @@
 const path = require('path')
 const webpack = require('webpack')
-const Babili = require('babili-webpack-plugin')
 const config = {
 
   js: {
@@ -67,6 +66,5 @@ module.exports = {
   plugins: [
     new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.NoEmitOnErrorsPlugin()
-    // new Babili({removeConsole:true,removeDebugger:true})
   ]
 }
