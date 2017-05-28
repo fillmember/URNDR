@@ -21,13 +21,18 @@ export default class Pen {
         this.canvas_hud = canvas_hud
         this.strokes = strokes // strokeManager to draw to
 
-        // event
-        canvas_hud.addEventListener("mousedown", (evt) => this.onmousedown(this, evt) )
-        canvas_hud.addEventListener("mouseup"  , (evt) => this.onmouseup(this, evt) )
-        canvas_hud.addEventListener("mousemove", (evt) => this.onmousemove(this, evt) )
-        canvas_hud.addEventListener("mouseout" , (evt) => this.onmouseout(this, evt) )
+        return this
 
-        Pressure.set( canvas_hud , {
+    }
+
+    bindEvents () {
+
+        this.canvas_hud.addEventListener("mousedown", (evt) => this.onmousedown(this, evt) )
+        this.canvas_hud.addEventListener("mouseup"  , (evt) => this.onmouseup(this, evt) )
+        this.canvas_hud.addEventListener("mousemove", (evt) => this.onmousemove(this, evt) )
+        this.canvas_hud.addEventListener("mouseout" , (evt) => this.onmouseout(this, evt) )
+
+        Pressure.set( this.canvas_hud , {
             change : (force,event) => { this.pressure = force}
         } )
 

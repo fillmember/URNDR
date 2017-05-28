@@ -4,7 +4,7 @@ import Model from './Model.js'
 const PI2 = Math.PI * 2
 
 export default class ThreeManager {
-    constructor ( arg ) {
+    constructor ( arg = {} ) {
 
         // Storage
         this.models = []
