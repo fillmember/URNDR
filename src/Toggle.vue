@@ -30,7 +30,7 @@ export default {
 </script>
 
 <style lang="stylus">
-@import './stylus/Variables'
+@import './stylus/Object/input-containers'
 
 toggle-w = 18px
 toggle-h = 9px

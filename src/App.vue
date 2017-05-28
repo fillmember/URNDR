@@ -213,5 +213,35 @@ export default {
 </script>
 
 <style lang="stylus">
-  @import './../css.src/main.styl'
+  @import './stylus/Variables'
+  @import './stylus/Base'
+  .outer-wrapper
+    display flex
+    flex-flow row nowrap
+    width 100vw
+    height 100vh
+
+  .canvas-container
+    width 80%
+    height 100%
+    min-height 500px
+    min-width 500px
+
+    background-color gray
+    display flex
+    align-items center
+    justify-content center
+    div
+      height 500px
+      width 500px
+      position relative
+    canvas
+      position absolute
+      top 0
+      left 0
+
+  .sidebar
+    font-weight 700
+    padding 0 .1rem
+    width 20%
 </style>

@@ -1,0 +1,83 @@
+@import './Variables'
+@import './Mixin'
+
+body
+  font-family 'Raleway', sans-serif
+  font-weight 500
+  font-size 12px
+  color #333
+  line-height 15.625px
+  margin 0
+  padding 0
+
+a
+a:visited
+  color #333
+a:hover
+a:active
+  background-color #FF0
+
+ul
+li
+  margin 12em 0 0 0
+  padding 0
+  list-style none
+
+p
+li
+  margin 0 0 2em 0
+
+h1
+h2
+h3
+h4
+  margin 0
+  padding 0
+
+h1
+  font-weight 500
+  margin-bottom 0.2em
+  font-size 1.66em
+
+h2
+  font-size 1.2em
+  font-weight 300
+
+h3
+  text-align center
+  font-weight 500
+  font-size 1.3em
+  padding 0
+  margin-bottom .5em
+
+h4
+  h4()
+
+input
+button
+label
+  user-select none
+  cursor pointer
+  outline none
+  appearance none
+  padding 0
+  margin 0
+  text-align left
+
+button
+  font-weight 700
+  text-transform lowercase
+  background #FFF
+  border 2px solid main-color
+  border-radius 5px
+  padding 0 3px 2px 4px
+  display flex
+  align-items center
+  .fa
+    position relative
+    top 1px
+    font-size 1.3em
+    padding-right 3px
+  transition background-color transition-duration
+  &.active
+    background-color active-color

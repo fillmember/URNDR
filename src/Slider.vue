@@ -69,7 +69,7 @@ export default {
 
 <style lang="stylus">
 @import './stylus/Variables'
-
+@import './stylus/Object/input-containers'
 slider-height = 10px
 s-knob-h = 14px
 s-knob-w = 14px
