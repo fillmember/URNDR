@@ -17,7 +17,6 @@
     "vuex": "^2.3.1"
   },
   "devDependencies": {
-    "stylus-loader": "^3.0.1",
     "babel-core": "^6.0.0",
     "babel-loader": "^6.0.0",
     "babel-preset-env": "^1.5.1",
@@ -30,6 +29,7 @@
     "pressure": "^2.1.1",
     "sass-loader": "^5.0.1",
     "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.1",
     "three": "^0.85.2",
     "vue-loader": "^12.1.0",
     "vue-template-compiler": "^2.3.3",
